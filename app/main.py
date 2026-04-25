@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 
 from app.api.routes.chat import router as chat_router
 from app.api.routes.dashboard import router as dashboard_router
@@ -19,6 +20,11 @@ app.include_router(handoffs_router)
 app.include_router(dashboard_router)
 app.include_router(demo_router)
 app.include_router(ui_router)
+
+
+@app.get("/")
+def root():
+    return RedirectResponse(url="/ui")
 
 
 @app.get("/health")
