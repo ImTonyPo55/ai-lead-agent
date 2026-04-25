@@ -155,11 +155,13 @@ def ui_page() -> str:
     }
 
     .top-actions {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 8px;
-    }
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  margin-bottom: 18px;
+  align-items: center;
+  flex-wrap: wrap;
+}
 
     .top-actions button {
       width: auto;
@@ -277,11 +279,11 @@ def ui_page() -> str:
     }
 
     .hint {
-      color: #94a3b8;
-      font-size: 12px;
-      margin-top: -4px;
-      margin-bottom: 12px;
-    }
+  margin-top: 12px;
+  font-size: 13px;
+  color: #94a3b8;
+  line-height: 1.4;
+}
 
     @media (max-width: 980px) {
       .grid, .grid-2, .grid-4 {
