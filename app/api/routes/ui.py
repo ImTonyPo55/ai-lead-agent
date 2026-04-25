@@ -279,7 +279,8 @@ def ui_page() -> str:
     }
 
     .hint {
-  margin-top: 12px;
+  display: block;
+  padding-top: 16px;
   font-size: 13px;
   color: #94a3b8;
   line-height: 1.4;
