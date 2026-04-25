@@ -304,34 +304,35 @@ def ui_page() -> str:
 </div>
     <div class="grid">
       <div class="card">
-        <h2>Отправить сообщение</h2>
-        <input id="leadIdInput" placeholder="lead_id — необязательно для первого сообщения" />
-        <textarea id="messageInput" placeholder="Введите входящее сообщение..."></textarea>
-        <div class="top-actions">
-          <button onclick="sendMessage()">Отправить</button>
-          <button class="secondary-btn" onclick="clearMessageForm()">Очистить</button>
-        </div>
-        <div class="hint">После ответа lead_id автоматически подставится в summary.</div>
+     <h2>Send message</h2>
+<input id="leadIdInput" placeholder="lead_id — optional for the first message" />
+<textarea id="messageInput" placeholder="Enter inbound message..."></textarea>
+<div class="top-actions">
+  <button onclick="sendMessage()">Send</button>
+  <button class="secondary-btn" onclick="clearMessageForm()">Clear</button>
+</div>
+<div class="hint">After the reply, lead_id will be automatically filled into summary.</div>
 
-        <details>
-          <summary>Raw response</summary>
-          <pre id="sendResult">Пока пусто.</pre>
-        </details>
+<details>
+  <summary>Raw response</summary>
+  <pre id="sendResult">Empty.</pre>
+</details> 
+        
       </div>
 
       <div class="card" id="summaryCard">
         <h2>Lead summary</h2>
-        <input id="summaryLeadId" placeholder="Введите lead_id" />
+        <input id="summaryLeadId" placeholder="Enter lead_id" />
         <div class="top-actions">
-          <button onclick="loadLeadSummary()">Загрузить summary</button>
+          <button onclick="loadLeadSummary()">Load summary</button>
         </div>
 
-        <div id="summaryCards" class="empty">Пока пусто.</div>
+        <div id="summaryCards" class="empty">Empty.</div>
         <div id="summaryActions" class="top-actions"></div>
 
         <details>
           <summary>Raw summary JSON</summary>
-          <pre id="summaryResult">Пока пусто.</pre>
+          <pre id="summaryResult">Empty.</pre>
         </details>
       </div>
     </div>
