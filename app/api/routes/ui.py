@@ -294,15 +294,14 @@ def ui_page() -> str:
   <div class="wrap">
     <div class="section-title">
       <div>
-        <h1>AI Lead Agent UI</h1>
-        <div class="muted">Быстрый операторский интерфейс поверх текущего API.</div>
-      </div>
-      <div class="top-actions">
-        <button class="success-btn" onclick="seedDemo()">Seed demo data</button>
-<button class="danger-btn" onclick="resetDemo()">Reset demo data</button>
-      </div>
-    </div>
-
+ <h1>AI Lead Agent</h1>
+<div class="muted">Demo-ready MVP for inbound B2B lead intake, qualification, and handoff.</div>
+</div>
+<div class="top-actions">
+  <button class="success-btn" onclick="seedDemo()">Load demo data</button>
+  <button class="danger-btn" onclick="resetDemo()">Reset demo</button>
+</div>
+</div>
     <div class="grid">
       <div class="card">
         <h2>Отправить сообщение</h2>
