@@ -1,6 +1,8 @@
 import re
 from typing import Optional
 
+from app.services.llm_service import is_llm_available, llm_extract_fields
+
 
 ROLE_MAP = {
     "founder": "founder",
@@ -56,17 +58,26 @@ COMPANY_PATTERNS = [
 
 USE_CASE_PATTERNS = [
     re.compile(
-        r"(?:\bneed\b|\blooking for\b|\bneed help with\b|\binterested in\b|\bwant\b)\s+(.+?)(?:$|[.!?]\s*|\bcontact\b)", re.IGNORECASE),
+        r"(?:\bneed\b|\blooking for\b|\bneed help with\b|\binterested in\b|\bwant\b)\s+(.+?)(?:$|[.!?]\s*|\bcontact\b)",
+        re.IGNORECASE,
+    ),
     re.compile(
-        r"(?:\bнужен\b|\bнужна\b|\bнужно\b|\bнужны\b|\bищем\b|\bинтересует\b|\bхотим\b)\s+(.+?)(?:$|[.!?]\s*|\bконтакт\b)", re.IGNORECASE),
+        r"(?:\bнужен\b|\bнужна\b|\bнужно\b|\bнужны\b|\bищем\b|\bинтересует\b|\bхотим\b)\s+(.+?)(?:$|[.!?]\s*|\bконтакт\b)",
+        re.IGNORECASE,
+    ),
     re.compile(
-        r"(?:\bnecesitamos\b|\bbuscamos\b|\bqueremos\b|\bnos interesa\b)\s+(.+?)(?:$|[.!?]\s*|\bcontacto\b)", re.IGNORECASE),
+        r"(?:\bnecesitamos\b|\bbuscamos\b|\bqueremos\b|\bnos interesa\b)\s+(.+?)(?:$|[.!?]\s*|\bcontacto\b)",
+        re.IGNORECASE,
+    ),
 ]
 
 NOISE_PATTERNS = [
     re.compile(r"\b(?:contact|контакт|contacto)[:\s].*$", re.IGNORECASE),
     re.compile(r"\b(?:i am|i'm|я|soy|somos)\b.*$", re.IGNORECASE),
-    re.compile(r"\b(?:founder|cofounder|co-founder|ceo|cto|cpo|owner|director|основатель|сооснователь|фаундер|владелец|директор|fundador|cofundador|dueño|dueno|directora)\b", re.IGNORECASE),
+    re.compile(
+        r"\b(?:founder|cofounder|co-founder|ceo|cto|cpo|owner|director|основатель|сооснователь|фаундер|владелец|директор|fundador|cofundador|dueño|dueno|directora)\b",
+        re.IGNORECASE,
+    ),
     re.compile(
         r"\b(?:we are|we're|мы из|somos de|soy de|company|компания|empresa)\b", re.IGNORECASE),
 ]
@@ -95,20 +106,16 @@ USE_CASE_HINTS = (
     "заявок",
     "лидов",
     "входящих",
-    "crm",
     "телеграм",
-    "whatsapp",
     "интегра",
     "агент",
     "бот",
     "панель",
     "аналитика",
     "automatización",
-    "leads",
     "entrantes",
     "integración",
     "agente",
-    "bot",
     "ventas",
     "panel",
 )
@@ -133,6 +140,43 @@ def _clean(value: str) -> str:
     return re.sub(r"\s+", " ", value).strip()
 
 
+def _clean_str(value) -> Optional[str]:
+    if value is None:
+        return None
+    value = str(value).strip()
+    return value or None
+
+
+def _build_result(
+    company: Optional[str],
+    role: Optional[str],
+    contact: Optional[str],
+    use_case: Optional[str],
+    extraction_method: str,
+    confidence: float,
+) -> dict:
+    missing_fields = []
+    if not company:
+        missing_fields.append("company")
+    if not role:
+        missing_fields.append("role")
+    if not contact:
+        missing_fields.append("contact")
+    if not use_case:
+        missing_fields.append("use_case")
+
+    return {
+        "company": company,
+        "role": role,
+        "contact": contact,
+        "use_case": use_case,
+        "extraction_method": extraction_method,
+        "confidence": round(max(0.0, min(confidence, 0.95)), 2),
+        "missing_fields": missing_fields,
+        "is_qualified_candidate": bool(company and use_case and (contact or role)),
+    }
+
+
 def _cleanup_company(value: str) -> Optional[str]:
     value = _clean(value)
     value = value.strip(" \n\t\r,.;:!?-—")
@@ -144,10 +188,8 @@ def _cleanup_company(value: str) -> Optional[str]:
 
     if not value:
         return None
-
     if value.lower() in BAD_COMPANY_VALUES:
         return None
-
     if len(value) < 2 or len(value) > 64:
         return None
 
@@ -211,12 +253,8 @@ def _extract_use_case(text: str) -> Optional[str]:
             if value:
                 return value
 
-    chunks = [
-        _clean(chunk)
-        for chunk in re.split(r"[\n.;]+", text)
-        if _clean(chunk)
-    ]
-
+    chunks = [_clean(chunk)
+              for chunk in re.split(r"[\n.;]+", text) if _clean(chunk)]
     scored = [(chunk, _score_sentence(chunk)) for chunk in chunks]
     scored = [item for item in scored if item[1] > 0]
 
@@ -227,9 +265,7 @@ def _extract_use_case(text: str) -> Optional[str]:
     return _cleanup_use_case(scored[0][0])
 
 
-def extract_fields(message_text: str) -> dict:
-    text = _clean(message_text)
-
+def _extract_rules_v2(text: str) -> dict:
     company = _extract_company(text)
     role = _extract_role(text)
     contact = _extract_contact(text)
@@ -243,44 +279,98 @@ def extract_fields(message_text: str) -> dict:
     if contact:
         confidence += 0.05
 
-    confidence = round(min(confidence, 0.95), 2)
+    return _build_result(
+        company=company,
+        role=role,
+        contact=contact,
+        use_case=use_case,
+        extraction_method="rules_v2",
+        confidence=confidence,
+    )
 
-    missing_fields = []
-    if not company:
-        missing_fields.append("company")
-    if not role:
-        missing_fields.append("role")
-    if not contact:
-        missing_fields.append("contact")
-    if not use_case:
-        missing_fields.append("use_case")
 
-    return {
-        "company": company,
-        "role": role,
-        "contact": contact,
-        "use_case": use_case,
-        "extraction_method": "rules_v2",
-        "confidence": confidence,
-        "missing_fields": missing_fields,
-        "is_qualified_candidate": bool(company and use_case and (contact or role)),
-    }
+def _should_try_llm(rule_result: dict) -> bool:
+    if not is_llm_available():
+        return False
+
+    if (
+        rule_result.get("is_qualified_candidate")
+        and rule_result.get("confidence", 0) >= 0.85
+        and len(rule_result.get("missing_fields", [])) == 0
+    ):
+        return False
+
+    return True
+
+
+def _llm_improves(rule_result: dict, llm_result: Optional[dict]) -> bool:
+    if not llm_result:
+        return False
+
+    rule_missing = sum(1 for key in ("company", "role",
+                       "contact", "use_case") if not rule_result.get(key))
+    llm_missing = sum(1 for key in ("company", "role",
+                      "contact", "use_case") if not llm_result.get(key))
+
+    if llm_missing < rule_missing:
+        return True
+
+    if not rule_result.get("is_qualified_candidate") and llm_result.get("is_qualified_candidate"):
+        return True
+
+    if llm_result.get("confidence", 0) > rule_result.get("confidence", 0) + 0.15:
+        return True
+
+    return False
+
+
+def _merge_results(rule_result: dict, llm_result: dict) -> dict:
+    company = rule_result.get("company") or llm_result.get("company")
+    role = rule_result.get("role") or llm_result.get("role")
+    contact = rule_result.get("contact") or llm_result.get("contact")
+    use_case = rule_result.get("use_case") or llm_result.get("use_case")
+    confidence = max(rule_result.get("confidence", 0.0),
+                     llm_result.get("confidence", 0.0))
+
+    return _build_result(
+        company=_clean_str(company),
+        role=_clean_str(role),
+        contact=_clean_str(contact),
+        use_case=_clean_str(use_case),
+        extraction_method="rules_v2+llm_fallback",
+        confidence=confidence,
+    )
+
+
+def extract_fields(message_text: str) -> dict:
+    text = _clean(message_text)
+    rule_result = _extract_rules_v2(text)
+
+    if not _should_try_llm(rule_result):
+        return rule_result
+
+    llm_result = llm_extract_fields(text)
+
+    if not _llm_improves(rule_result, llm_result):
+        return rule_result
+
+    return _merge_results(rule_result, llm_result)
 
 
 def extract_company(message_text: str) -> Optional[str]:
-    return _extract_company(message_text.strip())
+    return extract_fields(message_text).get("company")
 
 
 def extract_role(message_text: str) -> Optional[str]:
-    return _extract_role(message_text.strip())
+    return extract_fields(message_text).get("role")
 
 
 def extract_contact(message_text: str) -> Optional[str]:
-    return _extract_contact(message_text.strip())
+    return extract_fields(message_text).get("contact")
 
 
 def extract_use_case(message_text: str) -> Optional[str]:
-    return _extract_use_case(message_text.strip())
+    return extract_fields(message_text).get("use_case")
 
 
 def extract_lead_fields(message_text: str) -> dict:
