@@ -11,7 +11,7 @@ def ui_page() -> str:
     return dedent(
         """
         <!doctype html>
-        <html lang="ru">
+        <html lang="en">
         <head>
           <meta charset="UTF-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -34,6 +34,7 @@ def ui_page() -> str:
               --danger: #ef4444;
               --danger-hover: #dc2626;
               --cyan: #7dd3fc;
+              --warning: #f59e0b;
             }
 
             body {
@@ -350,9 +351,71 @@ def ui_page() -> str:
               color: #cbd5e1;
             }
 
-            .mono {
-              font-family: Menlo, Monaco, Consolas, monospace;
-              font-size: 12px;
+            .footer {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              gap: 12px;
+              flex-wrap: wrap;
+              margin-top: 18px;
+              padding: 14px 16px;
+              border: 1px solid var(--border);
+              border-radius: 14px;
+              background: rgba(15,23,42,0.4);
+            }
+
+            .footer-links {
+              display: flex;
+              gap: 10px;
+              flex-wrap: wrap;
+            }
+
+            .footer a {
+              color: var(--cyan);
+              text-decoration: none;
+              font-size: 13px;
+            }
+
+            .footer a:hover {
+              text-decoration: underline;
+            }
+
+            .toast-wrap {
+              position: fixed;
+              top: 16px;
+              right: 16px;
+              z-index: 9999;
+              display: flex;
+              flex-direction: column;
+              gap: 10px;
+              pointer-events: none;
+            }
+
+            .toast {
+              min-width: 240px;
+              max-width: 360px;
+              padding: 12px 14px;
+              border-radius: 12px;
+              border: 1px solid rgba(255,255,255,0.08);
+              box-shadow: 0 10px 24px rgba(0,0,0,0.25);
+              color: white;
+              font-size: 13px;
+              line-height: 1.4;
+              opacity: 0;
+              transform: translateY(-6px);
+              animation: toast-in 0.18s ease forwards;
+            }
+
+            .toast.success { background: rgba(22,163,74,0.95); }
+            .toast.info { background: rgba(37,99,235,0.95); }
+            .toast.warn { background: rgba(217,119,6,0.95); }
+            .toast.error { background: rgba(220,38,38,0.95); }
+
+            @keyframes toast-in {
+              to {
+                opacity: 1;
+                transform: translateY(0);
+              }
             }
 
             @media (max-width: 980px) {
@@ -381,10 +444,22 @@ def ui_page() -> str:
               h1 {
                 font-size: 22px;
               }
+
+              .toast-wrap {
+                left: 14px;
+                right: 14px;
+              }
+
+              .toast {
+                min-width: auto;
+                max-width: none;
+              }
             }
           </style>
         </head>
         <body>
+          <div class="toast-wrap" id="toastWrap"></div>
+
           <div class="wrap">
             <div class="section-title">
               <div>
@@ -430,7 +505,7 @@ def ui_page() -> str:
                 <input id="summaryLeadId" placeholder="Enter lead_id" />
 
                 <div class="top-actions">
-                  <button id="btnLoadSummary" onclick="loadLeadSummary()">Load summary</button>
+                  <button id="btnLoadSummary" onclick="loadLeadSummary(true)">Load summary</button>
                 </div>
 
                 <div id="summaryCards" class="summary-box empty">Empty.</div>
@@ -446,7 +521,7 @@ def ui_page() -> str:
             <div class="card full-width">
               <div class="section-row">
                 <h2 id="dashboardTitle">Dashboard overview</h2>
-                <button id="btnRefreshDashboard" class="small-btn" onclick="loadDashboard()">Refresh dashboard</button>
+                <button id="btnRefreshDashboard" class="small-btn" onclick="loadDashboard(true)">Refresh dashboard</button>
               </div>
 
               <div class="stats">
@@ -478,7 +553,7 @@ def ui_page() -> str:
               <div class="card">
                 <div class="section-row">
                   <h2 id="recentLeadsTitle">Recent leads</h2>
-                  <button id="btnRefreshLeads" class="small-btn" onclick="loadLeads()">Refresh</button>
+                  <button id="btnRefreshLeads" class="small-btn" onclick="loadLeads(true)">Refresh</button>
                 </div>
 
                 <div id="leadsTable" class="table-wrap empty">No leads.</div>
@@ -492,7 +567,7 @@ def ui_page() -> str:
               <div class="card">
                 <div class="section-row">
                   <h2 id="recentHandoffsTitle">Recent handoffs</h2>
-                  <button id="btnRefreshHandoffs" class="small-btn" onclick="loadHandoffs()">Refresh</button>
+                  <button id="btnRefreshHandoffs" class="small-btn" onclick="loadHandoffs(true)">Refresh</button>
                 </div>
 
                 <div id="handoffsTable" class="table-wrap empty">No handoffs.</div>
@@ -503,11 +578,21 @@ def ui_page() -> str:
                 </details>
               </div>
             </div>
+
+            <div class="footer">
+              <div class="muted" id="footerText">Demo-ready public MVP deployed on Render.</div>
+              <div class="footer-links">
+                <a id="linkUi" href="/ui" target="_blank" rel="noreferrer">UI</a>
+                <a id="linkDocs" href="/docs" target="_blank" rel="noreferrer">Docs</a>
+                <a id="linkHealth" href="/health" target="_blank" rel="noreferrer">Health</a>
+                <a id="linkGithub" href="https://github.com/ImTonyPo55/ai-lead-agent" target="_blank" rel="noreferrer">GitHub</a>
+              </div>
+            </div>
           </div>
 
           <script>
             const STATE = {
-              lang: 'ru',
+              lang: 'en',
               dashboard: null,
               leads: [],
               handoffs: [],
@@ -574,7 +659,17 @@ def ui_page() -> str:
                 status_pending: 'pending',
                 status_in_progress: 'in progress',
                 status_done: 'done',
-                status_unknown: 'unknown'
+                status_unknown: 'unknown',
+                footerText: 'Demo-ready public MVP deployed on Render.',
+                toastDemoLoaded: 'Demo data loaded.',
+                toastDemoReset: 'Demo data reset.',
+                toastMessageSent: 'Message processed.',
+                toastSummaryLoaded: 'Lead summary loaded.',
+                toastDashboardRefreshed: 'Dashboard refreshed.',
+                toastLeadsRefreshed: 'Leads refreshed.',
+                toastHandoffsRefreshed: 'Handoffs refreshed.',
+                toastHandoffUpdated: 'Handoff updated.',
+                toastError: 'Something went wrong.'
               },
 
               ru: {
@@ -635,7 +730,17 @@ def ui_page() -> str:
                 status_pending: 'в ожидании',
                 status_in_progress: 'в работе',
                 status_done: 'завершено',
-                status_unknown: 'неизвестно'
+                status_unknown: 'неизвестно',
+                footerText: 'Публичный демо-MVP задеплоен на Render.',
+                toastDemoLoaded: 'Демо-данные загружены.',
+                toastDemoReset: 'Демо-данные сброшены.',
+                toastMessageSent: 'Сообщение обработано.',
+                toastSummaryLoaded: 'Сводка по лиду загружена.',
+                toastDashboardRefreshed: 'Панель обновлена.',
+                toastLeadsRefreshed: 'Лиды обновлены.',
+                toastHandoffsRefreshed: 'Передачи обновлены.',
+                toastHandoffUpdated: 'Передача обновлена.',
+                toastError: 'Что-то пошло не так.'
               },
 
               es: {
@@ -696,7 +801,17 @@ def ui_page() -> str:
                 status_pending: 'pendiente',
                 status_in_progress: 'en progreso',
                 status_done: 'completado',
-                status_unknown: 'desconocido'
+                status_unknown: 'desconocido',
+                footerText: 'MVP público de demo desplegado en Render.',
+                toastDemoLoaded: 'Datos demo cargados.',
+                toastDemoReset: 'Datos demo restablecidos.',
+                toastMessageSent: 'Mensaje procesado.',
+                toastSummaryLoaded: 'Resumen del lead cargado.',
+                toastDashboardRefreshed: 'Panel actualizado.',
+                toastLeadsRefreshed: 'Leads actualizados.',
+                toastHandoffsRefreshed: 'Transferencias actualizadas.',
+                toastHandoffUpdated: 'Transferencia actualizada.',
+                toastError: 'Algo salió mal.'
               }
             };
 
@@ -715,6 +830,23 @@ def ui_page() -> str:
 
             function pretty(value) {
               return JSON.stringify(value, null, 2);
+            }
+
+            function showToast(message, type = 'info') {
+              const wrap = document.getElementById('toastWrap');
+              if (!wrap) return;
+
+              const toast = document.createElement('div');
+              toast.className = `toast ${type}`;
+              toast.textContent = message;
+
+              wrap.appendChild(toast);
+
+              setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-6px)';
+                setTimeout(() => toast.remove(), 180);
+              }, 2600);
             }
 
             function getStatusClass(status) {
@@ -805,6 +937,7 @@ def ui_page() -> str:
 
               setText('btnLoadDemo', t('btnLoadDemo'));
               setText('btnResetDemo', t('btnResetDemo'));
+              setText('footerText', t('footerText'));
 
               document.getElementById('langRu')?.classList.toggle('active', lang === 'ru');
               document.getElementById('langEn')?.classList.toggle('active', lang === 'en');
@@ -833,10 +966,10 @@ def ui_page() -> str:
             function renderDashboard(data) {
               STATE.dashboard = data;
 
-              const total = data?.leads_total ?? data?.total_leads ?? data?.total ?? 0;
-              const qualified = data?.qualified ?? data?.qualified_count ?? 0;
-              const inProgress = data?.handoffs_in_progress ?? data?.in_progress ?? 0;
-              const done = data?.handoffs_done ?? data?.done ?? 0;
+              const total = data?.leads?.total ?? data?.leads_total ?? data?.total_leads ?? data?.total ?? 0;
+              const qualified = data?.leads?.qualified ?? data?.qualified ?? data?.qualified_count ?? 0;
+              const inProgress = data?.handoffs?.in_progress ?? data?.handoffs_in_progress ?? data?.in_progress ?? 0;
+              const done = data?.handoffs?.done ?? data?.handoffs_done ?? data?.done ?? 0;
 
               document.getElementById('statLeads').textContent = total;
               document.getElementById('statQualified').textContent = qualified;
@@ -861,18 +994,22 @@ def ui_page() -> str:
                 return;
               }
 
-              const leadId = data.lead_id ?? data.id ?? '';
-              const leadStatus = data.status ?? data.lead_status ?? '';
-              const handoffStatus = data.handoff_status ?? data.handoff?.status ?? '';
-              const handoffId = data.handoff_id ?? data.handoff?.id ?? null;
-              const company = data.company ?? '—';
-              const role = data.role ?? '—';
-              const contact = data.contact ?? '—';
-              const useCase = data.use_case ?? data.usecase ?? '—';
-              const assignedTo = data.assigned_to ?? data.assignee ?? data.assigned ?? '—';
-              const lastSender = data.last_sender ?? '—';
-              const lastIntent = data.last_intent ?? '—';
-              const lastText = data.last_text ?? '—';
+              const lead = data.lead || data;
+              const handoff = data.handoff || data;
+              const conversation = data.conversation || data;
+
+              const leadId = lead.id ?? data.lead_id ?? data.id ?? '';
+              const leadStatus = lead.lead_status ?? lead.status ?? data.status ?? data.lead_status ?? '';
+              const handoffStatus = handoff.handoff_status ?? handoff.status ?? data.handoff_status ?? '';
+              const handoffId = handoff.id ?? data.handoff_id ?? null;
+              const company = lead.company ?? data.company ?? '—';
+              const role = lead.role ?? data.role ?? '—';
+              const contact = lead.contact ?? data.contact ?? '—';
+              const useCase = lead.use_case ?? data.use_case ?? data.usecase ?? '—';
+              const assignedTo = handoff.assigned_to ?? data.assigned_to ?? handoff.assignee ?? data.assignee ?? data.assigned ?? '—';
+              const lastSender = conversation.last_sender ?? data.last_sender ?? '—';
+              const lastIntent = conversation.last_intent ?? data.last_intent ?? '—';
+              const lastText = conversation.last_text ?? data.last_text ?? '—';
 
               const pills = [
                 leadId ? `<span class="pill pill-neutral">lead_id: ${escapeHtml(leadId)}</span>` : '',
@@ -1023,12 +1160,14 @@ def ui_page() -> str:
                 if (newLeadId) {
                   document.getElementById('leadIdInput').value = String(newLeadId);
                   document.getElementById('summaryLeadId').value = String(newLeadId);
-                  await loadLeadSummary();
+                  await loadLeadSummary(false);
                 }
 
-                await Promise.all([loadDashboard(), loadLeads(), loadHandoffs()]);
+                await Promise.all([loadDashboard(false), loadLeads(false), loadHandoffs(false)]);
+                showToast(t('toastMessageSent'), 'success');
               } catch (error) {
                 document.getElementById('sendResult').textContent = String(error);
+                showToast(t('toastError'), 'error');
               }
             }
 
@@ -1037,42 +1176,50 @@ def ui_page() -> str:
               document.getElementById('messageInput').value = '';
             }
 
-            async function loadLeadSummary() {
+            async function loadLeadSummary(showFeedback = false) {
               const leadId = document.getElementById('summaryLeadId').value.trim();
               if (!leadId) return;
 
               try {
                 const data = await api(`/leads/${leadId}/summary`);
                 renderSummary(data);
+                if (showFeedback) showToast(t('toastSummaryLoaded'), 'info');
               } catch (error) {
                 document.getElementById('summaryResult').textContent = String(error);
+                showToast(t('toastError'), 'error');
               }
             }
 
-            async function loadDashboard() {
+            async function loadDashboard(showFeedback = false) {
               try {
                 const data = await api('/dashboard/overview');
                 renderDashboard(data);
+                if (showFeedback) showToast(t('toastDashboardRefreshed'), 'info');
               } catch (error) {
                 document.getElementById('dashboardResult').textContent = String(error);
+                showToast(t('toastError'), 'error');
               }
             }
 
-            async function loadLeads() {
+            async function loadLeads(showFeedback = false) {
               try {
                 const data = await api('/leads');
                 renderLeads(data);
+                if (showFeedback) showToast(t('toastLeadsRefreshed'), 'info');
               } catch (error) {
                 document.getElementById('leadsRaw').textContent = String(error);
+                showToast(t('toastError'), 'error');
               }
             }
 
-            async function loadHandoffs() {
+            async function loadHandoffs(showFeedback = false) {
               try {
                 const data = await api('/handoffs');
                 renderHandoffs(data);
+                if (showFeedback) showToast(t('toastHandoffsRefreshed'), 'info');
               } catch (error) {
                 document.getElementById('handoffsRaw').textContent = String(error);
+                showToast(t('toastError'), 'error');
               }
             }
 
@@ -1083,13 +1230,15 @@ def ui_page() -> str:
                   body: JSON.stringify({ status })
                 });
 
-                await Promise.all([loadHandoffs(), loadDashboard()]);
+                await Promise.all([loadHandoffs(false), loadDashboard(false)]);
                 const leadId = document.getElementById('summaryLeadId').value.trim();
                 if (leadId) {
-                  await loadLeadSummary();
+                  await loadLeadSummary(false);
                 }
+                showToast(t('toastHandoffUpdated'), 'success');
               } catch (error) {
                 document.getElementById('summaryResult').textContent = String(error);
+                showToast(t('toastError'), 'error');
               }
             }
 
@@ -1099,9 +1248,22 @@ def ui_page() -> str:
                   method: 'POST',
                   body: JSON.stringify({})
                 });
+
                 await refreshAll();
+
+                if (STATE.leads.length) {
+                  const leadId = STATE.leads[0].id ?? STATE.leads[0].lead_id;
+                  if (leadId) {
+                    document.getElementById('summaryLeadId').value = String(leadId);
+                    document.getElementById('leadIdInput').value = String(leadId);
+                    await loadLeadSummary(false);
+                  }
+                }
+
+                showToast(t('toastDemoLoaded'), 'success');
               } catch (error) {
                 document.getElementById('sendResult').textContent = String(error);
+                showToast(t('toastError'), 'error');
               }
             }
 
@@ -1127,24 +1289,27 @@ def ui_page() -> str:
                 renderDashboard(null);
                 renderLeads([]);
                 renderHandoffs([]);
+
                 await refreshAll();
+                showToast(t('toastDemoReset'), 'warn');
               } catch (error) {
                 document.getElementById('sendResult').textContent = String(error);
+                showToast(t('toastError'), 'error');
               }
             }
 
             function openLead(leadId) {
               document.getElementById('summaryLeadId').value = String(leadId);
               document.getElementById('leadIdInput').value = String(leadId);
-              loadLeadSummary();
+              loadLeadSummary(true);
             }
 
             async function refreshAll() {
-              await Promise.all([loadDashboard(), loadLeads(), loadHandoffs()]);
+              await Promise.all([loadDashboard(false), loadLeads(false), loadHandoffs(false)]);
             }
 
             document.addEventListener('DOMContentLoaded', async () => {
-              setLang(localStorage.getItem('ui_lang') || 'ru');
+              setLang(localStorage.getItem('ui_lang') || 'en');
               document.getElementById('sendResult').textContent = t('empty');
               document.getElementById('summaryResult').textContent = t('empty');
               document.getElementById('dashboardResult').textContent = t('empty');
