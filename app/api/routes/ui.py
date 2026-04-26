@@ -1,3 +1,5 @@
+from textwrap import dedent
+
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse
 
@@ -6,877 +8,1142 @@ router = APIRouter(tags=["ui"])
 
 @router.get("/ui", response_class=HTMLResponse)
 def ui_page() -> str:
-    return """
-<!doctype html>
-<html lang="ru">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AI Lead Agent UI</title>
-  <style>
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #0f172a;
-      color: #e2e8f0;
-    }
-
-    .wrap {
-      max-width: 1440px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-
-    h1, h2, h3 {
-      margin: 0 0 12px 0;
-    }
-
-    .muted {
-      color: #94a3b8;
-      font-size: 13px;
-      margin-bottom: 18px;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: 1.15fr 1fr;
-      gap: 16px;
-    }
-
-    .grid-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-top: 16px;
-    }
-
-    .grid-4 {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-      margin-top: 12px;
-    }
-
-    .card {
-      background: #111827;
-      border: 1px solid #334155;
-      border-radius: 14px;
-      padding: 16px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.25);
-    }
-
-    .metric {
-      background: #0b1220;
-      border: 1px solid #334155;
-      border-radius: 12px;
-      padding: 14px;
-      min-height: 86px;
-    }
-
-    .metric-title {
-      color: #94a3b8;
-      font-size: 12px;
-      margin-bottom: 8px;
-    }
-
-    .metric-value {
-      font-size: 24px;
-      font-weight: 700;
-    }
-
-    input, textarea, button {
-      width: 100%;
-      margin-top: 8px;
-      margin-bottom: 12px;
-      padding: 11px 12px;
-      border-radius: 10px;
-      border: 1px solid #475569;
-      background: #0b1220;
-      color: #e2e8f0;
-      font-size: 14px;
-    }
-
-    textarea {
-      min-height: 110px;
-      resize: vertical;
-    }
-
-    button {
-      background: #2563eb;
-      border: none;
-      cursor: pointer;
-      font-weight: 700;
-    }
-
-    button:hover {
-      background: #1d4ed8;
-    }
-
-    .secondary-btn {
-      background: #1e293b;
-    }
-
-    .secondary-btn:hover {
-      background: #334155;
-    }
-
-    .success-btn {
-      background: #15803d;
-    }
-
-    .success-btn:hover {
-      background: #166534;
-    }
-
-    .warn-btn {
-      background: #b45309;
-    }
-
-    .warn-btn:hover {
-      background: #92400e;
-    }
-
-    .danger-btn {
-      background: #991b1b;
-    }
-
-    .danger-btn:hover {
-      background: #7f1d1d;
-    }
-
-    .small-btn {
-      width: auto;
-      margin: 0;
-      padding: 6px 10px;
-      font-size: 12px;
-      border-radius: 8px;
-    }
-
-    .top-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 12px;
-  margin-bottom: 18px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-    .top-actions button {
-      width: auto;
-      margin: 0;
-      padding: 10px 14px;
-    }
-
-    .pill {
-      display: inline-block;
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 700;
-      background: #1e293b;
-      color: #e2e8f0;
-      margin-right: 8px;
-      margin-bottom: 8px;
-    }
-
-    .ok { background: #14532d; }
-    .warn { background: #78350f; }
-    .info { background: #1e3a8a; }
-
-    .summary-line {
-      margin-bottom: 8px;
-      color: #e2e8f0;
-    }
-
-    .table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 8px;
-      font-size: 13px;
-    }
-
-    .table th, .table td {
-      border-bottom: 1px solid #334155;
-      padding: 10px 8px;
-      text-align: left;
-      vertical-align: top;
-    }
-
-    .table th {
-      color: #94a3b8;
-      font-weight: 700;
-    }
-
-    .empty {
-      color: #94a3b8;
-      padding: 12px 0;
-    }
-
-    .section-title {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .activity-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-top: 8px;
-    }
-
-    .activity-item {
-      border: 1px solid #334155;
-      background: #0b1220;
-      border-radius: 10px;
-      padding: 10px 12px;
-      font-size: 13px;
-    }
-
-    .activity-time {
-      color: #94a3b8;
-      font-size: 12px;
-      margin-bottom: 4px;
-    }
-
-    .activity-ok { border-color: #14532d; }
-    .activity-warn { border-color: #78350f; }
-    .activity-info { border-color: #1e3a8a; }
-
-    details {
-      margin-top: 12px;
-      border: 1px solid #334155;
-      border-radius: 10px;
-      background: #020617;
-      overflow: hidden;
-    }
-
-    summary {
-      cursor: pointer;
-      padding: 10px 12px;
-      color: #cbd5e1;
-      font-size: 13px;
-      font-weight: 700;
-      list-style: none;
-    }
-
-    summary::-webkit-details-marker {
-      display: none;
-    }
-
-    pre {
-      margin: 0;
-      padding: 12px;
-      overflow: auto;
-      white-space: pre-wrap;
-      word-break: break-word;
-      font-size: 12px;
-      color: #cbd5e1;
-    }
-
-    .hint {
-  display: block;
-  padding-top: 16px;
-  font-size: 13px;
-  color: #94a3b8;
-  line-height: 1.4;
-}
-
-    @media (max-width: 980px) {
-      .grid, .grid-2, .grid-4 {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <div class="section-title">
-      <div>
- <h1>AI Lead Agent</h1>
-<div class="muted">Demo-ready MVP for inbound B2B lead intake, qualification, and handoff.</div>
-</div>
-<div class="top-actions">
-  <button class="success-btn" onclick="seedDemo()">Load demo data</button>
-  <button class="danger-btn" onclick="resetDemo()">Reset demo</button>
-</div>
-</div>
-    <div class="grid">
-      <div class="card">
-     <h2>Send message</h2>
-<input id="leadIdInput" placeholder="lead_id — optional for the first message" />
-<textarea id="messageInput" placeholder="Enter inbound message..."></textarea>
-<div class="top-actions">
-  <button onclick="sendMessage()">Send</button>
-  <button class="secondary-btn" onclick="clearMessageForm()">Clear</button>
-</div>
-<div class="hint">After the reply, lead_id will be automatically filled into summary.</div>
-
-<details>
-  <summary>Raw response</summary>
-  <pre id="sendResult">Empty.</pre>
-</details> 
-        
-      </div>
-
-      <div class="card" id="summaryCard">
-        <h2>Lead summary</h2>
-        <input id="summaryLeadId" placeholder="Enter lead_id" />
-        <div class="top-actions">
-          <button onclick="loadLeadSummary()">Load summary</button>
-        </div>
-
-        <div id="summaryCards" class="empty">Empty.</div>
-        <div id="summaryActions" class="top-actions"></div>
-
-        <details>
-          <summary>Raw summary JSON</summary>
-          <pre id="summaryResult">Empty.</pre>
-        </details>
-      </div>
-    </div>
-
-    <div class="card" style="margin-top:16px;">
-      <div class="section-title">
-        <h2>Dashboard overview</h2>
-        <div class="top-actions">
-          <button onclick="loadDashboard(true)">Обновить dashboard</button>
-        </div>
-      </div>
-
-      <div class="grid-4">
-        <div class="metric">
-          <div class="metric-title">Leads total</div>
-          <div class="metric-value" id="metricLeadsTotal">—</div>
-        </div>
-        <div class="metric">
-          <div class="metric-title">Qualified</div>
-          <div class="metric-value" id="metricLeadsQualified">—</div>
-        </div>
-        <div class="metric">
-          <div class="metric-title">Handoffs in progress</div>
-          <div class="metric-value" id="metricHandoffsProgress">—</div>
-        </div>
-        <div class="metric">
-          <div class="metric-title">Handoffs done</div>
-          <div class="metric-value" id="metricHandoffsDone">—</div>
-        </div>
-      </div>
-
-      <details>
-        <summary>Raw dashboard JSON</summary>
-        <pre id="dashboardResult">Пока пусто.</pre>
-      </details>
-    </div>
-
-    <div class="grid-2">
-      <div class="card">
-        <div class="section-title">
-          <h2>Recent leads</h2>
-          <button onclick="loadLeads()">Обновить</button>
-        </div>
-        <div id="leadsTableWrap" class="empty">Пока пусто.</div>
-
-        <details>
-          <summary>Raw leads JSON</summary>
-          <pre id="leadsResult">Пока пусто.</pre>
-        </details>
-      </div>
-
-      <div class="card">
-        <div class="section-title">
-          <h2>Recent handoffs</h2>
-          <button onclick="loadHandoffs()">Обновить</button>
-        </div>
-        <div id="handoffsTableWrap" class="empty">Пока пусто.</div>
-
-        <details>
-          <summary>Raw handoffs JSON</summary>
-          <pre id="handoffsResult">Пока пусто.</pre>
-        </details>
-      </div>
-    </div>
-
-    <div class="card" style="margin-top:16px;">
-      <div class="section-title">
-        <h2>Activity log</h2>
-        <div class="top-actions">
-          <button class="secondary-btn" onclick="clearActivity()">Очистить log</button>
-        </div>
-      </div>
-      <div id="activityList" class="activity-list">
-        <div class="empty">Пока пусто.</div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    let currentSummary = null;
-    let activityItems = [];
-
-    function pretty(data) {
-      return JSON.stringify(data, null, 2);
-    }
-
-    function nowTime() {
-      const d = new Date();
-      return d.toLocaleTimeString();
-    }
-
-    function addActivity(text, type = "info") {
-      activityItems.unshift({
-        time: nowTime(),
-        text,
-        type
-      });
-      activityItems = activityItems.slice(0, 12);
-      renderActivity();
-    }
-
-    function clearActivity() {
-      activityItems = [];
-      renderActivity();
-    }
-
-    function renderActivity() {
-      const box = document.getElementById("activityList");
-
-      if (activityItems.length === 0) {
-        box.innerHTML = '<div class="empty">Пока пусто.</div>';
-        return;
-      }
-
-      box.innerHTML = activityItems.map(item => `
-        <div class="activity-item activity-${item.type}">
-          <div class="activity-time">${item.time}</div>
-          <div>${item.text}</div>
-        </div>
-      `).join("");
-    }
-
-    function statusPill(status) {
-      if (!status) return '<span class="pill">none</span>';
-      if (status === "qualified" || status === "done") return '<span class="pill ok">' + status + '</span>';
-      if (status === "needs_followup" || status === "pending") return '<span class="pill warn">' + status + '</span>';
-      return '<span class="pill info">' + status + '</span>';
-    }
-
-    function clearMessageForm() {
-      document.getElementById("messageInput").value = "";
-    }
-
-    function resetSummaryBlock() {
-      currentSummary = null;
-      document.getElementById("summaryLeadId").value = "";
-      document.getElementById("summaryCards").innerHTML = '<div class="empty">Пока пусто.</div>';
-      document.getElementById("summaryActions").innerHTML = "";
-      document.getElementById("summaryResult").textContent = "Пока пусто.";
-    }
-async function seedDemo() {
-  const confirmed = window.confirm("Загрузить готовые demo-данные? Текущие данные будут заменены.");
-  if (!confirmed) {
-    return;
-  }
-
-  const sendResult = document.getElementById("sendResult");
-
-  try {
-    const response = await fetch("/demo/seed", {
-      method: "POST"
-    });
-    const data = await response.json();
-
-    sendResult.textContent = pretty(data);
-
-    document.getElementById("leadIdInput").value = "";
-    document.getElementById("messageInput").value = "";
-    resetSummaryBlock();
-
-    clearActivity();
-    addActivity("Demo data загружены.", "ok");
-
-    await loadDashboard(false);
-    await loadLeads();
-    await loadHandoffs();
-
-    if (data.seeded_lead_ids && data.seeded_lead_ids.length > 0) {
-      await loadLeadSummaryById(data.seeded_lead_ids[0]);
-    }
-  } catch (error) {
-    sendResult.textContent = "Ошибка: " + error;
-    addActivity("Ошибка при загрузке demo data.", "warn");
-  }
-}
-    async function resetDemo() {
-      const confirmed = window.confirm("Точно удалить все demo-данные?");
-      if (!confirmed) {
-        return;
-      }
-
-      const sendResult = document.getElementById("sendResult");
-
-      try {
-        const response = await fetch("/demo/reset", {
-          method: "POST"
-        });
-        const data = await response.json();
-
-        sendResult.textContent = pretty(data);
-
-        document.getElementById("leadIdInput").value = "";
-        document.getElementById("messageInput").value = "";
-        resetSummaryBlock();
-
-        clearActivity();
-        addActivity("Demo data очищены.", "ok");
-
-        await loadDashboard(false);
-        await loadLeads();
-        await loadHandoffs();
-      } catch (error) {
-        sendResult.textContent = "Ошибка: " + error;
-        addActivity("Ошибка при очистке demo data.", "warn");
-      }
-    }
-
-    async function loadLeadSummaryById(id) {
-      document.getElementById("summaryLeadId").value = id;
-      await loadLeadSummary();
-      document.getElementById("summaryCard").scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-
-    function renderSummaryActions(data) {
-      const actions = document.getElementById("summaryActions");
-      actions.innerHTML = "";
-
-      if (!data || data.status !== "ok" || !data.lead || !data.lead.id) {
-        return;
-      }
-
-      const lead = data.lead;
-      const handoff = data.handoff || {};
-
-      if (lead.lead_status !== "qualified") {
-        actions.innerHTML += '<button class="warn-btn" onclick="markLeadQualified()">Mark qualified</button>';
-      }
-
-      if (handoff.id && handoff.handoff_status !== "in_progress") {
-        actions.innerHTML += '<button class="secondary-btn" onclick="markHandoffInProgress()">Set handoff in progress</button>';
-      }
-
-      if (handoff.id && handoff.handoff_status !== "done") {
-        actions.innerHTML += '<button class="success-btn" onclick="markHandoffDone()">Set handoff done</button>';
-      }
-    }
-
-    async function markLeadQualified() {
-      if (!currentSummary || !currentSummary.lead || !currentSummary.lead.id) return;
-
-      const leadId = currentSummary.lead.id;
-      const result = document.getElementById("sendResult");
-
-      try {
-        const response = await fetch(`/leads/${leadId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: "qualified" })
-        });
-        const data = await response.json();
-        result.textContent = pretty(data);
-
-        addActivity(`Lead ${leadId} переведён в qualified.`, "ok");
-
-        await loadLeadSummary();
-        await loadDashboard(false);
-        await loadLeads();
-        await loadHandoffs();
-      } catch (error) {
-        result.textContent = "Ошибка: " + error;
-        addActivity(`Ошибка при переводе lead ${leadId} в qualified.`, "warn");
-      }
-    }
-
-    async function markHandoffInProgress() {
-      if (!currentSummary || !currentSummary.handoff || !currentSummary.handoff.id) return;
-
-      const handoffId = currentSummary.handoff.id;
-      const result = document.getElementById("sendResult");
-
-      try {
-        const response = await fetch(`/handoffs/${handoffId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            assigned_to: "Tony",
-            status: "in_progress"
-          })
-        });
-        const data = await response.json();
-        result.textContent = pretty(data);
-
-        addActivity(`Handoff ${handoffId} переведён в in_progress.`, "info");
-
-        await loadLeadSummary();
-        await loadDashboard(false);
-        await loadLeads();
-        await loadHandoffs();
-      } catch (error) {
-        result.textContent = "Ошибка: " + error;
-        addActivity(`Ошибка при обновлении handoff ${handoffId}.`, "warn");
-      }
-    }
-
-    async function markHandoffDone() {
-      if (!currentSummary || !currentSummary.handoff || !currentSummary.handoff.id) return;
-
-      const handoffId = currentSummary.handoff.id;
-      const result = document.getElementById("sendResult");
-
-      try {
-        const response = await fetch(`/handoffs/${handoffId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            assigned_to: "Tony",
-            status: "done"
-          })
-        });
-        const data = await response.json();
-        result.textContent = pretty(data);
-
-        addActivity(`Handoff ${handoffId} закрыт со статусом done.`, "ok");
-
-        await loadLeadSummary();
-        await loadDashboard(false);
-        await loadLeads();
-        await loadHandoffs();
-      } catch (error) {
-        result.textContent = "Ошибка: " + error;
-        addActivity(`Ошибка при закрытии handoff ${handoffId}.`, "warn");
-      }
-    }
-
-    async function sendMessage() {
-      const leadIdRaw = document.getElementById("leadIdInput").value.trim();
-      const message = document.getElementById("messageInput").value.trim();
-      const result = document.getElementById("sendResult");
-
-      if (!message) {
-        result.textContent = "Введите сообщение.";
-        return;
-      }
-
-      const payload = { message };
-      if (leadIdRaw) {
-        payload.lead_id = Number(leadIdRaw);
-      }
-
-      try {
-        const response = await fetch("/chat/message", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-        const data = await response.json();
-        result.textContent = pretty(data);
-
-        if (data.lead_id) {
-          document.getElementById("summaryLeadId").value = data.lead_id;
-          document.getElementById("leadIdInput").value = data.lead_id;
-          await loadLeadSummary();
-          addActivity(`Сообщение обработано. Lead ${data.lead_id} обновлён.`, "ok");
-        } else {
-          addActivity("Сообщение обработано.", "info");
-        }
-
-        await loadDashboard(false);
-        await loadLeads();
-        await loadHandoffs();
-      } catch (error) {
-        result.textContent = "Ошибка: " + error;
-        addActivity("Ошибка при отправке сообщения.", "warn");
-      }
-    }
-
-    async function loadDashboard(withLog = true) {
-      const result = document.getElementById("dashboardResult");
-      try {
-        const response = await fetch("/dashboard/overview");
-        const data = await response.json();
-        result.textContent = pretty(data);
-
-        document.getElementById("metricLeadsTotal").textContent = data.leads?.total ?? "—";
-        document.getElementById("metricLeadsQualified").textContent = data.leads?.qualified ?? "—";
-        document.getElementById("metricHandoffsProgress").textContent = data.handoffs?.in_progress ?? "—";
-        document.getElementById("metricHandoffsDone").textContent = data.handoffs?.done ?? "—";
-
-        if (withLog) {
-          addActivity("Dashboard обновлён.", "info");
-        }
-      } catch (error) {
-        result.textContent = "Ошибка: " + error;
-        addActivity("Ошибка загрузки dashboard.", "warn");
-      }
-    }
-
-    async function loadLeadSummary() {
-      const leadId = document.getElementById("summaryLeadId").value.trim();
-      const result = document.getElementById("summaryResult");
-      const cards = document.getElementById("summaryCards");
-
-      if (!leadId) {
-        result.textContent = "Введите lead_id.";
-        cards.innerHTML = '<div class="empty">Введите lead_id.</div>';
-        document.getElementById("summaryActions").innerHTML = "";
-        return;
-      }
-
-      try {
-        const response = await fetch(`/leads/${leadId}/summary`);
-        const data = await response.json();
-        currentSummary = data;
-        result.textContent = pretty(data);
-
-        if (data.status !== "ok") {
-          cards.innerHTML = '<div class="empty">Lead не найден.</div>';
-          document.getElementById("summaryActions").innerHTML = "";
-          addActivity(`Lead ${leadId} не найден.`, "warn");
-          return;
-        }
-
-        const lead = data.lead || {};
-        const handoff = data.handoff || {};
-        const conversation = data.conversation || {};
-
-        cards.innerHTML = `
-          <div>
-            <span class="pill">lead_id: ${lead.id ?? "—"}</span>
-            ${statusPill(lead.lead_status)}
-            ${statusPill(handoff.handoff_status)}
+    return dedent(
+        """
+        <!doctype html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <title>AI Lead Agent</title>
+          <style>
+            * { box-sizing: border-box; }
+
+            :root {
+              --bg: #0f172a;
+              --panel: #14213d;
+              --panel-2: #172554;
+              --border: #334155;
+              --text: #e2e8f0;
+              --muted: #94a3b8;
+              --accent: #3b82f6;
+              --accent-hover: #2563eb;
+              --secondary: #475569;
+              --secondary-hover: #334155;
+              --success: #22c55e;
+              --success-hover: #16a34a;
+              --danger: #ef4444;
+              --danger-hover: #dc2626;
+              --warning: #f59e0b;
+              --cyan: #7dd3fc;
+            }
+
+            body {
+              margin: 0;
+              font-family: Arial, sans-serif;
+              background: var(--bg);
+              color: var(--text);
+            }
+
+            .wrap {
+              max-width: 1280px;
+              margin: 0 auto;
+              padding: 22px;
+            }
+
+            .section-title {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-start;
+              gap: 18px;
+              flex-wrap: wrap;
+              margin-bottom: 18px;
+            }
+
+            h1 {
+              margin: 0 0 8px 0;
+              font-size: 24px;
+              line-height: 1.15;
+            }
+
+            h2 {
+              margin: 0 0 14px 0;
+              font-size: 18px;
+              line-height: 1.2;
+            }
+
+            .muted {
+              color: var(--muted);
+              font-size: 13px;
+              line-height: 1.4;
+            }
+
+            .header-actions {
+              display: flex;
+              align-items: center;
+              justify-content: flex-end;
+              gap: 12px;
+              flex-wrap: wrap;
+            }
+
+            .lang-switch {
+              display: flex;
+              gap: 6px;
+              align-items: center;
+            }
+
+            .grid {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 16px;
+              margin-bottom: 16px;
+            }
+
+            .card {
+              background: linear-gradient(180deg, rgba(20,33,61,0.95) 0%, rgba(15,23,42,0.98) 100%);
+              border: 1px solid var(--border);
+              border-radius: 14px;
+              padding: 16px;
+              box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+            }
+
+            .full-width {
+              margin-bottom: 16px;
+            }
+
+            .section-row {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              gap: 12px;
+              flex-wrap: wrap;
+              margin-bottom: 14px;
+            }
+
+            input,
+            textarea,
+            pre {
+              width: 100%;
+              border: 1px solid #475569;
+              background: rgba(15,23,42,0.8);
+              color: var(--text);
+              border-radius: 10px;
+            }
+
+            input,
+            textarea {
+              padding: 12px 14px;
+              font-size: 14px;
+              outline: none;
+              transition: border-color 0.15s ease, box-shadow 0.15s ease;
+            }
+
+            input:focus,
+            textarea:focus {
+              border-color: var(--cyan);
+              box-shadow: 0 0 0 3px rgba(125, 211, 252, 0.15);
+            }
+
+            textarea {
+              min-height: 118px;
+              resize: vertical;
+              margin-top: 10px;
+            }
+
+            button {
+              border: 0;
+              cursor: pointer;
+              color: white;
+              background: var(--accent);
+              border-radius: 10px;
+              padding: 10px 14px;
+              font-size: 14px;
+              font-weight: 700;
+              transition: transform 0.04s ease, background 0.15s ease, opacity 0.15s ease;
+            }
+
+            button:hover { background: var(--accent-hover); }
+            button:active { transform: translateY(1px); }
+            button:disabled { opacity: 0.65; cursor: not-allowed; }
+
+            .secondary-btn {
+              background: var(--secondary);
+            }
+
+            .secondary-btn:hover {
+              background: var(--secondary-hover);
+            }
+
+            .success-btn {
+              background: var(--success);
+            }
+
+            .success-btn:hover {
+              background: var(--success-hover);
+            }
+
+            .danger-btn {
+              background: var(--danger);
+            }
+
+            .danger-btn:hover {
+              background: var(--danger-hover);
+            }
+
+            .small-btn,
+            .lang-btn {
+              width: auto;
+              margin: 0;
+              padding: 6px 10px;
+              font-size: 12px;
+              border-radius: 8px;
+            }
+
+            .lang-btn.active {
+              outline: 2px solid var(--cyan);
+              outline-offset: 1px;
+            }
+
+            .top-actions {
+              display: flex;
+              gap: 10px;
+              margin-top: 12px;
+              margin-bottom: 18px;
+              align-items: center;
+              flex-wrap: wrap;
+            }
+
+            .top-actions button {
+              width: auto;
+              margin: 0;
+              padding: 10px 14px;
+            }
+
+            .hint {
+              display: block;
+              padding-top: 16px;
+              font-size: 13px;
+              color: var(--muted);
+              line-height: 1.4;
+            }
+
+            .stats {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 14px;
+              margin-bottom: 14px;
+            }
+
+            .stat {
+              border: 1px solid var(--border);
+              background: rgba(15,23,42,0.7);
+              border-radius: 12px;
+              padding: 14px;
+            }
+
+            .stat-label {
+              color: var(--muted);
+              font-size: 12px;
+              margin-bottom: 8px;
+            }
+
+            .stat-value {
+              font-size: 32px;
+              font-weight: 700;
+              line-height: 1;
+            }
+
+            .pill {
+              display: inline-block;
+              padding: 4px 10px;
+              border-radius: 999px;
+              font-size: 12px;
+              font-weight: 700;
+              margin-right: 6px;
+              margin-bottom: 6px;
+            }
+
+            .pill-neutral { background: #1e293b; color: #e2e8f0; }
+            .pill-qualified { background: #166534; color: #dcfce7; }
+            .pill-followup { background: #92400e; color: #fef3c7; }
+            .pill-pending { background: #9a3412; color: #ffedd5; }
+            .pill-progress { background: #1d4ed8; color: #dbeafe; }
+            .pill-done { background: #15803d; color: #dcfce7; }
+
+            .summary-box,
+            .table-wrap {
+              border: 1px solid var(--border);
+              background: rgba(15,23,42,0.42);
+              border-radius: 12px;
+              padding: 12px;
+            }
+
+            .summary-box.empty,
+            .table-wrap.empty {
+              color: var(--muted);
+            }
+
+            .summary-row {
+              margin: 8px 0;
+              line-height: 1.45;
+            }
+
+            .summary-key {
+              color: var(--muted);
+              display: inline-block;
+              min-width: 118px;
+            }
+
+            table {
+              width: 100%;
+              border-collapse: collapse;
+            }
+
+            th,
+            td {
+              text-align: left;
+              padding: 10px 8px;
+              border-bottom: 1px solid rgba(148,163,184,0.18);
+              vertical-align: middle;
+              font-size: 14px;
+            }
+
+            th {
+              color: var(--muted);
+              font-size: 12px;
+              font-weight: 700;
+              text-transform: uppercase;
+              letter-spacing: 0.04em;
+            }
+
+            tr:last-child td {
+              border-bottom: 0;
+            }
+
+            details {
+              margin-top: 14px;
+              border: 1px solid var(--border);
+              border-radius: 12px;
+              background: rgba(15,23,42,0.35);
+              overflow: hidden;
+            }
+
+            summary {
+              list-style: none;
+              cursor: pointer;
+              padding: 12px 14px;
+              font-size: 13px;
+              font-weight: 700;
+              color: var(--text);
+              background: rgba(2,6,23,0.25);
+            }
+
+            summary::-webkit-details-marker {
+              display: none;
+            }
+
+            pre {
+              margin: 0;
+              padding: 12px;
+              overflow: auto;
+              white-space: pre-wrap;
+              word-break: break-word;
+              font-size: 12px;
+              color: #cbd5e1;
+            }
+
+            .mono {
+              font-family: Menlo, Monaco, Consolas, monospace;
+              font-size: 12px;
+            }
+
+            @media (max-width: 980px) {
+              .grid {
+                grid-template-columns: 1fr;
+              }
+
+              .stats {
+                grid-template-columns: 1fr 1fr;
+              }
+            }
+
+            @media (max-width: 640px) {
+              .wrap {
+                padding: 14px;
+              }
+
+              .stats {
+                grid-template-columns: 1fr;
+              }
+
+              .section-title {
+                margin-bottom: 14px;
+              }
+
+              h1 {
+                font-size: 22px;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="wrap">
+            <div class="section-title">
+              <div>
+                <h1 id="appTitle">AI Lead Agent</h1>
+                <div class="muted" id="subtitle">Demo-ready MVP for inbound B2B lead intake, qualification, and handoff.</div>
+              </div>
+
+              <div class="header-actions">
+                <div class="lang-switch">
+                  <button id="langRu" class="secondary-btn lang-btn" onclick="setLang('ru')">RU</button>
+                  <button id="langEn" class="secondary-btn lang-btn" onclick="setLang('en')">EN</button>
+                  <button id="langEs" class="secondary-btn lang-btn" onclick="setLang('es')">ES</button>
+                </div>
+
+                <div class="top-actions" style="margin: 0;">
+                  <button id="btnLoadDemo" class="success-btn" onclick="seedDemo()">Load demo data</button>
+                  <button id="btnResetDemo" class="danger-btn" onclick="resetDemo()">Reset demo</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid">
+              <div class="card">
+                <h2 id="sendTitle">Send message</h2>
+                <input id="leadIdInput" placeholder="lead_id — optional for the first message" />
+                <textarea id="messageInput" placeholder="Enter inbound message..."></textarea>
+
+                <div class="top-actions">
+                  <button id="btnSend" onclick="sendMessage()">Send</button>
+                  <button id="btnClear" class="secondary-btn" onclick="clearMessageForm()">Clear</button>
+                </div>
+
+                <div class="hint" id="sendHint">After the reply, lead_id will be automatically filled into summary.</div>
+
+                <details>
+                  <summary id="rawResponseLabel">Raw response</summary>
+                  <pre id="sendResult">Empty.</pre>
+                </details>
+              </div>
+
+              <div class="card" id="summaryCard">
+                <h2 id="summaryTitle">Lead summary</h2>
+                <input id="summaryLeadId" placeholder="Enter lead_id" />
+
+                <div class="top-actions">
+                  <button id="btnLoadSummary" onclick="loadLeadSummary()">Load summary</button>
+                </div>
+
+                <div id="summaryCards" class="summary-box empty">Empty.</div>
+                <div id="summaryActions" class="top-actions"></div>
+
+                <details>
+                  <summary id="rawSummaryLabel">Raw summary JSON</summary>
+                  <pre id="summaryResult">Empty.</pre>
+                </details>
+              </div>
+            </div>
+
+            <div class="card full-width">
+              <div class="section-row">
+                <h2 id="dashboardTitle">Dashboard overview</h2>
+                <button id="btnRefreshDashboard" class="small-btn" onclick="loadDashboard()">Refresh dashboard</button>
+              </div>
+
+              <div class="stats">
+                <div class="stat">
+                  <div class="stat-label" id="statLeadsLabel">Leads total</div>
+                  <div class="stat-value" id="statLeads">0</div>
+                </div>
+                <div class="stat">
+                  <div class="stat-label" id="statQualifiedLabel">Qualified</div>
+                  <div class="stat-value" id="statQualified">0</div>
+                </div>
+                <div class="stat">
+                  <div class="stat-label" id="statInProgressLabel">Handoffs in progress</div>
+                  <div class="stat-value" id="statInProgress">0</div>
+                </div>
+                <div class="stat">
+                  <div class="stat-label" id="statDoneLabel">Handoffs done</div>
+                  <div class="stat-value" id="statDone">0</div>
+                </div>
+              </div>
+
+              <details>
+                <summary id="rawDashboardLabel">Raw dashboard JSON</summary>
+                <pre id="dashboardResult">Empty.</pre>
+              </details>
+            </div>
+
+            <div class="grid">
+              <div class="card">
+                <div class="section-row">
+                  <h2 id="recentLeadsTitle">Recent leads</h2>
+                  <button id="btnRefreshLeads" class="small-btn" onclick="loadLeads()">Refresh</button>
+                </div>
+
+                <div id="leadsTable" class="table-wrap empty">No leads.</div>
+
+                <details>
+                  <summary id="rawLeadsLabel">Raw leads JSON</summary>
+                  <pre id="leadsRaw">Empty.</pre>
+                </details>
+              </div>
+
+              <div class="card">
+                <div class="section-row">
+                  <h2 id="recentHandoffsTitle">Recent handoffs</h2>
+                  <button id="btnRefreshHandoffs" class="small-btn" onclick="loadHandoffs()">Refresh</button>
+                </div>
+
+                <div id="handoffsTable" class="table-wrap empty">No handoffs.</div>
+
+                <details>
+                  <summary id="rawHandoffsLabel">Raw handoffs JSON</summary>
+                  <pre id="handoffsRaw">Empty.</pre>
+                </details>
+              </div>
+            </div>
           </div>
-          <div class="summary-line"><strong>Компания:</strong> ${lead.company ?? "—"}</div>
-          <div class="summary-line"><strong>Роль:</strong> ${lead.role ?? "—"}</div>
-          <div class="summary-line"><strong>Контакт:</strong> ${lead.contact ?? "—"}</div>
-          <div class="summary-line"><strong>Use case:</strong> ${lead.use_case ?? "—"}</div>
-          <div class="summary-line"><strong>Assigned to:</strong> ${handoff.assigned_to ?? "—"}</div>
-          <div class="summary-line"><strong>Last sender:</strong> ${conversation.last_sender ?? "—"}</div>
-          <div class="summary-line"><strong>Last intent:</strong> ${conversation.last_intent ?? "—"}</div>
-          <div class="summary-line"><strong>Last text:</strong> ${conversation.last_text ?? "—"}</div>
-        `;
 
-        renderSummaryActions(data);
-        addActivity(`Открыт summary для lead ${leadId}.`, "info");
-      } catch (error) {
-        result.textContent = "Ошибка: " + error;
-        cards.innerHTML = '<div class="empty">Ошибка загрузки.</div>';
-        document.getElementById("summaryActions").innerHTML = "";
-        addActivity(`Ошибка загрузки summary для lead ${leadId}.`, "warn");
-      }
-    }
+          <script>
+            const STATE = {
+              lang: 'en',
+              dashboard: null,
+              leads: [],
+              handoffs: [],
+              summary: null,
+              lastSendResponse: null
+            };
 
-    async function loadLeads() {
-      const result = document.getElementById("leadsResult");
-      const wrap = document.getElementById("leadsTableWrap");
+            const I18N = {
+              en: {
+                subtitle: 'Demo-ready MVP for inbound B2B lead intake, qualification, and handoff.',
+                sendTitle: 'Send message',
+                leadIdPlaceholder: 'lead_id — optional for the first message',
+                messagePlaceholder: 'Enter inbound message...',
+                btnSend: 'Send',
+                btnClear: 'Clear',
+                sendHint: 'After the reply, lead_id will be automatically filled into summary.',
+                rawResponseLabel: 'Raw response',
+                empty: 'Empty.',
+                summaryTitle: 'Lead summary',
+                summaryLeadPlaceholder: 'Enter lead_id',
+                btnLoadSummary: 'Load summary',
+                rawSummaryLabel: 'Raw summary JSON',
+                dashboardTitle: 'Dashboard overview',
+                btnRefreshDashboard: 'Refresh dashboard',
+                statLeadsLabel: 'Leads total',
+                statQualifiedLabel: 'Qualified',
+                statInProgressLabel: 'Handoffs in progress',
+                statDoneLabel: 'Handoffs done',
+                rawDashboardLabel: 'Raw dashboard JSON',
+                recentLeadsTitle: 'Recent leads',
+                recentHandoffsTitle: 'Recent handoffs',
+                btnRefresh: 'Refresh',
+                rawLeadsLabel: 'Raw leads JSON',
+                rawHandoffsLabel: 'Raw handoffs JSON',
+                noLeads: 'No leads.',
+                noHandoffs: 'No handoffs.',
+                btnLoadDemo: 'Load demo data',
+                btnResetDemo: 'Reset demo',
+                tableId: 'ID',
+                tableCompany: 'Company',
+                tableRole: 'Role',
+                tableStatus: 'Status',
+                tableLeadId: 'Lead ID',
+                tableAssigned: 'Assigned',
+                tableAction: 'Action',
+                btnOpen: 'Open',
+                btnOpenLead: 'Open lead',
+                btnSetInProgress: 'Set handoff in progress',
+                btnSetDone: 'Set handoff done',
+                unassigned: 'Unassigned',
+                company: 'Company',
+                role: 'Role',
+                contact: 'Contact',
+                useCase: 'Use case',
+                assignedTo: 'Assigned to',
+                lastSender: 'Last sender',
+                lastIntent: 'Last intent',
+                lastText: 'Last text',
+                noSummary: 'Empty.',
+                status_new: 'new',
+                status_qualified: 'qualified',
+                status_needs_followup: 'needs follow-up',
+                status_pending: 'pending',
+                status_in_progress: 'in progress',
+                status_done: 'done',
+                status_unknown: 'unknown'
+              },
+              ru: {
+                subtitle: 'Готовый к демо MVP для входящих B2B-лидов, квалификации и передачи.',
+                sendTitle: 'Отправить сообщение',
+                leadIdPlaceholder: 'lead_id — необязательно для первого сообщения',
+                messagePlaceholder: 'Введите входящее сообщение...',
+                btnSend: 'Отправить',
+                btnClear: 'Очистить',
+                sendHint: 'После ответа lead_id автоматически подставится в summary.',
+                rawResponseLabel: 'Raw response',
+                empty: 'Пока пусто.',
+                summaryTitle: 'Сводка по лиду',
+                summaryLeadPlaceholder: 'Введите lead_id',
+                btnLoadSummary: 'Загрузить summary',
+                rawSummaryLabel: 'Raw summary JSON',
+                dashboardTitle: 'Обзор dashboard',
+                btnRefreshDashboard: 'Обновить dashboard',
+                statLeadsLabel: 'Всего лидов',
+                statQualifiedLabel: 'Qualified',
+                statInProgressLabel: 'Handoffs в работе',
+                statDoneLabel: 'Handoffs завершены',
+                rawDashboardLabel: 'Raw dashboard JSON',
+                recentLeadsTitle: 'Последние лиды',
+                recentHandoffsTitle: 'Последние handoffs',
+                btnRefresh: 'Обновить',
+                rawLeadsLabel: 'Raw leads JSON',
+                rawHandoffsLabel: 'Raw handoffs JSON',
+                noLeads: 'Нет лидов.',
+                noHandoffs: 'Нет handoff.',
+                btnLoadDemo: 'Загрузить демо',
+                btnResetDemo: 'Сбросить демо',
+                tableId: 'ID',
+                tableCompany: 'Компания',
+                tableRole: 'Роль',
+                tableStatus: 'Статус',
+                tableLeadId: 'Lead ID',
+                tableAssigned: 'Ответственный',
+                tableAction: 'Действие',
+                btnOpen: 'Открыть',
+                btnOpenLead: 'Открыть lead',
+                btnSetInProgress: 'Перевести в in progress',
+                btnSetDone: 'Перевести в done',
+                unassigned: 'Не назначен',
+                company: 'Компания',
+                role: 'Роль',
+                contact: 'Контакт',
+                useCase: 'Use case',
+                assignedTo: 'Assigned to',
+                lastSender: 'Last sender',
+                lastIntent: 'Last intent',
+                lastText: 'Last text',
+                noSummary: 'Пока пусто.',
+                status_new: 'new',
+                status_qualified: 'qualified',
+                status_needs_followup: 'needs_followup',
+                status_pending: 'pending',
+                status_in_progress: 'in_progress',
+                status_done: 'done',
+                status_unknown: 'unknown'
+              },
+              es: {
+                subtitle: 'MVP listo para demo para leads B2B entrantes, calificación y handoff.',
+                sendTitle: 'Enviar mensaje',
+                leadIdPlaceholder: 'lead_id — opcional para el primer mensaje',
+                messagePlaceholder: 'Ingresa el mensaje entrante...',
+                btnSend: 'Enviar',
+                btnClear: 'Limpiar',
+                sendHint: 'Después de la respuesta, el lead_id se completará automáticamente en el summary.',
+                rawResponseLabel: 'Respuesta raw',
+                empty: 'Vacío.',
+                summaryTitle: 'Resumen del lead',
+                summaryLeadPlaceholder: 'Ingresa lead_id',
+                btnLoadSummary: 'Cargar summary',
+                rawSummaryLabel: 'Raw summary JSON',
+                dashboardTitle: 'Resumen del dashboard',
+                btnRefreshDashboard: 'Actualizar dashboard',
+                statLeadsLabel: 'Leads totales',
+                statQualifiedLabel: 'Calificados',
+                statInProgressLabel: 'Handoffs en progreso',
+                statDoneLabel: 'Handoffs completados',
+                rawDashboardLabel: 'Raw dashboard JSON',
+                recentLeadsTitle: 'Leads recientes',
+                recentHandoffsTitle: 'Handoffs recientes',
+                btnRefresh: 'Actualizar',
+                rawLeadsLabel: 'Raw leads JSON',
+                rawHandoffsLabel: 'Raw handoffs JSON',
+                noLeads: 'No hay leads.',
+                noHandoffs: 'No hay handoffs.',
+                btnLoadDemo: 'Cargar demo',
+                btnResetDemo: 'Resetear demo',
+                tableId: 'ID',
+                tableCompany: 'Empresa',
+                tableRole: 'Rol',
+                tableStatus: 'Estado',
+                tableLeadId: 'Lead ID',
+                tableAssigned: 'Asignado',
+                tableAction: 'Acción',
+                btnOpen: 'Abrir',
+                btnOpenLead: 'Abrir lead',
+                btnSetInProgress: 'Poner handoff en progreso',
+                btnSetDone: 'Marcar handoff como done',
+                unassigned: 'Sin asignar',
+                company: 'Empresa',
+                role: 'Rol',
+                contact: 'Contacto',
+                useCase: 'Caso de uso',
+                assignedTo: 'Asignado a',
+                lastSender: 'Último remitente',
+                lastIntent: 'Último intent',
+                lastText: 'Último texto',
+                noSummary: 'Vacío.',
+                status_new: 'new',
+                status_qualified: 'qualified',
+                status_needs_followup: 'needs_followup',
+                status_pending: 'pending',
+                status_in_progress: 'in_progress',
+                status_done: 'done',
+                status_unknown: 'unknown'
+              }
+            };
 
-      try {
-        const response = await fetch("/leads");
-        const data = await response.json();
-        result.textContent = pretty(data);
+            function t(key) {
+              return (I18N[STATE.lang] && I18N[STATE.lang][key]) || (I18N.en && I18N.en[key]) || key;
+            }
 
-        if (!Array.isArray(data) || data.length === 0) {
-          wrap.innerHTML = '<div class="empty">Нет лидов.</div>';
-          return;
-        }
+            function escapeHtml(value) {
+              return String(value ?? '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#039;');
+            }
 
-        wrap.innerHTML = `
-          <table class="table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Company</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              ${data.slice(0, 8).map(item => `
-                <tr>
-                  <td>${item.id ?? "—"}</td>
-                  <td>${item.company ?? "—"}</td>
-                  <td>${item.role ?? "—"}</td>
-                  <td>${statusPill(item.status)}</td>
-                  <td><button class="small-btn" onclick="loadLeadSummaryById(${item.id})">Open</button></td>
-                </tr>
-              `).join("")}
-            </tbody>
-          </table>
-        `;
-      } catch (error) {
-        result.textContent = "Ошибка: " + error;
-        wrap.innerHTML = '<div class="empty">Ошибка загрузки.</div>';
-        addActivity("Ошибка загрузки leads.", "warn");
-      }
-    }
+            function pretty(value) {
+              return JSON.stringify(value, null, 2);
+            }
 
-    async function loadHandoffs() {
-      const result = document.getElementById("handoffsResult");
-      const wrap = document.getElementById("handoffsTableWrap");
+            function getStatusClass(status) {
+              const s = String(status || '').toLowerCase();
+              if (s === 'qualified') return 'pill-qualified';
+              if (s === 'needs_followup' || s === 'needs-followup' || s === 'needs followup') return 'pill-followup';
+              if (s === 'pending') return 'pill-pending';
+              if (s === 'in_progress' || s === 'in progress') return 'pill-progress';
+              if (s === 'done') return 'pill-done';
+              return 'pill-neutral';
+            }
 
-      try {
-        const response = await fetch("/handoffs");
-        const data = await response.json();
-        result.textContent = pretty(data);
+            function translateStatus(status) {
+              const s = String(status || '').toLowerCase().replaceAll('-', '_').replaceAll(' ', '_');
+              return t('status_' + s) || status || t('status_unknown');
+            }
 
-        if (!Array.isArray(data) || data.length === 0) {
-          wrap.innerHTML = '<div class="empty">Нет handoff.</div>';
-          return;
-        }
+            async function api(path, options = {}) {
+              const response = await fetch(path, {
+                headers: { 'Content-Type': 'application/json' },
+                ...options
+              });
 
-        wrap.innerHTML = `
-          <table class="table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Lead ID</th>
-                <th>Assigned</th>
-                <th>Status</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              ${data.slice(0, 8).map(item => `
-                <tr>
-                  <td>${item.id ?? "—"}</td>
-                  <td>${item.lead_id ?? "—"}</td>
-                  <td>${item.assigned_to ?? "—"}</td>
-                  <td>${statusPill(item.status)}</td>
-                  <td><button class="small-btn" onclick="loadLeadSummaryById(${item.lead_id})">Open lead</button></td>
-                </tr>
-              `).join("")}
-            </tbody>
-          </table>
-        `;
-      } catch (error) {
-        result.textContent = "Ошибка: " + error;
-        wrap.innerHTML = '<div class="empty">Ошибка загрузки.</div>';
-        addActivity("Ошибка загрузки handoffs.", "warn");
-      }
-    }
+              const text = await response.text();
+              let data = null;
 
-    async function initPage() {
-      addActivity("UI загружен.", "info");
-      await loadDashboard(false);
-      await loadLeads();
-      await loadHandoffs();
-    }
+              try {
+                data = text ? JSON.parse(text) : null;
+              } catch {
+                data = text;
+              }
 
-    initPage();
-  </script>
-</body>
-</html>
-"""
+              if (!response.ok) {
+                throw new Error(typeof data === 'string' ? data : pretty(data));
+              }
+
+              return data;
+            }
+
+            function setText(id, value) {
+              const el = document.getElementById(id);
+              if (el) el.textContent = value;
+            }
+
+            function setPlaceholder(id, value) {
+              const el = document.getElementById(id);
+              if (el) el.placeholder = value;
+            }
+
+            function setLang(lang) {
+              if (!I18N[lang]) return;
+
+              STATE.lang = lang;
+              localStorage.setItem('ui_lang', lang);
+
+              setText('subtitle', t('subtitle'));
+              setText('sendTitle', t('sendTitle'));
+              setPlaceholder('leadIdInput', t('leadIdPlaceholder'));
+              setPlaceholder('messageInput', t('messagePlaceholder'));
+              setText('btnSend', t('btnSend'));
+              setText('btnClear', t('btnClear'));
+              setText('sendHint', t('sendHint'));
+              setText('rawResponseLabel', t('rawResponseLabel'));
+
+              setText('summaryTitle', t('summaryTitle'));
+              setPlaceholder('summaryLeadId', t('summaryLeadPlaceholder'));
+              setText('btnLoadSummary', t('btnLoadSummary'));
+              setText('rawSummaryLabel', t('rawSummaryLabel'));
+
+              setText('dashboardTitle', t('dashboardTitle'));
+              setText('btnRefreshDashboard', t('btnRefreshDashboard'));
+              setText('statLeadsLabel', t('statLeadsLabel'));
+              setText('statQualifiedLabel', t('statQualifiedLabel'));
+              setText('statInProgressLabel', t('statInProgressLabel'));
+              setText('statDoneLabel', t('statDoneLabel'));
+              setText('rawDashboardLabel', t('rawDashboardLabel'));
+
+              setText('recentLeadsTitle', t('recentLeadsTitle'));
+              setText('recentHandoffsTitle', t('recentHandoffsTitle'));
+              setText('btnRefreshLeads', t('btnRefresh'));
+              setText('btnRefreshHandoffs', t('btnRefresh'));
+              setText('rawLeadsLabel', t('rawLeadsLabel'));
+              setText('rawHandoffsLabel', t('rawHandoffsLabel'));
+              setText('btnLoadDemo', t('btnLoadDemo'));
+              setText('btnResetDemo', t('btnResetDemo'));
+
+              document.getElementById('langRu')?.classList.toggle('active', lang === 'ru');
+              document.getElementById('langEn')?.classList.toggle('active', lang === 'en');
+              document.getElementById('langEs')?.classList.toggle('active', lang === 'es');
+
+              if (!STATE.lastSendResponse) {
+                document.getElementById('sendResult').textContent = t('empty');
+              }
+
+              if (!STATE.summary) {
+                document.getElementById('summaryCards').textContent = t('noSummary');
+                document.getElementById('summaryCards').className = 'summary-box empty';
+                document.getElementById('summaryResult').textContent = t('empty');
+              }
+
+              if (!STATE.dashboard) {
+                document.getElementById('dashboardResult').textContent = t('empty');
+              }
+
+              renderLeads(STATE.leads);
+              renderHandoffs(STATE.handoffs);
+              renderDashboard(STATE.dashboard);
+              renderSummary(STATE.summary);
+            }
+
+            function renderDashboard(data) {
+              STATE.dashboard = data;
+
+              const total = data?.leads_total ?? data?.total_leads ?? data?.total ?? 0;
+              const qualified = data?.qualified ?? data?.qualified_count ?? 0;
+              const inProgress = data?.handoffs_in_progress ?? data?.in_progress ?? 0;
+              const done = data?.handoffs_done ?? data?.done ?? 0;
+
+              document.getElementById('statLeads').textContent = total;
+              document.getElementById('statQualified').textContent = qualified;
+              document.getElementById('statInProgress').textContent = inProgress;
+              document.getElementById('statDone').textContent = done;
+
+              document.getElementById('dashboardResult').textContent = data ? pretty(data) : t('empty');
+            }
+
+            function renderSummary(data) {
+              STATE.summary = data;
+
+              const box = document.getElementById('summaryCards');
+              const actions = document.getElementById('summaryActions');
+              const raw = document.getElementById('summaryResult');
+
+              if (!data) {
+                box.className = 'summary-box empty';
+                box.textContent = t('noSummary');
+                actions.innerHTML = '';
+                raw.textContent = t('empty');
+                return;
+              }
+
+              const leadId = data.lead_id ?? data.id ?? '';
+              const leadStatus = data.status ?? data.lead_status ?? '';
+              const handoffStatus = data.handoff_status ?? data.handoff?.status ?? '';
+              const handoffId = data.handoff_id ?? data.handoff?.id ?? null;
+              const company = data.company ?? '—';
+              const role = data.role ?? '—';
+              const contact = data.contact ?? '—';
+              const useCase = data.use_case ?? data.usecase ?? '—';
+              const assignedTo = data.assigned_to ?? data.assignee ?? data.assigned ?? '—';
+              const lastSender = data.last_sender ?? '—';
+              const lastIntent = data.last_intent ?? '—';
+              const lastText = data.last_text ?? '—';
+
+              const pills = [
+                leadId ? `<span class="pill pill-neutral">lead_id: ${escapeHtml(leadId)}</span>` : '',
+                leadStatus ? `<span class="pill ${getStatusClass(leadStatus)}">${escapeHtml(translateStatus(leadStatus))}</span>` : '',
+                handoffStatus ? `<span class="pill ${getStatusClass(handoffStatus)}">${escapeHtml(translateStatus(handoffStatus))}</span>` : ''
+              ].join('');
+
+              box.className = 'summary-box';
+              box.innerHTML = `
+                <div>${pills}</div>
+                <div class="summary-row"><span class="summary-key">${escapeHtml(t('company'))}:</span> ${escapeHtml(company)}</div>
+                <div class="summary-row"><span class="summary-key">${escapeHtml(t('role'))}:</span> ${escapeHtml(role)}</div>
+                <div class="summary-row"><span class="summary-key">${escapeHtml(t('contact'))}:</span> ${escapeHtml(contact)}</div>
+                <div class="summary-row"><span class="summary-key">${escapeHtml(t('useCase'))}:</span> ${escapeHtml(useCase)}</div>
+                <div class="summary-row"><span class="summary-key">${escapeHtml(t('assignedTo'))}:</span> ${escapeHtml(assignedTo)}</div>
+                <div class="summary-row"><span class="summary-key">${escapeHtml(t('lastSender'))}:</span> ${escapeHtml(lastSender)}</div>
+                <div class="summary-row"><span class="summary-key">${escapeHtml(t('lastIntent'))}:</span> ${escapeHtml(lastIntent)}</div>
+                <div class="summary-row"><span class="summary-key">${escapeHtml(t('lastText'))}:</span> ${escapeHtml(lastText)}</div>
+              `;
+
+              const buttons = [];
+              if (handoffId && handoffStatus !== 'in_progress') {
+                buttons.push(`<button class="secondary-btn small-btn" onclick="setHandoffStatus(${handoffId}, 'in_progress')">${escapeHtml(t('btnSetInProgress'))}</button>`);
+              }
+              if (handoffId && handoffStatus !== 'done') {
+                buttons.push(`<button class="success-btn small-btn" onclick="setHandoffStatus(${handoffId}, 'done')">${escapeHtml(t('btnSetDone'))}</button>`);
+              }
+
+              actions.innerHTML = buttons.join('');
+              raw.textContent = pretty(data);
+            }
+
+            function renderLeads(data) {
+              STATE.leads = Array.isArray(data) ? data : (Array.isArray(data?.items) ? data.items : []);
+
+              const wrap = document.getElementById('leadsTable');
+              const raw = document.getElementById('leadsRaw');
+
+              raw.textContent = STATE.leads.length ? pretty(STATE.leads) : t('empty');
+
+              if (!STATE.leads.length) {
+                wrap.className = 'table-wrap empty';
+                wrap.textContent = t('noLeads');
+                return;
+              }
+
+              wrap.className = 'table-wrap';
+              wrap.innerHTML = `
+                <table>
+                  <thead>
+                    <tr>
+                      <th>${escapeHtml(t('tableId'))}</th>
+                      <th>${escapeHtml(t('tableCompany'))}</th>
+                      <th>${escapeHtml(t('tableRole'))}</th>
+                      <th>${escapeHtml(t('tableStatus'))}</th>
+                      <th>${escapeHtml(t('tableAction'))}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${STATE.leads.map((lead) => {
+                      const id = lead.id ?? lead.lead_id ?? '';
+                      const company = lead.company ?? '—';
+                      const role = lead.role ?? '—';
+                      const status = lead.status ?? lead.lead_status ?? '';
+                      return `
+                        <tr>
+                          <td>${escapeHtml(id)}</td>
+                          <td>${escapeHtml(company)}</td>
+                          <td>${escapeHtml(role)}</td>
+                          <td><span class="pill ${getStatusClass(status)}">${escapeHtml(translateStatus(status))}</span></td>
+                          <td><button class="small-btn" onclick="openLead(${id})">${escapeHtml(t('btnOpen'))}</button></td>
+                        </tr>
+                      `;
+                    }).join('')}
+                  </tbody>
+                </table>
+              `;
+            }
+
+            function renderHandoffs(data) {
+              STATE.handoffs = Array.isArray(data) ? data : (Array.isArray(data?.items) ? data.items : []);
+
+              const wrap = document.getElementById('handoffsTable');
+              const raw = document.getElementById('handoffsRaw');
+
+              raw.textContent = STATE.handoffs.length ? pretty(STATE.handoffs) : t('empty');
+
+              if (!STATE.handoffs.length) {
+                wrap.className = 'table-wrap empty';
+                wrap.textContent = t('noHandoffs');
+                return;
+              }
+
+              wrap.className = 'table-wrap';
+              wrap.innerHTML = `
+                <table>
+                  <thead>
+                    <tr>
+                      <th>${escapeHtml(t('tableId'))}</th>
+                      <th>${escapeHtml(t('tableLeadId'))}</th>
+                      <th>${escapeHtml(t('tableAssigned'))}</th>
+                      <th>${escapeHtml(t('tableStatus'))}</th>
+                      <th>${escapeHtml(t('tableAction'))}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${STATE.handoffs.map((handoff) => {
+                      const id = handoff.id ?? '';
+                      const leadId = handoff.lead_id ?? '';
+                      const assigned = handoff.assigned_to ?? handoff.assignee ?? t('unassigned');
+                      const status = handoff.status ?? '';
+                      return `
+                        <tr>
+                          <td>${escapeHtml(id)}</td>
+                          <td>${escapeHtml(leadId)}</td>
+                          <td>${escapeHtml(assigned)}</td>
+                          <td><span class="pill ${getStatusClass(status)}">${escapeHtml(translateStatus(status))}</span></td>
+                          <td><button class="small-btn" onclick="openLead(${leadId})">${escapeHtml(t('btnOpenLead'))}</button></td>
+                        </tr>
+                      `;
+                    }).join('')}
+                  </tbody>
+                </table>
+              `;
+            }
+
+            async function sendMessage() {
+              const leadIdValue = document.getElementById('leadIdInput').value.trim();
+              const message = document.getElementById('messageInput').value.trim();
+
+              if (!message) return;
+
+              try {
+                const payload = {
+                  lead_id: leadIdValue ? Number(leadIdValue) : null,
+                  message
+                };
+
+                const data = await api('/chat/message', {
+                  method: 'POST',
+                  body: JSON.stringify(payload)
+                });
+
+                STATE.lastSendResponse = data;
+                document.getElementById('sendResult').textContent = pretty(data);
+
+                const newLeadId = data?.lead_id ?? data?.id ?? payload.lead_id;
+                if (newLeadId) {
+                  document.getElementById('leadIdInput').value = String(newLeadId);
+                  document.getElementById('summaryLeadId').value = String(newLeadId);
+                  await loadLeadSummary();
+                }
+
+                await Promise.all([loadDashboard(), loadLeads(), loadHandoffs()]);
+              } catch (error) {
+                document.getElementById('sendResult').textContent = String(error);
+              }
+            }
+
+            function clearMessageForm() {
+              document.getElementById('leadIdInput').value = '';
+              document.getElementById('messageInput').value = '';
+            }
+
+            async function loadLeadSummary() {
+              const leadId = document.getElementById('summaryLeadId').value.trim();
+              if (!leadId) return;
+
+              try {
+                const data = await api(`/leads/${leadId}/summary`);
+                renderSummary(data);
+              } catch (error) {
+                document.getElementById('summaryResult').textContent = String(error);
+              }
+            }
+
+            async function loadDashboard() {
+              try {
+                const data = await api('/dashboard/overview');
+                renderDashboard(data);
+              } catch (error) {
+                document.getElementById('dashboardResult').textContent = String(error);
+              }
+            }
+
+            async function loadLeads() {
+              try {
+                const data = await api('/leads');
+                renderLeads(data);
+              } catch (error) {
+                document.getElementById('leadsRaw').textContent = String(error);
+              }
+            }
+
+            async function loadHandoffs() {
+              try {
+                const data = await api('/handoffs');
+                renderHandoffs(data);
+              } catch (error) {
+                document.getElementById('handoffsRaw').textContent = String(error);
+              }
+            }
+
+            async function setHandoffStatus(handoffId, status) {
+              try {
+                await api(`/handoffs/${handoffId}`, {
+                  method: 'PATCH',
+                  body: JSON.stringify({ status })
+                });
+
+                await Promise.all([loadHandoffs(), loadDashboard()]);
+                const leadId = document.getElementById('summaryLeadId').value.trim();
+                if (leadId) {
+                  await loadLeadSummary();
+                }
+              } catch (error) {
+                document.getElementById('summaryResult').textContent = String(error);
+              }
+            }
+
+            async function seedDemo() {
+              try {
+                await api('/demo/seed', { method: 'POST', body: JSON.stringify({}) });
+                await refreshAll();
+              } catch (error) {
+                document.getElementById('sendResult').textContent = String(error);
+              }
+            }
+
+            async function resetDemo() {
+              try {
+                await api('/demo/reset', { method: 'POST', body: JSON.stringify({}) });
+
+                STATE.summary = null;
+                STATE.lastSendResponse = null;
+                document.getElementById('leadIdInput').value = '';
+                document.getElementById('messageInput').value = '';
+                document.getElementById('summaryLeadId').value = '';
+                document.getElementById('sendResult').textContent = t('empty');
+                document.getElementById('summaryResult').textContent = t('empty');
+                document.getElementById('dashboardResult').textContent = t('empty');
+                document.getElementById('leadsRaw').textContent = t('empty');
+                document.getElementById('handoffsRaw').textContent = t('empty');
+
+                renderSummary(null);
+                renderDashboard(null);
+                renderLeads([]);
+                renderHandoffs([]);
+                await refreshAll();
+              } catch (error) {
+                document.getElementById('sendResult').textContent = String(error);
+              }
+            }
+
+            function openLead(leadId) {
+              document.getElementById('summaryLeadId').value = String(leadId);
+              document.getElementById('leadIdInput').value = String(leadId);
+              loadLeadSummary();
+            }
+
+            async function refreshAll() {
+              await Promise.all([loadDashboard(), loadLeads(), loadHandoffs()]);
+            }
+
+            document.addEventListener('DOMContentLoaded', async () => {
+              setLang(localStorage.getItem('ui_lang') || 'en');
+              document.getElementById('sendResult').textContent = t('empty');
+              document.getElementById('summaryResult').textContent = t('empty');
+              document.getElementById('dashboardResult').textContent = t('empty');
+              document.getElementById('leadsRaw').textContent = t('empty');
+              document.getElementById('handoffsRaw').textContent = t('empty');
+              renderSummary(null);
+              renderDashboard(null);
+              renderLeads([]);
+              renderHandoffs([]);
+              await refreshAll();
+            });
+          </script>
+        </body>
+        </html>
+        """
+    )
