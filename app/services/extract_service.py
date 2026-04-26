@@ -51,6 +51,10 @@ COMPANY_PATTERNS = [
         re.IGNORECASE,
     ),
     re.compile(
+        r"^\s*([A-Z][A-Za-z0-9&.\- ]{1,60}?)\s+here\b",
+        re.IGNORECASE,
+    ),
+    re.compile(
         r"^\s*([A-ZА-ЯЁ][A-Za-zА-Яа-яЁё0-9&.\- ]{1,60}?)(?:,\s*(?:i am|i'm|я|soy|somos|need|нуж|buscamos|necesitamos)|[,.]\s|$)",
         re.IGNORECASE,
     ),
@@ -102,6 +106,8 @@ USE_CASE_HINTS = (
     "dashboard",
     "workflow",
     "qualification",
+    "product",
+    "growth",
     "автоматизация",
     "заявок",
     "лидов",
@@ -345,16 +351,22 @@ def _merge_results(rule_result: dict, llm_result: dict) -> dict:
 def extract_fields(message_text: str) -> dict:
     text = _clean(message_text)
     rule_result = _extract_rules_v2(text)
+    print("RULE_RESULT", rule_result)
 
     if not _should_try_llm(rule_result):
+        print("LLM_SKIPPED")
         return rule_result
 
     llm_result = llm_extract_fields(text)
+    print("LLM_RESULT", llm_result)
 
     if not _llm_improves(rule_result, llm_result):
+        print("LLM_NOT_BETTER")
         return rule_result
 
-    return _merge_results(rule_result, llm_result)
+    merged = _merge_results(rule_result, llm_result)
+    print("MERGED_RESULT", merged)
+    return merged
 
 
 def extract_company(message_text: str) -> Optional[str]:

@@ -71,6 +71,7 @@ def is_llm_available() -> bool:
 def llm_extract_fields(message_text: str) -> Optional[dict]:
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
+        print("LLM_DISABLED_NO_API_KEY")
         return None
 
     client = OpenAI(
@@ -93,7 +94,7 @@ Rules:
 - Return ONLY valid JSON.
 - If a field is missing, use null.
 - confidence must be a number from 0 to 1.
-- Preserve the original language of role/use_case/contact/company when useful, but normalized English roles are also acceptable.
+- Preserve the original language when useful.
 - Do not add commentary.
 - Do not wrap JSON in markdown fences.
 
@@ -115,16 +116,24 @@ Message:
             model=DEFAULT_MODEL,
             input=prompt,
         )
+
         raw_text = (response.output_text or "").strip()
+        print("LLM_RAW_TEXT", raw_text)
+
         json_block = _extract_json_block(raw_text)
         if not json_block:
+            print("LLM_NO_JSON_BLOCK")
             return None
 
         parsed = json.loads(json_block)
         if not isinstance(parsed, dict):
+            print("LLM_BAD_JSON_SHAPE", parsed)
             return None
 
-        return _normalize_result(parsed)
+        result = _normalize_result(parsed)
+        print("LLM_OK", result)
+        return result
 
-    except (APIConnectionError, APIStatusError, json.JSONDecodeError, ValueError, TypeError):
+    except (APIConnectionError, APIStatusError, json.JSONDecodeError, ValueError, TypeError) as e:
+        print("LLM_ERR", repr(e))
         return None
