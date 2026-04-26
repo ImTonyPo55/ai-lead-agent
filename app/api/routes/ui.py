@@ -11,7 +11,7 @@ def ui_page() -> str:
     return dedent(
         """
         <!doctype html>
-        <html lang="en">
+        <html lang="ru">
         <head>
           <meta charset="UTF-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -22,19 +22,17 @@ def ui_page() -> str:
             :root {
               --bg: #0f172a;
               --panel: #14213d;
-              --panel-2: #172554;
               --border: #334155;
               --text: #e2e8f0;
               --muted: #94a3b8;
               --accent: #3b82f6;
               --accent-hover: #2563eb;
-              --secondary: #475569;
-              --secondary-hover: #334155;
+              --secondary: #64748b;
+              --secondary-hover: #475569;
               --success: #22c55e;
               --success-hover: #16a34a;
               --danger: #ef4444;
               --danger-hover: #dc2626;
-              --warning: #f59e0b;
               --cyan: #7dd3fc;
             }
 
@@ -291,7 +289,7 @@ def ui_page() -> str:
             .summary-key {
               color: var(--muted);
               display: inline-block;
-              min-width: 118px;
+              min-width: 132px;
             }
 
             table {
@@ -509,7 +507,7 @@ def ui_page() -> str:
 
           <script>
             const STATE = {
-              lang: 'en',
+              lang: 'ru',
               dashboard: null,
               leads: [],
               handoffs: [],
@@ -519,6 +517,7 @@ def ui_page() -> str:
 
             const I18N = {
               en: {
+                appTitle: 'AI Lead Agent',
                 subtitle: 'Demo-ready MVP for inbound B2B lead intake, qualification, and handoff.',
                 sendTitle: 'Send message',
                 leadIdPlaceholder: 'lead_id — optional for the first message',
@@ -556,7 +555,7 @@ def ui_page() -> str:
                 tableAssigned: 'Assigned',
                 tableAction: 'Action',
                 btnOpen: 'Open',
-                btnOpenLead: 'Open lead',
+                btnOpenLead: 'Open',
                 btnSetInProgress: 'Set handoff in progress',
                 btnSetDone: 'Set handoff done',
                 unassigned: 'Unassigned',
@@ -577,106 +576,110 @@ def ui_page() -> str:
                 status_done: 'done',
                 status_unknown: 'unknown'
               },
+
               ru: {
+                appTitle: 'ИИ-Агент для лидов',
                 subtitle: 'Готовый к демо MVP для входящих B2B-лидов, квалификации и передачи.',
                 sendTitle: 'Отправить сообщение',
                 leadIdPlaceholder: 'lead_id — необязательно для первого сообщения',
                 messagePlaceholder: 'Введите входящее сообщение...',
                 btnSend: 'Отправить',
                 btnClear: 'Очистить',
-                sendHint: 'После ответа lead_id автоматически подставится в summary.',
-                rawResponseLabel: 'Raw response',
+                sendHint: 'После ответа lead_id автоматически подставится в сводку.',
+                rawResponseLabel: 'Сырой ответ',
                 empty: 'Пока пусто.',
                 summaryTitle: 'Сводка по лиду',
                 summaryLeadPlaceholder: 'Введите lead_id',
-                btnLoadSummary: 'Загрузить summary',
-                rawSummaryLabel: 'Raw summary JSON',
-                dashboardTitle: 'Обзор dashboard',
-                btnRefreshDashboard: 'Обновить dashboard',
+                btnLoadSummary: 'Загрузить сводку',
+                rawSummaryLabel: 'Сырой JSON сводки',
+                dashboardTitle: 'Обзор панели',
+                btnRefreshDashboard: 'Обновить панель',
                 statLeadsLabel: 'Всего лидов',
-                statQualifiedLabel: 'Qualified',
-                statInProgressLabel: 'Handoffs в работе',
-                statDoneLabel: 'Handoffs завершены',
-                rawDashboardLabel: 'Raw dashboard JSON',
+                statQualifiedLabel: 'Квалифицировано',
+                statInProgressLabel: 'Передачи в работе',
+                statDoneLabel: 'Передачи завершены',
+                rawDashboardLabel: 'Сырой JSON панели',
                 recentLeadsTitle: 'Последние лиды',
-                recentHandoffsTitle: 'Последние handoffs',
+                recentHandoffsTitle: 'Последние передачи',
                 btnRefresh: 'Обновить',
-                rawLeadsLabel: 'Raw leads JSON',
-                rawHandoffsLabel: 'Raw handoffs JSON',
+                rawLeadsLabel: 'Сырой JSON лидов',
+                rawHandoffsLabel: 'Сырой JSON передач',
                 noLeads: 'Нет лидов.',
-                noHandoffs: 'Нет handoff.',
+                noHandoffs: 'Нет передач.',
                 btnLoadDemo: 'Загрузить демо',
                 btnResetDemo: 'Сбросить демо',
                 tableId: 'ID',
                 tableCompany: 'Компания',
                 tableRole: 'Роль',
                 tableStatus: 'Статус',
-                tableLeadId: 'Lead ID',
-                tableAssigned: 'Ответственный',
+                tableLeadId: 'ID лида',
+                tableAssigned: 'Назначен',
                 tableAction: 'Действие',
                 btnOpen: 'Открыть',
-                btnOpenLead: 'Открыть lead',
-                btnSetInProgress: 'Перевести в in progress',
-                btnSetDone: 'Перевести в done',
+                btnOpenLead: 'Открыть',
+                btnSetInProgress: 'Перевести в работу',
+                btnSetDone: 'Отметить как завершённую',
                 unassigned: 'Не назначен',
                 company: 'Компания',
                 role: 'Роль',
                 contact: 'Контакт',
-                useCase: 'Use case',
-                assignedTo: 'Assigned to',
-                lastSender: 'Last sender',
-                lastIntent: 'Last intent',
-                lastText: 'Last text',
+                useCase: 'Сценарий использования',
+                assignedTo: 'Назначен',
+                lastSender: 'Последний отправитель',
+                lastIntent: 'Последнее намерение',
+                lastText: 'Последний текст',
                 noSummary: 'Пока пусто.',
-                status_new: 'new',
-                status_qualified: 'qualified',
-                status_needs_followup: 'needs_followup',
-                status_pending: 'pending',
-                status_in_progress: 'in_progress',
-                status_done: 'done',
-                status_unknown: 'unknown'
+                status_new: 'новый',
+                status_qualified: 'квалифицирован',
+                status_needs_followup: 'требует продолжения',
+                status_pending: 'в ожидании',
+                status_in_progress: 'в работе',
+                status_done: 'завершено',
+                status_unknown: 'неизвестно'
               },
+
               es: {
-                subtitle: 'MVP listo para demo para leads B2B entrantes, calificación y handoff.',
+                appTitle: 'Agente IA para Leads',
+                subtitle: 'MVP listo para demo para leads B2B entrantes, calificación y transferencia.',
                 sendTitle: 'Enviar mensaje',
                 leadIdPlaceholder: 'lead_id — opcional para el primer mensaje',
                 messagePlaceholder: 'Ingresa el mensaje entrante...',
                 btnSend: 'Enviar',
                 btnClear: 'Limpiar',
-                sendHint: 'Después de la respuesta, el lead_id se completará automáticamente en el summary.',
-                rawResponseLabel: 'Respuesta raw',
+                sendHint: 'Después de la respuesta, el lead_id se completará automáticamente en el resumen.',
+                rawResponseLabel: 'Respuesta bruta',
                 empty: 'Vacío.',
                 summaryTitle: 'Resumen del lead',
                 summaryLeadPlaceholder: 'Ingresa lead_id',
-                btnLoadSummary: 'Cargar summary',
-                rawSummaryLabel: 'Raw summary JSON',
-                dashboardTitle: 'Resumen del dashboard',
-                btnRefreshDashboard: 'Actualizar dashboard',
+                btnLoadSummary: 'Cargar resumen',
+                rawSummaryLabel: 'JSON bruto del resumen',
+                dashboardTitle: 'Resumen del panel',
+                btnRefreshDashboard: 'Actualizar panel',
                 statLeadsLabel: 'Leads totales',
                 statQualifiedLabel: 'Calificados',
-                statInProgressLabel: 'Handoffs en progreso',
-                statDoneLabel: 'Handoffs completados',
-                rawDashboardLabel: 'Raw dashboard JSON',
+                statInProgressLabel: 'Transferencias en progreso',
+                statDoneLabel: 'Transferencias completadas',
+                rawDashboardLabel: 'JSON bruto del panel',
                 recentLeadsTitle: 'Leads recientes',
-                recentHandoffsTitle: 'Handoffs recientes',
+                recentHandoffsTitle: 'Transferencias recientes',
                 btnRefresh: 'Actualizar',
-                rawLeadsLabel: 'Raw leads JSON',
-                rawHandoffsLabel: 'Raw handoffs JSON',
+                rawLeadsLabel: 'JSON bruto de leads',
+                rawHandoffsLabel: 'JSON bruto de transferencias',
                 noLeads: 'No hay leads.',
-                noHandoffs: 'No hay handoffs.',
+                noHandoffs: 'No hay transferencias.',
                 btnLoadDemo: 'Cargar demo',
-                btnResetDemo: 'Resetear demo',
+                btnResetDemo: 'Restablecer demo',
                 tableId: 'ID',
                 tableCompany: 'Empresa',
                 tableRole: 'Rol',
                 tableStatus: 'Estado',
-                tableLeadId: 'Lead ID',
+                tableLeadId: 'ID del lead',
                 tableAssigned: 'Asignado',
                 tableAction: 'Acción',
                 btnOpen: 'Abrir',
-                btnOpenLead: 'Abrir lead',
-                btnSetInProgress: 'Poner handoff en progreso',
-                btnSetDone: 'Marcar handoff como done',
+                btnOpenLead: 'Abrir',
+                btnSetInProgress: 'Mover a en progreso',
+                btnSetDone: 'Marcar como completada',
                 unassigned: 'Sin asignar',
                 company: 'Empresa',
                 role: 'Rol',
@@ -684,16 +687,16 @@ def ui_page() -> str:
                 useCase: 'Caso de uso',
                 assignedTo: 'Asignado a',
                 lastSender: 'Último remitente',
-                lastIntent: 'Último intent',
+                lastIntent: 'Última intención',
                 lastText: 'Último texto',
                 noSummary: 'Vacío.',
-                status_new: 'new',
-                status_qualified: 'qualified',
-                status_needs_followup: 'needs_followup',
-                status_pending: 'pending',
-                status_in_progress: 'in_progress',
-                status_done: 'done',
-                status_unknown: 'unknown'
+                status_new: 'nuevo',
+                status_qualified: 'calificado',
+                status_needs_followup: 'requiere seguimiento',
+                status_pending: 'pendiente',
+                status_in_progress: 'en progreso',
+                status_done: 'completado',
+                status_unknown: 'desconocido'
               }
             };
 
@@ -766,8 +769,12 @@ def ui_page() -> str:
 
               STATE.lang = lang;
               localStorage.setItem('ui_lang', lang);
+              document.documentElement.lang = lang;
+              document.title = t('appTitle');
 
+              setText('appTitle', t('appTitle'));
               setText('subtitle', t('subtitle'));
+
               setText('sendTitle', t('sendTitle'));
               setPlaceholder('leadIdInput', t('leadIdPlaceholder'));
               setPlaceholder('messageInput', t('messagePlaceholder'));
@@ -795,6 +802,7 @@ def ui_page() -> str:
               setText('btnRefreshHandoffs', t('btnRefresh'));
               setText('rawLeadsLabel', t('rawLeadsLabel'));
               setText('rawHandoffsLabel', t('rawHandoffsLabel'));
+
               setText('btnLoadDemo', t('btnLoadDemo'));
               setText('btnResetDemo', t('btnResetDemo'));
 
@@ -1087,7 +1095,10 @@ def ui_page() -> str:
 
             async function seedDemo() {
               try {
-                await api('/demo/seed', { method: 'POST', body: JSON.stringify({}) });
+                await api('/demo/seed', {
+                  method: 'POST',
+                  body: JSON.stringify({})
+                });
                 await refreshAll();
               } catch (error) {
                 document.getElementById('sendResult').textContent = String(error);
@@ -1096,7 +1107,10 @@ def ui_page() -> str:
 
             async function resetDemo() {
               try {
-                await api('/demo/reset', { method: 'POST', body: JSON.stringify({}) });
+                await api('/demo/reset', {
+                  method: 'POST',
+                  body: JSON.stringify({})
+                });
 
                 STATE.summary = null;
                 STATE.lastSendResponse = null;
@@ -1130,7 +1144,7 @@ def ui_page() -> str:
             }
 
             document.addEventListener('DOMContentLoaded', async () => {
-              setLang(localStorage.getItem('ui_lang') || 'en');
+              setLang(localStorage.getItem('ui_lang') || 'ru');
               document.getElementById('sendResult').textContent = t('empty');
               document.getElementById('summaryResult').textContent = t('empty');
               document.getElementById('dashboardResult').textContent = t('empty');
