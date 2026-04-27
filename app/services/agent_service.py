@@ -1,0 +1,190 @@
+from __future__ import annotations
+
+from typing import Any, Dict, List, Optional, Literal
+
+from pydantic import BaseModel, Field
+
+
+CRITICAL_FIELDS = ["company", "contact", "use_case"]
+
+
+class AgentDecision(BaseModel):
+    intent: str = "other"
+    next_action: Literal[
+        "ask_followup",
+        "qualify_lead",
+        "create_handoff",
+        "update_lead",
+        "reply_only",
+        "noop",
+    ] = "noop"
+    should_ask_followup: bool = False
+    should_create_handoff: bool = False
+    should_update_lead: bool = False
+    should_create_new_lead: bool = False
+    confidence: float = 0.0
+    missing_fields: List[str] = Field(default_factory=list)
+    reply_text: str = ""
+    notes: str = ""
+
+
+def _clean_text(value: Optional[str]) -> str:
+    if not value:
+        return ""
+    return " ".join(str(value).strip().split())
+
+
+def _has_value(value: Optional[str]) -> bool:
+    return bool(_clean_text(value))
+
+
+def _missing_fields(extracted: Optional[Dict[str, Any]]) -> List[str]:
+    data = extracted or {}
+    missing: List[str] = []
+
+    for field in CRITICAL_FIELDS:
+        if not _has_value(data.get(field)):
+            missing.append(field)
+
+    return missing
+
+
+def _followup_question(missing_fields: List[str]) -> str:
+    if not missing_fields:
+        return "Спасибо. Уточнений не требуется."
+
+    mapping = {
+        "company": "как называется ваша компания",
+        "contact": "какой контакт для связи предпочтителен",
+        "use_case": "какой у вас сценарий использования или задача",
+    }
+
+    parts = [mapping[field] for field in missing_fields if field in mapping]
+
+    if not parts:
+        return "Спасибо. Уточните, пожалуйста, недостающие данные по запросу."
+
+    if len(parts) == 1:
+        return f"Спасибо. Подскажите, пожалуйста, {parts[0]}?"
+
+    if len(parts) == 2:
+        return f"Спасибо. Подскажите, пожалуйста, {parts[0]} и {parts[1]}?"
+
+    return (
+        "Спасибо. Подскажите, пожалуйста, "
+        f"{parts[0]}, {parts[1]} и {parts[2]}?"
+    )
+
+
+def build_agent_prompt(
+    message_text: str,
+    extracted: Optional[Dict[str, Any]] = None,
+    current_lead: Optional[Dict[str, Any]] = None,
+) -> str:
+    cleaned_message = _clean_text(message_text)
+    extracted = extracted or {}
+    current_lead = current_lead or {}
+
+    return f"""
+You are an agent decision engine for inbound B2B lead qualification.
+
+Your job is to decide the next best action after a user message.
+
+Return ONLY valid JSON with these keys:
+- intent
+- next_action
+- should_ask_followup
+- should_create_handoff
+- should_update_lead
+- should_create_new_lead
+- confidence
+- missing_fields
+- reply_text
+- notes
+
+Allowed next_action values:
+- ask_followup
+- qualify_lead
+- create_handoff
+- update_lead
+- reply_only
+- noop
+
+Rules:
+1. If company/contact/use_case are missing, ask a focused follow-up.
+2. If enough data is present, qualify the lead.
+3. If the lead is qualified and not yet handed off, create handoff.
+4. Be concise.
+5. reply_text must be short and usable as an assistant reply.
+
+MESSAGE:
+{cleaned_message}
+
+EXTRACTED:
+{extracted}
+
+CURRENT_LEAD:
+{current_lead}
+""".strip()
+
+
+def rule_based_agent_decide(
+    message_text: str,
+    extracted: Optional[Dict[str, Any]] = None,
+    current_lead: Optional[Dict[str, Any]] = None,
+) -> AgentDecision:
+    cleaned_message = _clean_text(message_text)
+    extracted = extracted or {}
+    current_lead = current_lead or {}
+
+    missing_fields = _missing_fields(extracted)
+    lead_exists = bool(current_lead)
+
+    if missing_fields:
+        return AgentDecision(
+            intent="lead_followup",
+            next_action="ask_followup",
+            should_ask_followup=True,
+            should_create_handoff=False,
+            should_update_lead=lead_exists,
+            should_create_new_lead=not lead_exists,
+            confidence=0.78,
+            missing_fields=missing_fields,
+            reply_text=_followup_question(missing_fields),
+            notes="Critical lead fields are missing.",
+        )
+
+    return AgentDecision(
+        intent="qualified_lead",
+        next_action="create_handoff",
+        should_ask_followup=False,
+        should_create_handoff=True,
+        should_update_lead=True,
+        should_create_new_lead=not lead_exists,
+        confidence=0.92,
+        missing_fields=[],
+        reply_text=(
+            "Спасибо. Ключевые данные извлечены, лид квалифицирован "
+            "и готов к передаче в работу."
+        ),
+        notes="Lead has enough data for qualification and handoff.",
+    )
+
+
+def agent_decide(
+    message_text: str,
+    extracted: Optional[Dict[str, Any]] = None,
+    current_lead: Optional[Dict[str, Any]] = None,
+    use_llm: bool = False,
+) -> AgentDecision:
+    """
+    Step 1:
+    For now we return rule-based decisions.
+    Later we will add LLM-based decisioning here.
+    """
+    _ = use_llm
+    return rule_based_agent_decide(
+        message_text=message_text,
+        extracted=extracted,
+        current_lead=current_lead,
+    )
