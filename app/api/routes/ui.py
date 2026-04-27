@@ -1,1328 +1,1298 @@
-from textwrap import dedent
-
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse
 
-router = APIRouter(tags=["ui"])
+router = APIRouter()
+
+
+def ui_page() -> str:
+    return """
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Lead Agent UI</title>
+  <style>
+    :root {
+      --bg: #081225;
+      --panel: #0d1b34;
+      --panel-2: #102141;
+      --border: #2c4f87;
+      --text: #eef4ff;
+      --muted: #a9b9d4;
+      --blue: #2f8cff;
+      --blue-2: #4aa3ff;
+      --green: #39d353;
+      --red: #ff5d5d;
+      --orange: #ff9f43;
+      --gray: #8fa4c5;
+      --shadow: 0 18px 44px rgba(0, 0, 0, 0.24);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(59,130,246,0.16), transparent 28%),
+        linear-gradient(180deg, #07111f 0%, #081225 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .wrap {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .title h1 {
+      margin: 0 0 6px 0;
+      font-size: 38px;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+    }
+
+    .title p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .lang-switch {
+      display: inline-flex;
+      gap: 6px;
+      padding: 4px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .lang-btn,
+    button {
+      appearance: none;
+      border: 0;
+      cursor: pointer;
+      color: white;
+      font-weight: 700;
+      transition: 0.18s ease;
+    }
+
+    .lang-btn {
+      min-width: 42px;
+      height: 34px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid transparent;
+    }
+
+    .lang-btn.active {
+      background: var(--blue);
+      color: #fff;
+      border-color: rgba(255,255,255,0.16);
+      box-shadow: 0 6px 18px rgba(47,140,255,0.32);
+    }
+
+    .btn {
+      min-height: 40px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .btn-blue { background: linear-gradient(180deg, var(--blue-2), var(--blue)); }
+    .btn-blue:hover { transform: translateY(-1px); }
+    .btn-green { background: linear-gradient(180deg, #46e061, #2ec84a); }
+    .btn-red { background: linear-gradient(180deg, #ff7474, #ff4b4b); }
+    .btn-gray { background: linear-gradient(180deg, #c6d2e3, #a8b9d2); color: #18304f; }
+    .btn-ghost {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--text);
+      box-shadow: none;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+
+    .grid-bottom {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .card {
+      background: linear-gradient(180deg, rgba(16,33,65,0.96), rgba(11,24,48,0.96));
+      border: 1px solid rgba(95,132,194,0.36);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .card h2 {
+      margin: 0 0 14px 0;
+      font-size: 28px;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+    }
+
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .section-title h3 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    input, textarea, pre {
+      width: 100%;
+      background: rgba(6, 17, 33, 0.46);
+      border: 1px solid rgba(115, 148, 204, 0.32);
+      color: var(--text);
+      border-radius: 12px;
+      outline: none;
+    }
+
+    input, textarea {
+      padding: 12px 14px;
+      font-size: 14px;
+    }
+
+    textarea {
+      min-height: 118px;
+      resize: vertical;
+      font-family: inherit;
+      line-height: 1.45;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+      margin-top: 6px;
+      margin-bottom: 12px;
+    }
+
+    .raw-toggle {
+      margin-top: 12px;
+    }
+
+    details {
+      border: 1px solid rgba(115, 148, 204, 0.28);
+      border-radius: 12px;
+      background: rgba(6, 17, 33, 0.32);
+      overflow: hidden;
+    }
+
+    summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 12px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      border-bottom: 1px solid transparent;
+    }
+
+    summary::-webkit-details-marker { display: none; }
+    details[open] summary {
+      border-bottom-color: rgba(115, 148, 204, 0.2);
+      background: rgba(255,255,255,0.03);
+    }
+
+    pre {
+      margin: 0;
+      padding: 14px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 12px;
+      color: #d7e5ff;
+      border: 0;
+      border-radius: 0;
+    }
+
+    .summary-box {
+      display: grid;
+      gap: 10px;
+    }
+
+    .badges {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 4px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .badge-id { background: rgba(255,255,255,0.08); color: #fff; }
+    .badge-green { background: rgba(57,211,83,0.2); color: #9effad; border: 1px solid rgba(57,211,83,0.34); }
+    .badge-orange { background: rgba(255,159,67,0.18); color: #ffd39f; border: 1px solid rgba(255,159,67,0.34); }
+    .badge-gray { background: rgba(143,164,197,0.16); color: #d1def2; border: 1px solid rgba(143,164,197,0.28); }
+    .badge-blue { background: rgba(47,140,255,0.16); color: #bdddff; border: 1px solid rgba(47,140,255,0.32); }
+
+    .kv {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 10px;
+      align-items: start;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .kv .k { color: var(--muted); }
+    .kv .v { color: var(--text); font-weight: 600; }
+
+    .summary-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+
+    .metric {
+      background: rgba(7, 18, 36, 0.44);
+      border: 1px solid rgba(115,148,204,0.24);
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    .metric .label {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .metric .value {
+      font-size: 34px;
+      line-height: 1;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+
+    .list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .list-item {
+      background: rgba(7,18,36,0.42);
+      border: 1px solid rgba(115,148,204,0.24);
+      border-radius: 14px;
+      padding: 14px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .list-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .list-title {
+      font-weight: 800;
+      font-size: 15px;
+    }
+
+    .list-sub {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .list-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .footer {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .footer a {
+      color: #bdddff;
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    .toast-wrap {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      display: grid;
+      gap: 10px;
+      z-index: 9999;
+      max-width: 360px;
+    }
+
+    .toast {
+      background: rgba(8, 18, 37, 0.96);
+      border: 1px solid rgba(115,148,204,0.28);
+      color: #fff;
+      border-radius: 14px;
+      padding: 12px 14px;
+      box-shadow: var(--shadow);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .toast.success { border-color: rgba(57,211,83,0.35); }
+    .toast.error { border-color: rgba(255,93,93,0.35); }
+
+    @media (max-width: 1080px) {
+      .grid-2, .grid-bottom { grid-template-columns: 1fr; }
+      .grid-4 { grid-template-columns: 1fr 1fr; }
+      .kv { grid-template-columns: 1fr; gap: 4px; }
+    }
+
+    @media (max-width: 720px) {
+      .wrap { padding: 14px; }
+      .title h1 { font-size: 28px; }
+      .grid-4 { grid-template-columns: 1fr; }
+      .controls { justify-content: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="title">
+        <h1 id="pageTitle">ИИ-Агент для лидов</h1>
+        <p id="pageSubtitle">Готовый к демо MVP для входящих B2B-лидов, квалификации и передачи.</p>
+      </div>
+
+      <div class="controls">
+        <div class="lang-switch">
+          <button class="lang-btn" data-lang="ru">RU</button>
+          <button class="lang-btn" data-lang="en">EN</button>
+          <button class="lang-btn" data-lang="es">ES</button>
+        </div>
+
+        <button id="loadDemoBtn" class="btn btn-green">Загрузить демо</button>
+        <button id="resetDemoBtn" class="btn btn-red">Сбросить демо</button>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="section-title">
+          <h3 id="sendSectionTitle">Отправить сообщение</h3>
+        </div>
+
+        <input id="leadIdInput" placeholder="lead_id — необязательно для первого сообщения" />
+        <div style="height: 10px;"></div>
+        <textarea id="messageInput" placeholder="Введите входящее сообщение..."></textarea>
+
+        <div class="actions">
+          <button id="sendBtn" class="btn btn-blue">Отправить</button>
+          <button id="clearBtn" class="btn btn-gray">Очистить</button>
+        </div>
+
+        <div id="sendHint" class="hint">
+          После ответа lead_id автоматически подставится в сводку.
+        </div>
+
+        <div class="raw-toggle">
+          <details>
+            <summary id="rawResponseSummary">Сырой ответ</summary>
+            <pre id="sendResult">(пусто)</pre>
+          </details>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">
+          <h3 id="summarySectionTitle">Сводка по лиду</h3>
+        </div>
+
+        <input id="summaryLeadIdInput" placeholder="Введите lead_id" />
+        <div style="height: 10px;"></div>
+        <button id="loadSummaryBtn" class="btn btn-blue">Загрузить сводку</button>
+
+        <div style="height: 14px;"></div>
+
+        <div class="summary-box" id="summaryBox">
+          <div id="summaryEmpty" class="hint">Пока пусто.</div>
+        </div>
+
+        <div class="raw-toggle">
+          <details>
+            <summary id="rawSummarySummary">Сырой JSON сводки</summary>
+            <pre id="summaryResult">(пусто)</pre>
+          </details>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">
+        <h3 id="dashboardSectionTitle">Обзор панели</h3>
+        <button id="refreshDashboardBtn" class="btn btn-blue">Обновить панель</button>
+      </div>
+
+      <div class="grid-4">
+        <div class="metric">
+          <div class="label" id="metricLeadsLabel">Всего лидов</div>
+          <div id="metricLeads" class="value">0</div>
+        </div>
+        <div class="metric">
+          <div class="label" id="metricQualifiedLabel">Квалифицировано</div>
+          <div id="metricQualified" class="value">0</div>
+        </div>
+        <div class="metric">
+          <div class="label" id="metricInProgressLabel">Передачи в работе</div>
+          <div id="metricInProgress" class="value">0</div>
+        </div>
+        <div class="metric">
+          <div class="label" id="metricDoneLabel">Передачи завершены</div>
+          <div id="metricDone" class="value">0</div>
+        </div>
+      </div>
+
+      <div style="margin-top: 14px;">
+        <details>
+          <summary id="rawDashboardSummary">Сырой JSON панели</summary>
+          <pre id="dashboardResult">(пусто)</pre>
+        </details>
+      </div>
+    </div>
+
+    <div class="grid-bottom">
+      <div class="card">
+        <div class="section-title">
+          <h3 id="leadsSectionTitle">Последние лиды</h3>
+          <button id="refreshLeadsBtn" class="btn btn-blue">Обновить</button>
+        </div>
+
+        <div id="leadsList" class="list"></div>
+
+        <div style="margin-top: 14px;">
+          <details>
+            <summary id="rawLeadsSummary">Сырой JSON лидов</summary>
+            <pre id="leadsRaw">(пусто)</pre>
+          </details>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">
+          <h3 id="handoffsSectionTitle">Последние передачи</h3>
+          <button id="refreshHandoffsBtn" class="btn btn-blue">Обновить</button>
+        </div>
+
+        <div id="handoffsList" class="list"></div>
+
+        <div style="margin-top: 14px;">
+          <details>
+            <summary id="rawHandoffsSummary">Сырой JSON передач</summary>
+            <pre id="handoffsRaw">(пусто)</pre>
+          </details>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div id="footerText">Публичный демо-MVP задеплоен на Render.</div>
+      <div class="footer-links">
+        <a href="/ui" target="_blank">UI</a>
+        <a href="/docs" target="_blank">Docs</a>
+        <a href="/health" target="_blank">Health</a>
+        <a href="https://github.com/" target="_blank" rel="noreferrer">GitHub</a>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastWrap" class="toast-wrap"></div>
+
+  <script>
+    const i18n = {
+      ru: {
+        pageTitle: 'ИИ-Агент для лидов',
+        pageSubtitle: 'Готовый к демо MVP для входящих B2B-лидов, квалификации и передачи.',
+        sendSectionTitle: 'Отправить сообщение',
+        sendBtn: 'Отправить',
+        clearBtn: 'Очистить',
+        sendHint: 'После ответа lead_id автоматически подставится в сводку.',
+        rawResponseSummary: 'Сырой ответ',
+        summarySectionTitle: 'Сводка по лиду',
+        loadSummaryBtn: 'Загрузить сводку',
+        rawSummarySummary: 'Сырой JSON сводки',
+        dashboardSectionTitle: 'Обзор панели',
+        refreshDashboardBtn: 'Обновить панель',
+        metricLeadsLabel: 'Всего лидов',
+        metricQualifiedLabel: 'Квалифицировано',
+        metricInProgressLabel: 'Передачи в работе',
+        metricDoneLabel: 'Передачи завершены',
+        rawDashboardSummary: 'Сырой JSON панели',
+        leadsSectionTitle: 'Последние лиды',
+        refreshLeadsBtn: 'Обновить',
+        rawLeadsSummary: 'Сырой JSON лидов',
+        handoffsSectionTitle: 'Последние передачи',
+        refreshHandoffsBtn: 'Обновить',
+        rawHandoffsSummary: 'Сырой JSON передач',
+        loadDemoBtn: 'Загрузить демо',
+        resetDemoBtn: 'Сбросить демо',
+        footerText: 'Публичный демо-MVP задеплоен на Render.',
+        leadIdPlaceholder: 'lead_id — необязательно для первого сообщения',
+        summaryLeadIdPlaceholder: 'Введите lead_id',
+        messagePlaceholder: 'Введите входящее сообщение...',
+        empty: '(пусто)',
+        noSummary: 'Пока пусто.',
+        noLeads: 'Нет лидов.',
+        noHandoffs: 'Нет передач.',
+        company: 'Компания',
+        role: 'Роль',
+        contact: 'Контакт',
+        useCase: 'Сценарий использования',
+        assignedTo: 'Назначен',
+        lastSender: 'Последний отправитель',
+        lastIntent: 'Последнее намерение',
+        lastText: 'Последний текст',
+        notAssigned: 'Не назначен',
+        status_new: 'новый',
+        status_qualified: 'квалифицирован',
+        status_needs_followup: 'требует продолжения',
+        status_pending: 'готов к передаче',
+        status_in_progress: 'в работе',
+        status_done: 'завершено',
+        status_unknown: 'неизвестно',
+        moveToInProgress: 'Перевести в работу',
+        markDone: 'Отметить как завершённую',
+        open: 'Открыть',
+        toastDemoLoaded: 'Демо-данные загружены.',
+        toastDemoReset: 'Демо-данные сброшены.',
+        toastMessageSent: 'Сообщение обработано.',
+        toastSummaryLoaded: 'Сводка по лиду загружена.',
+        toastDashboardRefreshed: 'Панель обновлена.',
+        toastLeadsRefreshed: 'Лиды обновлены.',
+        toastHandoffsRefreshed: 'Передачи обновлены.',
+        toastHandoffUpdated: 'Статус передачи обновлён.',
+        toastError: 'Что-то пошло не так.',
+        polishedAssistantReply: 'Спасибо. Ключевые данные извлечены, лид квалифицирован и готов к передаче в работу.',
+      },
+      en: {
+        pageTitle: 'AI Lead Agent',
+        pageSubtitle: 'Demo-ready MVP for inbound B2B lead intake, qualification, and handoff.',
+        sendSectionTitle: 'Send message',
+        sendBtn: 'Send',
+        clearBtn: 'Clear',
+        sendHint: 'After the reply, lead_id will be automatically filled into summary.',
+        rawResponseSummary: 'Raw response',
+        summarySectionTitle: 'Lead summary',
+        loadSummaryBtn: 'Load summary',
+        rawSummarySummary: 'Raw summary JSON',
+        dashboardSectionTitle: 'Dashboard overview',
+        refreshDashboardBtn: 'Refresh dashboard',
+        metricLeadsLabel: 'Leads total',
+        metricQualifiedLabel: 'Qualified',
+        metricInProgressLabel: 'Handoffs in progress',
+        metricDoneLabel: 'Handoffs done',
+        rawDashboardSummary: 'Raw dashboard JSON',
+        leadsSectionTitle: 'Recent leads',
+        refreshLeadsBtn: 'Refresh',
+        rawLeadsSummary: 'Raw leads JSON',
+        handoffsSectionTitle: 'Recent handoffs',
+        refreshHandoffsBtn: 'Refresh',
+        rawHandoffsSummary: 'Raw handoffs JSON',
+        loadDemoBtn: 'Load demo data',
+        resetDemoBtn: 'Reset demo',
+        footerText: 'Public demo MVP deployed on Render.',
+        leadIdPlaceholder: 'lead_id — optional for the first message',
+        summaryLeadIdPlaceholder: 'Enter lead_id',
+        messagePlaceholder: 'Enter inbound message...',
+        empty: '(empty)',
+        noSummary: 'Empty.',
+        noLeads: 'No leads.',
+        noHandoffs: 'No handoffs.',
+        company: 'Company',
+        role: 'Role',
+        contact: 'Contact',
+        useCase: 'Use case',
+        assignedTo: 'Assigned to',
+        lastSender: 'Last sender',
+        lastIntent: 'Last intent',
+        lastText: 'Last text',
+        notAssigned: 'Unassigned',
+        status_new: 'new',
+        status_qualified: 'qualified',
+        status_needs_followup: 'needs follow-up',
+        status_pending: 'ready for handoff',
+        status_in_progress: 'in progress',
+        status_done: 'done',
+        status_unknown: 'unknown',
+        moveToInProgress: 'Set handoff in progress',
+        markDone: 'Set handoff done',
+        open: 'Open',
+        toastDemoLoaded: 'Demo data loaded.',
+        toastDemoReset: 'Demo data reset.',
+        toastMessageSent: 'Message processed.',
+        toastSummaryLoaded: 'Lead summary loaded.',
+        toastDashboardRefreshed: 'Dashboard refreshed.',
+        toastLeadsRefreshed: 'Leads refreshed.',
+        toastHandoffsRefreshed: 'Handoffs refreshed.',
+        toastHandoffUpdated: 'Handoff updated.',
+        toastError: 'Something went wrong.',
+        polishedAssistantReply: 'Thanks. Key data was extracted, the lead is qualified and ready for handoff.',
+      },
+      es: {
+        pageTitle: 'Agente IA para Leads',
+        pageSubtitle: 'MVP listo para demo de leads B2B entrantes, calificación y transferencia.',
+        sendSectionTitle: 'Enviar mensaje',
+        sendBtn: 'Enviar',
+        clearBtn: 'Limpiar',
+        sendHint: 'Después de la respuesta, el lead_id se completará automáticamente en el resumen.',
+        rawResponseSummary: 'Respuesta bruta',
+        summarySectionTitle: 'Resumen del lead',
+        loadSummaryBtn: 'Cargar resumen',
+        rawSummarySummary: 'JSON bruto del resumen',
+        dashboardSectionTitle: 'Resumen del panel',
+        refreshDashboardBtn: 'Actualizar panel',
+        metricLeadsLabel: 'Leads totales',
+        metricQualifiedLabel: 'Calificados',
+        metricInProgressLabel: 'Transferencias en progreso',
+        metricDoneLabel: 'Transferencias completadas',
+        rawDashboardSummary: 'JSON bruto del panel',
+        leadsSectionTitle: 'Leads recientes',
+        refreshLeadsBtn: 'Actualizar',
+        rawLeadsSummary: 'JSON bruto de leads',
+        handoffsSectionTitle: 'Transferencias recientes',
+        refreshHandoffsBtn: 'Actualizar',
+        rawHandoffsSummary: 'JSON bruto de transferencias',
+        loadDemoBtn: 'Cargar demo',
+        resetDemoBtn: 'Restablecer demo',
+        footerText: 'MVP público de demo desplegado en Render.',
+        leadIdPlaceholder: 'lead_id — opcional para el primer mensaje',
+        summaryLeadIdPlaceholder: 'Ingresa lead_id',
+        messagePlaceholder: 'Ingresa el mensaje entrante...',
+        empty: '(vacío)',
+        noSummary: 'Vacío.',
+        noLeads: 'No hay leads.',
+        noHandoffs: 'No hay transferencias.',
+        company: 'Empresa',
+        role: 'Rol',
+        contact: 'Contacto',
+        useCase: 'Caso de uso',
+        assignedTo: 'Asignado a',
+        lastSender: 'Último remitente',
+        lastIntent: 'Última intención',
+        lastText: 'Último texto',
+        notAssigned: 'Sin asignar',
+        status_new: 'nuevo',
+        status_qualified: 'calificado',
+        status_needs_followup: 'requiere seguimiento',
+        status_pending: 'listo para transferencia',
+        status_in_progress: 'en progreso',
+        status_done: 'completado',
+        status_unknown: 'desconocido',
+        moveToInProgress: 'Mover a en progreso',
+        markDone: 'Marcar como completada',
+        open: 'Abrir',
+        toastDemoLoaded: 'Datos demo cargados.',
+        toastDemoReset: 'Datos demo restablecidos.',
+        toastMessageSent: 'Mensaje procesado.',
+        toastSummaryLoaded: 'Resumen del lead cargado.',
+        toastDashboardRefreshed: 'Panel actualizado.',
+        toastLeadsRefreshed: 'Leads actualizados.',
+        toastHandoffsRefreshed: 'Transferencias actualizadas.',
+        toastHandoffUpdated: 'Transferencia actualizada.',
+        toastError: 'Algo salió mal.',
+        polishedAssistantReply: 'Gracias. Los datos clave fueron extraídos, el lead quedó calificado y listo para transferencia.',
+      }
+    };
+
+    let currentLang = localStorage.getItem('ui_lang') || 'ru';
+    let lastSummary = null;
+    let lastDashboard = null;
+    let lastLeads = [];
+    let lastHandoffs = [];
+
+    const $ = (id) => document.getElementById(id);
+    const t = (key) => (i18n[currentLang] && i18n[currentLang][key]) || key;
+
+    function showToast(message, kind='success') {
+      const wrap = $('toastWrap');
+      const toast = document.createElement('div');
+      toast.className = `toast ${kind}`;
+      toast.textContent = message;
+      wrap.appendChild(toast);
+      setTimeout(() => toast.remove(), 2600);
+    }
+
+    function safeJson(obj) {
+      try { return JSON.stringify(obj, null, 2); }
+      catch { return String(obj); }
+    }
+
+    function setLang(lang) {
+      currentLang = lang;
+      localStorage.setItem('ui_lang', lang);
+
+      document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.lang === lang);
+      });
+
+      $('pageTitle').textContent = t('pageTitle');
+      $('pageSubtitle').textContent = t('pageSubtitle');
+      $('sendSectionTitle').textContent = t('sendSectionTitle');
+      $('sendBtn').textContent = t('sendBtn');
+      $('clearBtn').textContent = t('clearBtn');
+      $('sendHint').textContent = t('sendHint');
+      $('rawResponseSummary').textContent = t('rawResponseSummary');
+      $('summarySectionTitle').textContent = t('summarySectionTitle');
+      $('loadSummaryBtn').textContent = t('loadSummaryBtn');
+      $('rawSummarySummary').textContent = t('rawSummarySummary');
+      $('dashboardSectionTitle').textContent = t('dashboardSectionTitle');
+      $('refreshDashboardBtn').textContent = t('refreshDashboardBtn');
+      $('metricLeadsLabel').textContent = t('metricLeadsLabel');
+      $('metricQualifiedLabel').textContent = t('metricQualifiedLabel');
+      $('metricInProgressLabel').textContent = t('metricInProgressLabel');
+      $('metricDoneLabel').textContent = t('metricDoneLabel');
+      $('rawDashboardSummary').textContent = t('rawDashboardSummary');
+      $('leadsSectionTitle').textContent = t('leadsSectionTitle');
+      $('refreshLeadsBtn').textContent = t('refreshLeadsBtn');
+      $('rawLeadsSummary').textContent = t('rawLeadsSummary');
+      $('handoffsSectionTitle').textContent = t('handoffsSectionTitle');
+      $('refreshHandoffsBtn').textContent = t('refreshHandoffsBtn');
+      $('rawHandoffsSummary').textContent = t('rawHandoffsSummary');
+      $('loadDemoBtn').textContent = t('loadDemoBtn');
+      $('resetDemoBtn').textContent = t('resetDemoBtn');
+      $('footerText').textContent = t('footerText');
+
+      $('leadIdInput').placeholder = t('leadIdPlaceholder');
+      $('summaryLeadIdInput').placeholder = t('summaryLeadIdPlaceholder');
+      $('messageInput').placeholder = t('messagePlaceholder');
+
+      if ($('sendResult').textContent === '(пусто)' || $('sendResult').textContent === '(empty)' || $('sendResult').textContent === '(vacío)') {
+        $('sendResult').textContent = t('empty');
+      }
+      if ($('summaryResult').textContent === '(пусто)' || $('summaryResult').textContent === '(empty)' || $('summaryResult').textContent === '(vacío)') {
+        $('summaryResult').textContent = t('empty');
+      }
+      if ($('dashboardResult').textContent === '(пусто)' || $('dashboardResult').textContent === '(empty)' || $('dashboardResult').textContent === '(vacío)') {
+        $('dashboardResult').textContent = t('empty');
+      }
+      if ($('leadsRaw').textContent === '(пусто)' || $('leadsRaw').textContent === '(empty)' || $('leadsRaw').textContent === '(vacío)') {
+        $('leadsRaw').textContent = t('empty');
+      }
+      if ($('handoffsRaw').textContent === '(пусто)' || $('handoffsRaw').textContent === '(empty)' || $('handoffsRaw').textContent === '(vacío)') {
+        $('handoffsRaw').textContent = t('empty');
+      }
+
+      renderSummary(lastSummary);
+      renderDashboard(lastDashboard);
+      renderLeads(lastLeads);
+      renderHandoffs(lastHandoffs);
+    }
+
+    function mapStatus(status) {
+      if (!status) return t('status_unknown');
+      const key = `status_${String(status).toLowerCase()}`;
+      return t(key);
+    }
+
+    function badgeClass(status) {
+      const s = String(status || '').toLowerCase();
+      if (['qualified', 'done'].includes(s)) return 'badge-green';
+      if (['pending', 'needs_followup'].includes(s)) return 'badge-orange';
+      if (['in_progress'].includes(s)) return 'badge-blue';
+      return 'badge-gray';
+    }
+
+    function prettyAssistantText(text, sender) {
+      const raw = String(text || '').trim();
+      if (!raw) return t('empty');
+
+      const normalized = raw.toLowerCase();
+
+      const known = [
+        'понял ваш запрос. спасибо, базовую информацию получил.',
+        'thanks. basic information received.',
+        'gracias. información básica recibida.'
+      ];
+
+      if (sender === 'assistant' && known.includes(normalized)) {
+        return t('polishedAssistantReply');
+      }
+      return raw;
+    }
+
+    function normalizeSummaryForDisplay(summary) {
+      if (!summary || !summary.lead) return summary;
+
+      const clone = JSON.parse(JSON.stringify(summary));
+      const lead = clone.lead || {};
+      const handoff = clone.handoff || {};
+      const conversation = clone.conversation || {};
+
+      if (!handoff.assigned_to) {
+        handoff.assigned_to = t('notAssigned');
+      }
+
+      conversation.last_text = prettyAssistantText(conversation.last_text, conversation.last_sender);
+
+      clone.lead = lead;
+      clone.handoff = handoff;
+      clone.conversation = conversation;
+      return clone;
+    }
+
+    async function fetchJSON(url, options={}) {
+      const res = await fetch(url, {
+        headers: { 'Content-Type': 'application/json' },
+        ...options
+      });
+
+      const text = await res.text();
+      let data = null;
+
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch {
+        data = { raw: text };
+      }
+
+      if (!res.ok) {
+        const errText = data && data.detail ? data.detail : text || res.statusText;
+        throw new Error(errText);
+      }
+
+      return data;
+    }
+
+    function renderSummary(summary) {
+      lastSummary = summary;
+      const box = $('summaryBox');
+      box.innerHTML = '';
+
+      if (!summary || !summary.lead) {
+        const empty = document.createElement('div');
+        empty.id = 'summaryEmpty';
+        empty.className = 'hint';
+        empty.textContent = t('noSummary');
+        box.appendChild(empty);
+        return;
+      }
+
+      const data = normalizeSummaryForDisplay(summary);
+      const lead = data.lead || {};
+      const handoff = data.handoff || {};
+      const convo = data.conversation || {};
+
+      const wrap = document.createElement('div');
+      wrap.className = 'summary-box';
+
+      const badges = document.createElement('div');
+      badges.className = 'badges';
+      badges.innerHTML = `
+        <span class="badge badge-id">lead_id: ${lead.id ?? '-'}</span>
+        <span class="badge ${badgeClass(lead.lead_status)}">${mapStatus(lead.lead_status)}</span>
+        <span class="badge ${badgeClass(handoff.handoff_status || 'pending')}">${mapStatus(handoff.handoff_status || 'pending')}</span>
+      `;
+      wrap.appendChild(badges);
+
+      const rows = [
+        [t('company'), lead.company || t('empty')],
+        [t('role'), lead.role || t('empty')],
+        [t('contact'), lead.contact || t('empty')],
+        [t('useCase'), lead.use_case || t('empty')],
+        [t('assignedTo'), handoff.assigned_to || t('notAssigned')],
+        [t('lastSender'), convo.last_sender || t('empty')],
+        [t('lastIntent'), convo.last_intent || t('empty')],
+        [t('lastText'), convo.last_text || t('empty')],
+      ];
+
+      rows.forEach(([k, v]) => {
+        const row = document.createElement('div');
+        row.className = 'kv';
+        row.innerHTML = `<div class="k">${k}:</div><div class="v">${v}</div>`;
+        wrap.appendChild(row);
+      });
+
+      const actions = document.createElement('div');
+      actions.className = 'summary-actions';
+      actions.innerHTML = `
+        <button class="btn btn-gray" id="setInProgressBtn">${t('moveToInProgress')}</button>
+        <button class="btn btn-green" id="setDoneBtn">${t('markDone')}</button>
+      `;
+      wrap.appendChild(actions);
+      box.appendChild(wrap);
+
+      const leadId = lead.id;
+      $('setInProgressBtn').onclick = async () => {
+        if (!leadId) return;
+        await tryHandoffAction(leadId, 'in_progress');
+      };
+
+      $('setDoneBtn').onclick = async () => {
+        if (!leadId) return;
+        await tryHandoffAction(leadId, 'done');
+      };
+    }
+
+    function renderDashboard(data) {
+      lastDashboard = data;
+      $('metricLeads').textContent = data?.leads_total ?? 0;
+      $('metricQualified').textContent = data?.qualified_total ?? 0;
+      $('metricInProgress').textContent = data?.handoffs_in_progress ?? 0;
+      $('metricDone').textContent = data?.handoffs_done ?? 0;
+      $('dashboardResult').textContent = data ? safeJson(data) : t('empty');
+    }
+
+    function renderLeads(items) {
+      lastLeads = Array.isArray(items) ? items : [];
+      $('leadsRaw').textContent = lastLeads.length ? safeJson(lastLeads) : t('empty');
+
+      const root = $('leadsList');
+      root.innerHTML = '';
+
+      if (!lastLeads.length) {
+        const empty = document.createElement('div');
+        empty.className = 'hint';
+        empty.textContent = t('noLeads');
+        root.appendChild(empty);
+        return;
+      }
+
+      lastLeads.forEach((item) => {
+        const el = document.createElement('div');
+        el.className = 'list-item';
+        el.innerHTML = `
+          <div class="list-top">
+            <div>
+              <div class="list-title">${item.company || item.contact || ('lead_id ' + item.id)}</div>
+              <div class="list-sub">${t('role')}: ${item.role || t('empty')} · ${t('contact')}: ${item.contact || t('empty')}</div>
+            </div>
+            <div class="badges">
+              <span class="badge badge-id">lead_id: ${item.id ?? '-'}</span>
+              <span class="badge ${badgeClass(item.lead_status)}">${mapStatus(item.lead_status)}</span>
+            </div>
+          </div>
+          <div class="list-sub">${item.use_case || t('empty')}</div>
+          <div class="list-actions">
+            <button class="btn btn-blue open-lead-btn" data-lead-id="${item.id}">${t('open')}</button>
+          </div>
+        `;
+        root.appendChild(el);
+      });
+
+      root.querySelectorAll('.open-lead-btn').forEach(btn => {
+        btn.onclick = async () => {
+          const id = btn.dataset.leadId;
+          $('summaryLeadIdInput').value = id;
+          await loadSummary(id);
+        };
+      });
+    }
+
+    function renderHandoffs(items) {
+      lastHandoffs = Array.isArray(items) ? items : [];
+      $('handoffsRaw').textContent = lastHandoffs.length ? safeJson(lastHandoffs) : t('empty');
+
+      const root = $('handoffsList');
+      root.innerHTML = '';
+
+      if (!lastHandoffs.length) {
+        const empty = document.createElement('div');
+        empty.className = 'hint';
+        empty.textContent = t('noHandoffs');
+        root.appendChild(empty);
+        return;
+      }
+
+      lastHandoffs.forEach((item) => {
+        const el = document.createElement('div');
+        el.className = 'list-item';
+
+        const assigned = item.assigned_to || t('notAssigned');
+        const status = item.handoff_status || 'pending';
+
+        el.innerHTML = `
+          <div class="list-top">
+            <div>
+              <div class="list-title">${item.company || item.contact || ('lead_id ' + item.lead_id)}</div>
+              <div class="list-sub">${t('assignedTo')}: ${assigned}</div>
+            </div>
+            <div class="badges">
+              <span class="badge badge-id">lead_id: ${item.lead_id ?? '-'}</span>
+              <span class="badge ${badgeClass(status)}">${mapStatus(status)}</span>
+            </div>
+          </div>
+          <div class="list-sub">${item.reason || t('empty')}</div>
+        `;
+        root.appendChild(el);
+      });
+    }
+
+    async function tryHandoffAction(leadId, action) {
+      const endpoints = action === 'in_progress'
+        ? [`/handoffs/${leadId}/in-progress`, `/handoffs/${leadId}/start`, `/handoffs/${leadId}/in_progress`]
+        : [`/handoffs/${leadId}/done`, `/handoffs/${leadId}/complete`];
+
+      for (const url of endpoints) {
+        try {
+          await fetchJSON(url, { method: 'POST' });
+          showToast(t('toastHandoffUpdated'));
+          await refreshAll();
+          return;
+        } catch (_) {}
+      }
+
+      showToast(t('toastError'), 'error');
+    }
+
+    async function sendMessage() {
+      const leadId = $('leadIdInput').value.trim();
+      const messageText = $('messageInput').value.trim();
+
+      if (!messageText) {
+        showToast(t('toastError'), 'error');
+        return;
+      }
+
+      const payload = { message_text: messageText };
+      if (leadId) payload.lead_id = Number(leadId);
+
+      try {
+        const data = await fetchJSON('/chat/message', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+
+        $('sendResult').textContent = safeJson(data);
+        const newLeadId = data?.lead_id ?? data?.lead?.id;
+
+        if (newLeadId) {
+          $('leadIdInput').value = String(newLeadId);
+          $('summaryLeadIdInput').value = String(newLeadId);
+          await loadSummary(String(newLeadId), false);
+        }
+
+        await refreshAll(false);
+        showToast(t('toastMessageSent'));
+      } catch (e) {
+        $('sendResult').textContent = String(e.message || e);
+        showToast(t('toastError'), 'error');
+      }
+    }
+
+    async function loadSummary(id = null, toast = true) {
+      const leadId = id || $('summaryLeadIdInput').value.trim();
+      if (!leadId) return;
+
+      try {
+        const data = await fetchJSON(`/leads/${leadId}/summary`);
+        $('summaryResult').textContent = safeJson(data);
+        renderSummary(data);
+        if (toast) showToast(t('toastSummaryLoaded'));
+      } catch (e) {
+        $('summaryResult').textContent = String(e.message || e);
+        renderSummary(null);
+        showToast(t('toastError'), 'error');
+      }
+    }
+
+    async function loadDashboard(toast = true) {
+      try {
+        const data = await fetchJSON('/dashboard/overview');
+        renderDashboard(data);
+        if (toast) showToast(t('toastDashboardRefreshed'));
+      } catch (e) {
+        $('dashboardResult').textContent = String(e.message || e);
+        showToast(t('toastError'), 'error');
+      }
+    }
+
+    async function loadLeads(toast = true) {
+      try {
+        const data = await fetchJSON('/leads');
+        renderLeads(data || []);
+        if (toast) showToast(t('toastLeadsRefreshed'));
+      } catch (e) {
+        $('leadsRaw').textContent = String(e.message || e);
+        renderLeads([]);
+        showToast(t('toastError'), 'error');
+      }
+    }
+
+    async function loadHandoffs(toast = true) {
+      try {
+        const data = await fetchJSON('/handoffs');
+        renderHandoffs(data || []);
+        if (toast) showToast(t('toastHandoffsRefreshed'));
+      } catch (e) {
+        $('handoffsRaw').textContent = String(e.message || e);
+        renderHandoffs([]);
+        showToast(t('toastError'), 'error');
+      }
+    }
+
+    async function refreshAll(toast = false) {
+      await Promise.all([
+        loadDashboard(toast),
+        loadLeads(toast),
+        loadHandoffs(toast)
+      ]);
+    }
+
+    async function loadDemo() {
+      const candidates = ['/demo/load', '/demo/load-data', '/demo/seed'];
+
+      for (const url of candidates) {
+        try {
+          const data = await fetchJSON(url, { method: 'POST' });
+          $('sendResult').textContent = safeJson(data);
+          await refreshAll(false);
+          showToast(t('toastDemoLoaded'));
+          return;
+        } catch (_) {}
+      }
+
+      showToast(t('toastError'), 'error');
+    }
+
+    async function resetDemo() {
+      const candidates = ['/demo/reset', '/demo/reset-data'];
+
+      for (const url of candidates) {
+        try {
+          const data = await fetchJSON(url, { method: 'POST' });
+          $('sendResult').textContent = safeJson(data);
+          $('leadIdInput').value = '';
+          $('summaryLeadIdInput').value = '';
+          $('messageInput').value = '';
+          $('summaryResult').textContent = t('empty');
+          renderSummary(null);
+          await refreshAll(false);
+          showToast(t('toastDemoReset'));
+          return;
+        } catch (_) {}
+      }
+
+      showToast(t('toastError'), 'error');
+    }
+
+    function clearForm() {
+      $('leadIdInput').value = '';
+      $('messageInput').value = '';
+      $('sendResult').textContent = t('empty');
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.addEventListener('click', () => setLang(btn.dataset.lang));
+      });
+
+      $('sendBtn').addEventListener('click', sendMessage);
+      $('clearBtn').addEventListener('click', clearForm);
+      $('loadSummaryBtn').addEventListener('click', () => loadSummary());
+      $('refreshDashboardBtn').addEventListener('click', () => loadDashboard());
+      $('refreshLeadsBtn').addEventListener('click', () => loadLeads());
+      $('refreshHandoffsBtn').addEventListener('click', () => loadHandoffs());
+      $('loadDemoBtn').addEventListener('click', loadDemo);
+      $('resetDemoBtn').addEventListener('click', resetDemo);
+
+      $('sendResult').textContent = t('empty');
+      $('summaryResult').textContent = t('empty');
+      $('dashboardResult').textContent = t('empty');
+      $('leadsRaw').textContent = t('empty');
+      $('handoffsRaw').textContent = t('empty');
+
+      setLang(currentLang);
+      renderSummary(null);
+      renderDashboard(null);
+      renderLeads([]);
+      renderHandoffs([]);
+
+      await refreshAll(false);
+    });
+  </script>
+</body>
+</html>
+"""
 
 
 @router.get("/ui", response_class=HTMLResponse)
-def ui_page() -> str:
-    return dedent(
-        """
-        <!doctype html>
-        <html lang="en">
-        <head>
-          <meta charset="UTF-8" />
-          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          <title>AI Lead Agent</title>
-          <style>
-            * { box-sizing: border-box; }
-
-            :root {
-              --bg: #0f172a;
-              --panel: #14213d;
-              --border: #334155;
-              --text: #e2e8f0;
-              --muted: #94a3b8;
-              --accent: #3b82f6;
-              --accent-hover: #2563eb;
-              --secondary: #64748b;
-              --secondary-hover: #475569;
-              --success: #22c55e;
-              --success-hover: #16a34a;
-              --danger: #ef4444;
-              --danger-hover: #dc2626;
-              --cyan: #7dd3fc;
-              --warning: #f59e0b;
-            }
-
-            body {
-              margin: 0;
-              font-family: Arial, sans-serif;
-              background: var(--bg);
-              color: var(--text);
-            }
-
-            .wrap {
-              max-width: 1280px;
-              margin: 0 auto;
-              padding: 22px;
-            }
-
-            .section-title {
-              display: flex;
-              justify-content: space-between;
-              align-items: flex-start;
-              gap: 18px;
-              flex-wrap: wrap;
-              margin-bottom: 18px;
-            }
-
-            h1 {
-              margin: 0 0 8px 0;
-              font-size: 24px;
-              line-height: 1.15;
-            }
-
-            h2 {
-              margin: 0 0 14px 0;
-              font-size: 18px;
-              line-height: 1.2;
-            }
-
-            .muted {
-              color: var(--muted);
-              font-size: 13px;
-              line-height: 1.4;
-            }
-
-            .header-actions {
-              display: flex;
-              align-items: center;
-              justify-content: flex-end;
-              gap: 12px;
-              flex-wrap: wrap;
-            }
-
-            .lang-switch {
-              display: flex;
-              gap: 6px;
-              align-items: center;
-            }
-
-            .grid {
-              display: grid;
-              grid-template-columns: 1fr 1fr;
-              gap: 16px;
-              margin-bottom: 16px;
-            }
-
-            .card {
-              background: linear-gradient(180deg, rgba(20,33,61,0.95) 0%, rgba(15,23,42,0.98) 100%);
-              border: 1px solid var(--border);
-              border-radius: 14px;
-              padding: 16px;
-              box-shadow: 0 6px 24px rgba(0,0,0,0.18);
-            }
-
-            .full-width {
-              margin-bottom: 16px;
-            }
-
-            .section-row {
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              gap: 12px;
-              flex-wrap: wrap;
-              margin-bottom: 14px;
-            }
-
-            input,
-            textarea,
-            pre {
-              width: 100%;
-              border: 1px solid #475569;
-              background: rgba(15,23,42,0.8);
-              color: var(--text);
-              border-radius: 10px;
-            }
-
-            input,
-            textarea {
-              padding: 12px 14px;
-              font-size: 14px;
-              outline: none;
-              transition: border-color 0.15s ease, box-shadow 0.15s ease;
-            }
-
-            input:focus,
-            textarea:focus {
-              border-color: var(--cyan);
-              box-shadow: 0 0 0 3px rgba(125, 211, 252, 0.15);
-            }
-
-            textarea {
-              min-height: 118px;
-              resize: vertical;
-              margin-top: 10px;
-            }
-
-            button {
-              border: 0;
-              cursor: pointer;
-              color: white;
-              background: var(--accent);
-              border-radius: 10px;
-              padding: 10px 14px;
-              font-size: 14px;
-              font-weight: 700;
-              transition: transform 0.04s ease, background 0.15s ease, opacity 0.15s ease;
-            }
-
-            button:hover { background: var(--accent-hover); }
-            button:active { transform: translateY(1px); }
-            button:disabled { opacity: 0.65; cursor: not-allowed; }
-
-            .secondary-btn {
-              background: var(--secondary);
-            }
-
-            .secondary-btn:hover {
-              background: var(--secondary-hover);
-            }
-
-            .success-btn {
-              background: var(--success);
-            }
-
-            .success-btn:hover {
-              background: var(--success-hover);
-            }
-
-            .danger-btn {
-              background: var(--danger);
-            }
-
-            .danger-btn:hover {
-              background: var(--danger-hover);
-            }
-
-            .small-btn,
-            .lang-btn {
-              width: auto;
-              margin: 0;
-              padding: 6px 10px;
-              font-size: 12px;
-              border-radius: 8px;
-            }
-
-            .lang-btn.active {
-              outline: 2px solid var(--cyan);
-              outline-offset: 1px;
-            }
-
-            .top-actions {
-              display: flex;
-              gap: 10px;
-              margin-top: 12px;
-              margin-bottom: 18px;
-              align-items: center;
-              flex-wrap: wrap;
-            }
-
-            .top-actions button {
-              width: auto;
-              margin: 0;
-              padding: 10px 14px;
-            }
-
-            .hint {
-              display: block;
-              padding-top: 16px;
-              font-size: 13px;
-              color: var(--muted);
-              line-height: 1.4;
-            }
-
-            .stats {
-              display: grid;
-              grid-template-columns: repeat(4, 1fr);
-              gap: 14px;
-              margin-bottom: 14px;
-            }
-
-            .stat {
-              border: 1px solid var(--border);
-              background: rgba(15,23,42,0.7);
-              border-radius: 12px;
-              padding: 14px;
-            }
-
-            .stat-label {
-              color: var(--muted);
-              font-size: 12px;
-              margin-bottom: 8px;
-            }
-
-            .stat-value {
-              font-size: 32px;
-              font-weight: 700;
-              line-height: 1;
-            }
-
-            .pill {
-              display: inline-block;
-              padding: 4px 10px;
-              border-radius: 999px;
-              font-size: 12px;
-              font-weight: 700;
-              margin-right: 6px;
-              margin-bottom: 6px;
-            }
-
-            .pill-neutral { background: #1e293b; color: #e2e8f0; }
-            .pill-qualified { background: #166534; color: #dcfce7; }
-            .pill-followup { background: #92400e; color: #fef3c7; }
-            .pill-pending { background: #9a3412; color: #ffedd5; }
-            .pill-progress { background: #1d4ed8; color: #dbeafe; }
-            .pill-done { background: #15803d; color: #dcfce7; }
-
-            .summary-box,
-            .table-wrap {
-              border: 1px solid var(--border);
-              background: rgba(15,23,42,0.42);
-              border-radius: 12px;
-              padding: 12px;
-            }
-
-            .summary-box.empty,
-            .table-wrap.empty {
-              color: var(--muted);
-            }
-
-            .summary-row {
-              margin: 8px 0;
-              line-height: 1.45;
-            }
-
-            .summary-key {
-              color: var(--muted);
-              display: inline-block;
-              min-width: 132px;
-            }
-
-            table {
-              width: 100%;
-              border-collapse: collapse;
-            }
-
-            th,
-            td {
-              text-align: left;
-              padding: 10px 8px;
-              border-bottom: 1px solid rgba(148,163,184,0.18);
-              vertical-align: middle;
-              font-size: 14px;
-            }
-
-            th {
-              color: var(--muted);
-              font-size: 12px;
-              font-weight: 700;
-              text-transform: uppercase;
-              letter-spacing: 0.04em;
-            }
-
-            tr:last-child td {
-              border-bottom: 0;
-            }
-
-            details {
-              margin-top: 14px;
-              border: 1px solid var(--border);
-              border-radius: 12px;
-              background: rgba(15,23,42,0.35);
-              overflow: hidden;
-            }
-
-            summary {
-              list-style: none;
-              cursor: pointer;
-              padding: 12px 14px;
-              font-size: 13px;
-              font-weight: 700;
-              color: var(--text);
-              background: rgba(2,6,23,0.25);
-            }
-
-            summary::-webkit-details-marker {
-              display: none;
-            }
-
-            pre {
-              margin: 0;
-              padding: 12px;
-              overflow: auto;
-              white-space: pre-wrap;
-              word-break: break-word;
-              font-size: 12px;
-              color: #cbd5e1;
-            }
-
-            .footer {
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              gap: 12px;
-              flex-wrap: wrap;
-              margin-top: 18px;
-              padding: 14px 16px;
-              border: 1px solid var(--border);
-              border-radius: 14px;
-              background: rgba(15,23,42,0.4);
-            }
-
-            .footer-links {
-              display: flex;
-              gap: 10px;
-              flex-wrap: wrap;
-            }
-
-            .footer a {
-              color: var(--cyan);
-              text-decoration: none;
-              font-size: 13px;
-            }
-
-            .footer a:hover {
-              text-decoration: underline;
-            }
-
-            .toast-wrap {
-              position: fixed;
-              top: 16px;
-              right: 16px;
-              z-index: 9999;
-              display: flex;
-              flex-direction: column;
-              gap: 10px;
-              pointer-events: none;
-            }
-
-            .toast {
-              min-width: 240px;
-              max-width: 360px;
-              padding: 12px 14px;
-              border-radius: 12px;
-              border: 1px solid rgba(255,255,255,0.08);
-              box-shadow: 0 10px 24px rgba(0,0,0,0.25);
-              color: white;
-              font-size: 13px;
-              line-height: 1.4;
-              opacity: 0;
-              transform: translateY(-6px);
-              animation: toast-in 0.18s ease forwards;
-            }
-
-            .toast.success { background: rgba(22,163,74,0.95); }
-            .toast.info { background: rgba(37,99,235,0.95); }
-            .toast.warn { background: rgba(217,119,6,0.95); }
-            .toast.error { background: rgba(220,38,38,0.95); }
-
-            @keyframes toast-in {
-              to {
-                opacity: 1;
-                transform: translateY(0);
-              }
-            }
-
-            @media (max-width: 980px) {
-              .grid {
-                grid-template-columns: 1fr;
-              }
-
-              .stats {
-                grid-template-columns: 1fr 1fr;
-              }
-            }
-
-            @media (max-width: 640px) {
-              .wrap {
-                padding: 14px;
-              }
-
-              .stats {
-                grid-template-columns: 1fr;
-              }
-
-              .section-title {
-                margin-bottom: 14px;
-              }
-
-              h1 {
-                font-size: 22px;
-              }
-
-              .toast-wrap {
-                left: 14px;
-                right: 14px;
-              }
-
-              .toast {
-                min-width: auto;
-                max-width: none;
-              }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="toast-wrap" id="toastWrap"></div>
-
-          <div class="wrap">
-            <div class="section-title">
-              <div>
-                <h1 id="appTitle">AI Lead Agent</h1>
-                <div class="muted" id="subtitle">Demo-ready MVP for inbound B2B lead intake, qualification, and handoff.</div>
-              </div>
-
-              <div class="header-actions">
-                <div class="lang-switch">
-                  <button id="langRu" class="secondary-btn lang-btn" onclick="setLang('ru')">RU</button>
-                  <button id="langEn" class="secondary-btn lang-btn" onclick="setLang('en')">EN</button>
-                  <button id="langEs" class="secondary-btn lang-btn" onclick="setLang('es')">ES</button>
-                </div>
-
-                <div class="top-actions" style="margin: 0;">
-                  <button id="btnLoadDemo" class="success-btn" onclick="seedDemo()">Load demo data</button>
-                  <button id="btnResetDemo" class="danger-btn" onclick="resetDemo()">Reset demo</button>
-                </div>
-              </div>
-            </div>
-
-            <div class="grid">
-              <div class="card">
-                <h2 id="sendTitle">Send message</h2>
-                <input id="leadIdInput" placeholder="lead_id — optional for the first message" />
-                <textarea id="messageInput" placeholder="Enter inbound message..."></textarea>
-
-                <div class="top-actions">
-                  <button id="btnSend" onclick="sendMessage()">Send</button>
-                  <button id="btnClear" class="secondary-btn" onclick="clearMessageForm()">Clear</button>
-                </div>
-
-                <div class="hint" id="sendHint">After the reply, lead_id will be automatically filled into summary.</div>
-
-                <details>
-                  <summary id="rawResponseLabel">Raw response</summary>
-                  <pre id="sendResult">Empty.</pre>
-                </details>
-              </div>
-
-              <div class="card" id="summaryCard">
-                <h2 id="summaryTitle">Lead summary</h2>
-                <input id="summaryLeadId" placeholder="Enter lead_id" />
-
-                <div class="top-actions">
-                  <button id="btnLoadSummary" onclick="loadLeadSummary(true)">Load summary</button>
-                </div>
-
-                <div id="summaryCards" class="summary-box empty">Empty.</div>
-                <div id="summaryActions" class="top-actions"></div>
-
-                <details>
-                  <summary id="rawSummaryLabel">Raw summary JSON</summary>
-                  <pre id="summaryResult">Empty.</pre>
-                </details>
-              </div>
-            </div>
-
-            <div class="card full-width">
-              <div class="section-row">
-                <h2 id="dashboardTitle">Dashboard overview</h2>
-                <button id="btnRefreshDashboard" class="small-btn" onclick="loadDashboard(true)">Refresh dashboard</button>
-              </div>
-
-              <div class="stats">
-                <div class="stat">
-                  <div class="stat-label" id="statLeadsLabel">Leads total</div>
-                  <div class="stat-value" id="statLeads">0</div>
-                </div>
-                <div class="stat">
-                  <div class="stat-label" id="statQualifiedLabel">Qualified</div>
-                  <div class="stat-value" id="statQualified">0</div>
-                </div>
-                <div class="stat">
-                  <div class="stat-label" id="statInProgressLabel">Handoffs in progress</div>
-                  <div class="stat-value" id="statInProgress">0</div>
-                </div>
-                <div class="stat">
-                  <div class="stat-label" id="statDoneLabel">Handoffs done</div>
-                  <div class="stat-value" id="statDone">0</div>
-                </div>
-              </div>
-
-              <details>
-                <summary id="rawDashboardLabel">Raw dashboard JSON</summary>
-                <pre id="dashboardResult">Empty.</pre>
-              </details>
-            </div>
-
-            <div class="grid">
-              <div class="card">
-                <div class="section-row">
-                  <h2 id="recentLeadsTitle">Recent leads</h2>
-                  <button id="btnRefreshLeads" class="small-btn" onclick="loadLeads(true)">Refresh</button>
-                </div>
-
-                <div id="leadsTable" class="table-wrap empty">No leads.</div>
-
-                <details>
-                  <summary id="rawLeadsLabel">Raw leads JSON</summary>
-                  <pre id="leadsRaw">Empty.</pre>
-                </details>
-              </div>
-
-              <div class="card">
-                <div class="section-row">
-                  <h2 id="recentHandoffsTitle">Recent handoffs</h2>
-                  <button id="btnRefreshHandoffs" class="small-btn" onclick="loadHandoffs(true)">Refresh</button>
-                </div>
-
-                <div id="handoffsTable" class="table-wrap empty">No handoffs.</div>
-
-                <details>
-                  <summary id="rawHandoffsLabel">Raw handoffs JSON</summary>
-                  <pre id="handoffsRaw">Empty.</pre>
-                </details>
-              </div>
-            </div>
-
-            <div class="footer">
-              <div class="muted" id="footerText">Demo-ready public MVP deployed on Render.</div>
-              <div class="footer-links">
-                <a id="linkUi" href="/ui" target="_blank" rel="noreferrer">UI</a>
-                <a id="linkDocs" href="/docs" target="_blank" rel="noreferrer">Docs</a>
-                <a id="linkHealth" href="/health" target="_blank" rel="noreferrer">Health</a>
-                <a id="linkGithub" href="https://github.com/ImTonyPo55/ai-lead-agent" target="_blank" rel="noreferrer">GitHub</a>
-              </div>
-            </div>
-          </div>
-
-          <script>
-            const STATE = {
-              lang: 'en',
-              dashboard: null,
-              leads: [],
-              handoffs: [],
-              summary: null,
-              lastSendResponse: null
-            };
-
-            const I18N = {
-              en: {
-                appTitle: 'AI Lead Agent',
-                subtitle: 'Demo-ready MVP for inbound B2B lead intake, qualification, and handoff.',
-                sendTitle: 'Send message',
-                leadIdPlaceholder: 'lead_id — optional for the first message',
-                messagePlaceholder: 'Enter inbound message...',
-                btnSend: 'Send',
-                btnClear: 'Clear',
-                sendHint: 'After the reply, lead_id will be automatically filled into summary.',
-                rawResponseLabel: 'Raw response',
-                empty: 'Empty.',
-                summaryTitle: 'Lead summary',
-                summaryLeadPlaceholder: 'Enter lead_id',
-                btnLoadSummary: 'Load summary',
-                rawSummaryLabel: 'Raw summary JSON',
-                dashboardTitle: 'Dashboard overview',
-                btnRefreshDashboard: 'Refresh dashboard',
-                statLeadsLabel: 'Leads total',
-                statQualifiedLabel: 'Qualified',
-                statInProgressLabel: 'Handoffs in progress',
-                statDoneLabel: 'Handoffs done',
-                rawDashboardLabel: 'Raw dashboard JSON',
-                recentLeadsTitle: 'Recent leads',
-                recentHandoffsTitle: 'Recent handoffs',
-                btnRefresh: 'Refresh',
-                rawLeadsLabel: 'Raw leads JSON',
-                rawHandoffsLabel: 'Raw handoffs JSON',
-                noLeads: 'No leads.',
-                noHandoffs: 'No handoffs.',
-                btnLoadDemo: 'Load demo data',
-                btnResetDemo: 'Reset demo',
-                tableId: 'ID',
-                tableCompany: 'Company',
-                tableRole: 'Role',
-                tableStatus: 'Status',
-                tableLeadId: 'Lead ID',
-                tableAssigned: 'Assigned',
-                tableAction: 'Action',
-                btnOpen: 'Open',
-                btnOpenLead: 'Open',
-                btnSetInProgress: 'Set handoff in progress',
-                btnSetDone: 'Set handoff done',
-                unassigned: 'Unassigned',
-                company: 'Company',
-                role: 'Role',
-                contact: 'Contact',
-                useCase: 'Use case',
-                assignedTo: 'Assigned to',
-                lastSender: 'Last sender',
-                lastIntent: 'Last intent',
-                lastText: 'Last text',
-                noSummary: 'Empty.',
-                status_new: 'new',
-                status_qualified: 'qualified',
-                status_needs_followup: 'needs follow-up',
-                status_pending: 'pending',
-                status_in_progress: 'in progress',
-                status_done: 'done',
-                status_unknown: 'unknown',
-                footerText: 'Demo-ready public MVP deployed on Render.',
-                toastDemoLoaded: 'Demo data loaded.',
-                toastDemoReset: 'Demo data reset.',
-                toastMessageSent: 'Message processed.',
-                toastSummaryLoaded: 'Lead summary loaded.',
-                toastDashboardRefreshed: 'Dashboard refreshed.',
-                toastLeadsRefreshed: 'Leads refreshed.',
-                toastHandoffsRefreshed: 'Handoffs refreshed.',
-                toastHandoffUpdated: 'Handoff updated.',
-                toastError: 'Something went wrong.'
-              },
-
-              ru: {
-                appTitle: 'ИИ-Агент для лидов',
-                subtitle: 'Готовый к демо MVP для входящих B2B-лидов, квалификации и передачи.',
-                sendTitle: 'Отправить сообщение',
-                leadIdPlaceholder: 'lead_id — необязательно для первого сообщения',
-                messagePlaceholder: 'Введите входящее сообщение...',
-                btnSend: 'Отправить',
-                btnClear: 'Очистить',
-                sendHint: 'После ответа lead_id автоматически подставится в сводку.',
-                rawResponseLabel: 'Сырой ответ',
-                empty: 'Пока пусто.',
-                summaryTitle: 'Сводка по лиду',
-                summaryLeadPlaceholder: 'Введите lead_id',
-                btnLoadSummary: 'Загрузить сводку',
-                rawSummaryLabel: 'Сырой JSON сводки',
-                dashboardTitle: 'Обзор панели',
-                btnRefreshDashboard: 'Обновить панель',
-                statLeadsLabel: 'Всего лидов',
-                statQualifiedLabel: 'Квалифицировано',
-                statInProgressLabel: 'Передачи в работе',
-                statDoneLabel: 'Передачи завершены',
-                rawDashboardLabel: 'Сырой JSON панели',
-                recentLeadsTitle: 'Последние лиды',
-                recentHandoffsTitle: 'Последние передачи',
-                btnRefresh: 'Обновить',
-                rawLeadsLabel: 'Сырой JSON лидов',
-                rawHandoffsLabel: 'Сырой JSON передач',
-                noLeads: 'Нет лидов.',
-                noHandoffs: 'Нет передач.',
-                btnLoadDemo: 'Загрузить демо',
-                btnResetDemo: 'Сбросить демо',
-                tableId: 'ID',
-                tableCompany: 'Компания',
-                tableRole: 'Роль',
-                tableStatus: 'Статус',
-                tableLeadId: 'ID лида',
-                tableAssigned: 'Назначен',
-                tableAction: 'Действие',
-                btnOpen: 'Открыть',
-                btnOpenLead: 'Открыть',
-                btnSetInProgress: 'Перевести в работу',
-                btnSetDone: 'Отметить как завершённую',
-                unassigned: 'Не назначен',
-                company: 'Компания',
-                role: 'Роль',
-                contact: 'Контакт',
-                useCase: 'Сценарий использования',
-                assignedTo: 'Назначен',
-                lastSender: 'Последний отправитель',
-                lastIntent: 'Последнее намерение',
-                lastText: 'Последний текст',
-                noSummary: 'Пока пусто.',
-                status_new: 'новый',
-                status_qualified: 'квалифицирован',
-                status_needs_followup: 'требует продолжения',
-                status_pending: 'в ожидании',
-                status_in_progress: 'в работе',
-                status_done: 'завершено',
-                status_unknown: 'неизвестно',
-                footerText: 'Публичный демо-MVP задеплоен на Render.',
-                toastDemoLoaded: 'Демо-данные загружены.',
-                toastDemoReset: 'Демо-данные сброшены.',
-                toastMessageSent: 'Сообщение обработано.',
-                toastSummaryLoaded: 'Сводка по лиду загружена.',
-                toastDashboardRefreshed: 'Панель обновлена.',
-                toastLeadsRefreshed: 'Лиды обновлены.',
-                toastHandoffsRefreshed: 'Передачи обновлены.',
-                toastHandoffUpdated: 'Передача обновлена.',
-                toastError: 'Что-то пошло не так.'
-              },
-
-              es: {
-                appTitle: 'Agente IA para Leads',
-                subtitle: 'MVP listo para demo para leads B2B entrantes, calificación y transferencia.',
-                sendTitle: 'Enviar mensaje',
-                leadIdPlaceholder: 'lead_id — opcional para el primer mensaje',
-                messagePlaceholder: 'Ingresa el mensaje entrante...',
-                btnSend: 'Enviar',
-                btnClear: 'Limpiar',
-                sendHint: 'Después de la respuesta, el lead_id se completará automáticamente en el resumen.',
-                rawResponseLabel: 'Respuesta bruta',
-                empty: 'Vacío.',
-                summaryTitle: 'Resumen del lead',
-                summaryLeadPlaceholder: 'Ingresa lead_id',
-                btnLoadSummary: 'Cargar resumen',
-                rawSummaryLabel: 'JSON bruto del resumen',
-                dashboardTitle: 'Resumen del panel',
-                btnRefreshDashboard: 'Actualizar panel',
-                statLeadsLabel: 'Leads totales',
-                statQualifiedLabel: 'Calificados',
-                statInProgressLabel: 'Transferencias en progreso',
-                statDoneLabel: 'Transferencias completadas',
-                rawDashboardLabel: 'JSON bruto del panel',
-                recentLeadsTitle: 'Leads recientes',
-                recentHandoffsTitle: 'Transferencias recientes',
-                btnRefresh: 'Actualizar',
-                rawLeadsLabel: 'JSON bruto de leads',
-                rawHandoffsLabel: 'JSON bruto de transferencias',
-                noLeads: 'No hay leads.',
-                noHandoffs: 'No hay transferencias.',
-                btnLoadDemo: 'Cargar demo',
-                btnResetDemo: 'Restablecer demo',
-                tableId: 'ID',
-                tableCompany: 'Empresa',
-                tableRole: 'Rol',
-                tableStatus: 'Estado',
-                tableLeadId: 'ID del lead',
-                tableAssigned: 'Asignado',
-                tableAction: 'Acción',
-                btnOpen: 'Abrir',
-                btnOpenLead: 'Abrir',
-                btnSetInProgress: 'Mover a en progreso',
-                btnSetDone: 'Marcar como completada',
-                unassigned: 'Sin asignar',
-                company: 'Empresa',
-                role: 'Rol',
-                contact: 'Contacto',
-                useCase: 'Caso de uso',
-                assignedTo: 'Asignado a',
-                lastSender: 'Último remitente',
-                lastIntent: 'Última intención',
-                lastText: 'Último texto',
-                noSummary: 'Vacío.',
-                status_new: 'nuevo',
-                status_qualified: 'calificado',
-                status_needs_followup: 'requiere seguimiento',
-                status_pending: 'pendiente',
-                status_in_progress: 'en progreso',
-                status_done: 'completado',
-                status_unknown: 'desconocido',
-                footerText: 'MVP público de demo desplegado en Render.',
-                toastDemoLoaded: 'Datos demo cargados.',
-                toastDemoReset: 'Datos demo restablecidos.',
-                toastMessageSent: 'Mensaje procesado.',
-                toastSummaryLoaded: 'Resumen del lead cargado.',
-                toastDashboardRefreshed: 'Panel actualizado.',
-                toastLeadsRefreshed: 'Leads actualizados.',
-                toastHandoffsRefreshed: 'Transferencias actualizadas.',
-                toastHandoffUpdated: 'Transferencia actualizada.',
-                toastError: 'Algo salió mal.'
-              }
-            };
-
-            function t(key) {
-              return (I18N[STATE.lang] && I18N[STATE.lang][key]) || (I18N.en && I18N.en[key]) || key;
-            }
-
-            function escapeHtml(value) {
-              return String(value ?? '')
-                .replaceAll('&', '&amp;')
-                .replaceAll('<', '&lt;')
-                .replaceAll('>', '&gt;')
-                .replaceAll('"', '&quot;')
-                .replaceAll("'", '&#039;');
-            }
-
-            function pretty(value) {
-              return JSON.stringify(value, null, 2);
-            }
-
-            function showToast(message, type = 'info') {
-              const wrap = document.getElementById('toastWrap');
-              if (!wrap) return;
-
-              const toast = document.createElement('div');
-              toast.className = `toast ${type}`;
-              toast.textContent = message;
-
-              wrap.appendChild(toast);
-
-              setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateY(-6px)';
-                setTimeout(() => toast.remove(), 180);
-              }, 2600);
-            }
-
-            function getStatusClass(status) {
-              const s = String(status || '').toLowerCase();
-              if (s === 'qualified') return 'pill-qualified';
-              if (s === 'needs_followup' || s === 'needs-followup' || s === 'needs followup') return 'pill-followup';
-              if (s === 'pending') return 'pill-pending';
-              if (s === 'in_progress' || s === 'in progress') return 'pill-progress';
-              if (s === 'done') return 'pill-done';
-              return 'pill-neutral';
-            }
-
-            function translateStatus(status) {
-              const s = String(status || '').toLowerCase().replaceAll('-', '_').replaceAll(' ', '_');
-              return t('status_' + s) || status || t('status_unknown');
-            }
-
-            async function api(path, options = {}) {
-              const response = await fetch(path, {
-                headers: { 'Content-Type': 'application/json' },
-                ...options
-              });
-
-              const text = await response.text();
-              let data = null;
-
-              try {
-                data = text ? JSON.parse(text) : null;
-              } catch {
-                data = text;
-              }
-
-              if (!response.ok) {
-                throw new Error(typeof data === 'string' ? data : pretty(data));
-              }
-
-              return data;
-            }
-
-            function setText(id, value) {
-              const el = document.getElementById(id);
-              if (el) el.textContent = value;
-            }
-
-            function setPlaceholder(id, value) {
-              const el = document.getElementById(id);
-              if (el) el.placeholder = value;
-            }
-
-            function setLang(lang) {
-              if (!I18N[lang]) return;
-
-              STATE.lang = lang;
-              localStorage.setItem('ui_lang', lang);
-              document.documentElement.lang = lang;
-              document.title = t('appTitle');
-
-              setText('appTitle', t('appTitle'));
-              setText('subtitle', t('subtitle'));
-
-              setText('sendTitle', t('sendTitle'));
-              setPlaceholder('leadIdInput', t('leadIdPlaceholder'));
-              setPlaceholder('messageInput', t('messagePlaceholder'));
-              setText('btnSend', t('btnSend'));
-              setText('btnClear', t('btnClear'));
-              setText('sendHint', t('sendHint'));
-              setText('rawResponseLabel', t('rawResponseLabel'));
-
-              setText('summaryTitle', t('summaryTitle'));
-              setPlaceholder('summaryLeadId', t('summaryLeadPlaceholder'));
-              setText('btnLoadSummary', t('btnLoadSummary'));
-              setText('rawSummaryLabel', t('rawSummaryLabel'));
-
-              setText('dashboardTitle', t('dashboardTitle'));
-              setText('btnRefreshDashboard', t('btnRefreshDashboard'));
-              setText('statLeadsLabel', t('statLeadsLabel'));
-              setText('statQualifiedLabel', t('statQualifiedLabel'));
-              setText('statInProgressLabel', t('statInProgressLabel'));
-              setText('statDoneLabel', t('statDoneLabel'));
-              setText('rawDashboardLabel', t('rawDashboardLabel'));
-
-              setText('recentLeadsTitle', t('recentLeadsTitle'));
-              setText('recentHandoffsTitle', t('recentHandoffsTitle'));
-              setText('btnRefreshLeads', t('btnRefresh'));
-              setText('btnRefreshHandoffs', t('btnRefresh'));
-              setText('rawLeadsLabel', t('rawLeadsLabel'));
-              setText('rawHandoffsLabel', t('rawHandoffsLabel'));
-
-              setText('btnLoadDemo', t('btnLoadDemo'));
-              setText('btnResetDemo', t('btnResetDemo'));
-              setText('footerText', t('footerText'));
-
-              document.getElementById('langRu')?.classList.toggle('active', lang === 'ru');
-              document.getElementById('langEn')?.classList.toggle('active', lang === 'en');
-              document.getElementById('langEs')?.classList.toggle('active', lang === 'es');
-
-              if (!STATE.lastSendResponse) {
-                document.getElementById('sendResult').textContent = t('empty');
-              }
-
-              if (!STATE.summary) {
-                document.getElementById('summaryCards').textContent = t('noSummary');
-                document.getElementById('summaryCards').className = 'summary-box empty';
-                document.getElementById('summaryResult').textContent = t('empty');
-              }
-
-              if (!STATE.dashboard) {
-                document.getElementById('dashboardResult').textContent = t('empty');
-              }
-
-              renderLeads(STATE.leads);
-              renderHandoffs(STATE.handoffs);
-              renderDashboard(STATE.dashboard);
-              renderSummary(STATE.summary);
-            }
-
-            function renderDashboard(data) {
-              STATE.dashboard = data;
-
-              const total = data?.leads?.total ?? data?.leads_total ?? data?.total_leads ?? data?.total ?? 0;
-              const qualified = data?.leads?.qualified ?? data?.qualified ?? data?.qualified_count ?? 0;
-              const inProgress = data?.handoffs?.in_progress ?? data?.handoffs_in_progress ?? data?.in_progress ?? 0;
-              const done = data?.handoffs?.done ?? data?.handoffs_done ?? data?.done ?? 0;
-
-              document.getElementById('statLeads').textContent = total;
-              document.getElementById('statQualified').textContent = qualified;
-              document.getElementById('statInProgress').textContent = inProgress;
-              document.getElementById('statDone').textContent = done;
-
-              document.getElementById('dashboardResult').textContent = data ? pretty(data) : t('empty');
-            }
-
-            function renderSummary(data) {
-              STATE.summary = data;
-
-              const box = document.getElementById('summaryCards');
-              const actions = document.getElementById('summaryActions');
-              const raw = document.getElementById('summaryResult');
-
-              if (!data) {
-                box.className = 'summary-box empty';
-                box.textContent = t('noSummary');
-                actions.innerHTML = '';
-                raw.textContent = t('empty');
-                return;
-              }
-
-              const lead = data.lead || data;
-              const handoff = data.handoff || data;
-              const conversation = data.conversation || data;
-
-              const leadId = lead.id ?? data.lead_id ?? data.id ?? '';
-              const leadStatus = lead.lead_status ?? lead.status ?? data.status ?? data.lead_status ?? '';
-              const handoffStatus = handoff.handoff_status ?? handoff.status ?? data.handoff_status ?? '';
-              const handoffId = handoff.id ?? data.handoff_id ?? null;
-              const company = lead.company ?? data.company ?? '—';
-              const role = lead.role ?? data.role ?? '—';
-              const contact = lead.contact ?? data.contact ?? '—';
-              const useCase = lead.use_case ?? data.use_case ?? data.usecase ?? '—';
-              const assignedTo = handoff.assigned_to ?? data.assigned_to ?? handoff.assignee ?? data.assignee ?? data.assigned ?? '—';
-              const lastSender = conversation.last_sender ?? data.last_sender ?? '—';
-              const lastIntent = conversation.last_intent ?? data.last_intent ?? '—';
-              const lastText = conversation.last_text ?? data.last_text ?? '—';
-
-              const pills = [
-                leadId ? `<span class="pill pill-neutral">lead_id: ${escapeHtml(leadId)}</span>` : '',
-                leadStatus ? `<span class="pill ${getStatusClass(leadStatus)}">${escapeHtml(translateStatus(leadStatus))}</span>` : '',
-                handoffStatus ? `<span class="pill ${getStatusClass(handoffStatus)}">${escapeHtml(translateStatus(handoffStatus))}</span>` : ''
-              ].join('');
-
-              box.className = 'summary-box';
-              box.innerHTML = `
-                <div>${pills}</div>
-                <div class="summary-row"><span class="summary-key">${escapeHtml(t('company'))}:</span> ${escapeHtml(company)}</div>
-                <div class="summary-row"><span class="summary-key">${escapeHtml(t('role'))}:</span> ${escapeHtml(role)}</div>
-                <div class="summary-row"><span class="summary-key">${escapeHtml(t('contact'))}:</span> ${escapeHtml(contact)}</div>
-                <div class="summary-row"><span class="summary-key">${escapeHtml(t('useCase'))}:</span> ${escapeHtml(useCase)}</div>
-                <div class="summary-row"><span class="summary-key">${escapeHtml(t('assignedTo'))}:</span> ${escapeHtml(assignedTo)}</div>
-                <div class="summary-row"><span class="summary-key">${escapeHtml(t('lastSender'))}:</span> ${escapeHtml(lastSender)}</div>
-                <div class="summary-row"><span class="summary-key">${escapeHtml(t('lastIntent'))}:</span> ${escapeHtml(lastIntent)}</div>
-                <div class="summary-row"><span class="summary-key">${escapeHtml(t('lastText'))}:</span> ${escapeHtml(lastText)}</div>
-              `;
-
-              const buttons = [];
-              if (handoffId && handoffStatus !== 'in_progress') {
-                buttons.push(`<button class="secondary-btn small-btn" onclick="setHandoffStatus(${handoffId}, 'in_progress')">${escapeHtml(t('btnSetInProgress'))}</button>`);
-              }
-              if (handoffId && handoffStatus !== 'done') {
-                buttons.push(`<button class="success-btn small-btn" onclick="setHandoffStatus(${handoffId}, 'done')">${escapeHtml(t('btnSetDone'))}</button>`);
-              }
-
-              actions.innerHTML = buttons.join('');
-              raw.textContent = pretty(data);
-            }
-
-            function renderLeads(data) {
-              STATE.leads = Array.isArray(data) ? data : (Array.isArray(data?.items) ? data.items : []);
-
-              const wrap = document.getElementById('leadsTable');
-              const raw = document.getElementById('leadsRaw');
-
-              raw.textContent = STATE.leads.length ? pretty(STATE.leads) : t('empty');
-
-              if (!STATE.leads.length) {
-                wrap.className = 'table-wrap empty';
-                wrap.textContent = t('noLeads');
-                return;
-              }
-
-              wrap.className = 'table-wrap';
-              wrap.innerHTML = `
-                <table>
-                  <thead>
-                    <tr>
-                      <th>${escapeHtml(t('tableId'))}</th>
-                      <th>${escapeHtml(t('tableCompany'))}</th>
-                      <th>${escapeHtml(t('tableRole'))}</th>
-                      <th>${escapeHtml(t('tableStatus'))}</th>
-                      <th>${escapeHtml(t('tableAction'))}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${STATE.leads.map((lead) => {
-                      const id = lead.id ?? lead.lead_id ?? '';
-                      const company = lead.company ?? '—';
-                      const role = lead.role ?? '—';
-                      const status = lead.status ?? lead.lead_status ?? '';
-                      return `
-                        <tr>
-                          <td>${escapeHtml(id)}</td>
-                          <td>${escapeHtml(company)}</td>
-                          <td>${escapeHtml(role)}</td>
-                          <td><span class="pill ${getStatusClass(status)}">${escapeHtml(translateStatus(status))}</span></td>
-                          <td><button class="small-btn" onclick="openLead(${id})">${escapeHtml(t('btnOpen'))}</button></td>
-                        </tr>
-                      `;
-                    }).join('')}
-                  </tbody>
-                </table>
-              `;
-            }
-
-            function renderHandoffs(data) {
-              STATE.handoffs = Array.isArray(data) ? data : (Array.isArray(data?.items) ? data.items : []);
-
-              const wrap = document.getElementById('handoffsTable');
-              const raw = document.getElementById('handoffsRaw');
-
-              raw.textContent = STATE.handoffs.length ? pretty(STATE.handoffs) : t('empty');
-
-              if (!STATE.handoffs.length) {
-                wrap.className = 'table-wrap empty';
-                wrap.textContent = t('noHandoffs');
-                return;
-              }
-
-              wrap.className = 'table-wrap';
-              wrap.innerHTML = `
-                <table>
-                  <thead>
-                    <tr>
-                      <th>${escapeHtml(t('tableId'))}</th>
-                      <th>${escapeHtml(t('tableLeadId'))}</th>
-                      <th>${escapeHtml(t('tableAssigned'))}</th>
-                      <th>${escapeHtml(t('tableStatus'))}</th>
-                      <th>${escapeHtml(t('tableAction'))}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${STATE.handoffs.map((handoff) => {
-                      const id = handoff.id ?? '';
-                      const leadId = handoff.lead_id ?? '';
-                      const assigned = handoff.assigned_to ?? handoff.assignee ?? t('unassigned');
-                      const status = handoff.status ?? '';
-                      return `
-                        <tr>
-                          <td>${escapeHtml(id)}</td>
-                          <td>${escapeHtml(leadId)}</td>
-                          <td>${escapeHtml(assigned)}</td>
-                          <td><span class="pill ${getStatusClass(status)}">${escapeHtml(translateStatus(status))}</span></td>
-                          <td><button class="small-btn" onclick="openLead(${leadId})">${escapeHtml(t('btnOpenLead'))}</button></td>
-                        </tr>
-                      `;
-                    }).join('')}
-                  </tbody>
-                </table>
-              `;
-            }
-
-            async function sendMessage() {
-              const leadIdValue = document.getElementById('leadIdInput').value.trim();
-              const message = document.getElementById('messageInput').value.trim();
-
-              if (!message) return;
-
-              try {
-                const payload = {
-                  lead_id: leadIdValue ? Number(leadIdValue) : null,
-                  message
-                };
-
-                const data = await api('/chat/message', {
-                  method: 'POST',
-                  body: JSON.stringify(payload)
-                });
-
-                STATE.lastSendResponse = data;
-                document.getElementById('sendResult').textContent = pretty(data);
-
-                const newLeadId = data?.lead_id ?? data?.id ?? payload.lead_id;
-                if (newLeadId) {
-                  document.getElementById('leadIdInput').value = String(newLeadId);
-                  document.getElementById('summaryLeadId').value = String(newLeadId);
-                  await loadLeadSummary(false);
-                }
-
-                await Promise.all([loadDashboard(false), loadLeads(false), loadHandoffs(false)]);
-                showToast(t('toastMessageSent'), 'success');
-              } catch (error) {
-                document.getElementById('sendResult').textContent = String(error);
-                showToast(t('toastError'), 'error');
-              }
-            }
-
-            function clearMessageForm() {
-              document.getElementById('leadIdInput').value = '';
-              document.getElementById('messageInput').value = '';
-            }
-
-            async function loadLeadSummary(showFeedback = false) {
-              const leadId = document.getElementById('summaryLeadId').value.trim();
-              if (!leadId) return;
-
-              try {
-                const data = await api(`/leads/${leadId}/summary`);
-                renderSummary(data);
-                if (showFeedback) showToast(t('toastSummaryLoaded'), 'info');
-              } catch (error) {
-                document.getElementById('summaryResult').textContent = String(error);
-                showToast(t('toastError'), 'error');
-              }
-            }
-
-            async function loadDashboard(showFeedback = false) {
-              try {
-                const data = await api('/dashboard/overview');
-                renderDashboard(data);
-                if (showFeedback) showToast(t('toastDashboardRefreshed'), 'info');
-              } catch (error) {
-                document.getElementById('dashboardResult').textContent = String(error);
-                showToast(t('toastError'), 'error');
-              }
-            }
-
-            async function loadLeads(showFeedback = false) {
-              try {
-                const data = await api('/leads');
-                renderLeads(data);
-                if (showFeedback) showToast(t('toastLeadsRefreshed'), 'info');
-              } catch (error) {
-                document.getElementById('leadsRaw').textContent = String(error);
-                showToast(t('toastError'), 'error');
-              }
-            }
-
-            async function loadHandoffs(showFeedback = false) {
-              try {
-                const data = await api('/handoffs');
-                renderHandoffs(data);
-                if (showFeedback) showToast(t('toastHandoffsRefreshed'), 'info');
-              } catch (error) {
-                document.getElementById('handoffsRaw').textContent = String(error);
-                showToast(t('toastError'), 'error');
-              }
-            }
-
-            async function setHandoffStatus(handoffId, status) {
-              try {
-                await api(`/handoffs/${handoffId}`, {
-                  method: 'PATCH',
-                  body: JSON.stringify({ status })
-                });
-
-                await Promise.all([loadHandoffs(false), loadDashboard(false)]);
-                const leadId = document.getElementById('summaryLeadId').value.trim();
-                if (leadId) {
-                  await loadLeadSummary(false);
-                }
-                showToast(t('toastHandoffUpdated'), 'success');
-              } catch (error) {
-                document.getElementById('summaryResult').textContent = String(error);
-                showToast(t('toastError'), 'error');
-              }
-            }
-
-            async function seedDemo() {
-              try {
-                await api('/demo/seed', {
-                  method: 'POST',
-                  body: JSON.stringify({})
-                });
-
-                await refreshAll();
-
-                if (STATE.leads.length) {
-                  const leadId = STATE.leads[0].id ?? STATE.leads[0].lead_id;
-                  if (leadId) {
-                    document.getElementById('summaryLeadId').value = String(leadId);
-                    document.getElementById('leadIdInput').value = String(leadId);
-                    await loadLeadSummary(false);
-                  }
-                }
-
-                showToast(t('toastDemoLoaded'), 'success');
-              } catch (error) {
-                document.getElementById('sendResult').textContent = String(error);
-                showToast(t('toastError'), 'error');
-              }
-            }
-
-            async function resetDemo() {
-              try {
-                await api('/demo/reset', {
-                  method: 'POST',
-                  body: JSON.stringify({})
-                });
-
-                STATE.summary = null;
-                STATE.lastSendResponse = null;
-                document.getElementById('leadIdInput').value = '';
-                document.getElementById('messageInput').value = '';
-                document.getElementById('summaryLeadId').value = '';
-                document.getElementById('sendResult').textContent = t('empty');
-                document.getElementById('summaryResult').textContent = t('empty');
-                document.getElementById('dashboardResult').textContent = t('empty');
-                document.getElementById('leadsRaw').textContent = t('empty');
-                document.getElementById('handoffsRaw').textContent = t('empty');
-
-                renderSummary(null);
-                renderDashboard(null);
-                renderLeads([]);
-                renderHandoffs([]);
-
-                await refreshAll();
-                showToast(t('toastDemoReset'), 'warn');
-              } catch (error) {
-                document.getElementById('sendResult').textContent = String(error);
-                showToast(t('toastError'), 'error');
-              }
-            }
-
-            function openLead(leadId) {
-              document.getElementById('summaryLeadId').value = String(leadId);
-              document.getElementById('leadIdInput').value = String(leadId);
-              loadLeadSummary(true);
-            }
-
-            async function refreshAll() {
-              await Promise.all([loadDashboard(false), loadLeads(false), loadHandoffs(false)]);
-            }
-
-            document.addEventListener('DOMContentLoaded', async () => {
-              setLang(localStorage.getItem('ui_lang') || 'en');
-              document.getElementById('sendResult').textContent = t('empty');
-              document.getElementById('summaryResult').textContent = t('empty');
-              document.getElementById('dashboardResult').textContent = t('empty');
-              document.getElementById('leadsRaw').textContent = t('empty');
-              document.getElementById('handoffsRaw').textContent = t('empty');
-              renderSummary(null);
-              renderDashboard(null);
-              renderLeads([]);
-              renderHandoffs([]);
-              await refreshAll();
-            });
-          </script>
-        </body>
-        </html>
-        """
-    )
+async def ui():
+    return HTMLResponse(ui_page())
