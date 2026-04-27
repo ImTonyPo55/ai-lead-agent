@@ -160,13 +160,6 @@ def ui_page() -> str:
       box-shadow: var(--shadow);
     }
 
-    .card h2 {
-      margin: 0 0 14px 0;
-      font-size: 28px;
-      line-height: 1.05;
-      letter-spacing: -0.02em;
-    }
-
     .section-title {
       display: flex;
       justify-content: space-between;
@@ -225,10 +218,6 @@ def ui_page() -> str:
       margin-bottom: 12px;
     }
 
-    .raw-toggle {
-      margin-top: 12px;
-    }
-
     details {
       border: 1px solid rgba(115, 148, 204, 0.28);
       border-radius: 12px;
@@ -247,6 +236,7 @@ def ui_page() -> str:
     }
 
     summary::-webkit-details-marker { display: none; }
+
     details[open] summary {
       border-bottom-color: rgba(115, 148, 204, 0.2);
       background: rgba(255,255,255,0.03);
@@ -474,12 +464,10 @@ def ui_page() -> str:
           После ответа lead_id автоматически подставится в сводку.
         </div>
 
-        <div class="raw-toggle">
-          <details>
-            <summary id="rawResponseSummary">Сырой ответ</summary>
-            <pre id="sendResult">(пусто)</pre>
-          </details>
-        </div>
+        <details>
+          <summary id="rawResponseSummary">Сырой ответ</summary>
+          <pre id="sendResult">(пусто)</pre>
+        </details>
       </div>
 
       <div class="card">
@@ -497,12 +485,10 @@ def ui_page() -> str:
           <div id="summaryEmpty" class="hint">Пока пусто.</div>
         </div>
 
-        <div class="raw-toggle">
-          <details>
-            <summary id="rawSummarySummary">Сырой JSON сводки</summary>
-            <pre id="summaryResult">(пусто)</pre>
-          </details>
-        </div>
+        <details>
+          <summary id="rawSummarySummary">Сырой JSON сводки</summary>
+          <pre id="summaryResult">(пусто)</pre>
+        </details>
       </div>
     </div>
 
@@ -844,21 +830,11 @@ def ui_page() -> str:
       $('summaryLeadIdInput').placeholder = t('summaryLeadIdPlaceholder');
       $('messageInput').placeholder = t('messagePlaceholder');
 
-      if ($('sendResult').textContent === '(пусто)' || $('sendResult').textContent === '(empty)' || $('sendResult').textContent === '(vacío)') {
-        $('sendResult').textContent = t('empty');
-      }
-      if ($('summaryResult').textContent === '(пусто)' || $('summaryResult').textContent === '(empty)' || $('summaryResult').textContent === '(vacío)') {
-        $('summaryResult').textContent = t('empty');
-      }
-      if ($('dashboardResult').textContent === '(пусто)' || $('dashboardResult').textContent === '(empty)' || $('dashboardResult').textContent === '(vacío)') {
-        $('dashboardResult').textContent = t('empty');
-      }
-      if ($('leadsRaw').textContent === '(пусто)' || $('leadsRaw').textContent === '(empty)' || $('leadsRaw').textContent === '(vacío)') {
-        $('leadsRaw').textContent = t('empty');
-      }
-      if ($('handoffsRaw').textContent === '(пусто)' || $('handoffsRaw').textContent === '(empty)' || $('handoffsRaw').textContent === '(vacío)') {
-        $('handoffsRaw').textContent = t('empty');
-      }
+      if (['(пусто)', '(empty)', '(vacío)'].includes($('sendResult').textContent)) $('sendResult').textContent = t('empty');
+      if (['(пусто)', '(empty)', '(vacío)'].includes($('summaryResult').textContent)) $('summaryResult').textContent = t('empty');
+      if (['(пусто)', '(empty)', '(vacío)'].includes($('dashboardResult').textContent)) $('dashboardResult').textContent = t('empty');
+      if (['(пусто)', '(empty)', '(vacío)'].includes($('leadsRaw').textContent)) $('leadsRaw').textContent = t('empty');
+      if (['(пусто)', '(empty)', '(vacío)'].includes($('handoffsRaw').textContent)) $('handoffsRaw').textContent = t('empty');
 
       renderSummary(lastSummary);
       renderDashboard(lastDashboard);
@@ -885,7 +861,6 @@ def ui_page() -> str:
       if (!raw) return t('empty');
 
       const normalized = raw.toLowerCase();
-
       const known = [
         'понял ваш запрос. спасибо, базовую информацию получил.',
         'thanks. basic information received.',
@@ -902,7 +877,6 @@ def ui_page() -> str:
       if (!summary || !summary.lead) return summary;
 
       const clone = JSON.parse(JSON.stringify(summary));
-      const lead = clone.lead || {};
       const handoff = clone.handoff || {};
       const conversation = clone.conversation || {};
 
@@ -912,7 +886,6 @@ def ui_page() -> str:
 
       conversation.last_text = prettyAssistantText(conversation.last_text, conversation.last_sender);
 
-      clone.lead = lead;
       clone.handoff = handoff;
       clone.conversation = conversation;
       return clone;
@@ -934,7 +907,7 @@ def ui_page() -> str:
       }
 
       if (!res.ok) {
-        const errText = data && data.detail ? data.detail : text || res.statusText;
+        const errText = data && data.detail ? JSON.stringify(data.detail) : text || res.statusText;
         throw new Error(errText);
       }
 
@@ -960,6 +933,8 @@ def ui_page() -> str:
       const handoff = data.handoff || {};
       const convo = data.conversation || {};
 
+      const effectiveHandoffStatus = handoff.handoff_status || (lead.lead_status === 'qualified' ? 'pending' : null);
+
       const wrap = document.createElement('div');
       wrap.className = 'summary-box';
 
@@ -968,7 +943,7 @@ def ui_page() -> str:
       badges.innerHTML = `
         <span class="badge badge-id">lead_id: ${lead.id ?? '-'}</span>
         <span class="badge ${badgeClass(lead.lead_status)}">${mapStatus(lead.lead_status)}</span>
-        <span class="badge ${badgeClass(handoff.handoff_status || 'pending')}">${mapStatus(handoff.handoff_status || 'pending')}</span>
+        <span class="badge ${badgeClass(effectiveHandoffStatus)}">${mapStatus(effectiveHandoffStatus)}</span>
       `;
       wrap.appendChild(badges);
 
@@ -1013,10 +988,46 @@ def ui_page() -> str:
 
     function renderDashboard(data) {
       lastDashboard = data;
-      $('metricLeads').textContent = data?.leads_total ?? 0;
-      $('metricQualified').textContent = data?.qualified_total ?? 0;
-      $('metricInProgress').textContent = data?.handoffs_in_progress ?? 0;
-      $('metricDone').textContent = data?.handoffs_done ?? 0;
+
+      const leadsTotal =
+        data?.leads_total ??
+        data?.total_leads ??
+        data?.counts?.leads_total ??
+        data?.counts?.total_leads ??
+        data?.summary?.leads_total ??
+        lastLeads.length ??
+        0;
+
+      const qualifiedTotal =
+        data?.qualified_total ??
+        data?.qualified_leads ??
+        data?.counts?.qualified_total ??
+        data?.counts?.qualified_leads ??
+        data?.summary?.qualified_total ??
+        lastLeads.filter(item => (item.lead_status ?? item.status ?? item.lead?.lead_status ?? 'qualified') === 'qualified').length ??
+        0;
+
+      const inProgress =
+        data?.handoffs_in_progress ??
+        data?.in_progress ??
+        data?.counts?.handoffs_in_progress ??
+        data?.summary?.handoffs_in_progress ??
+        lastHandoffs.filter(item => (item.handoff_status ?? item.status) === 'in_progress').length ??
+        0;
+
+      const done =
+        data?.handoffs_done ??
+        data?.handoffs_completed ??
+        data?.counts?.handoffs_done ??
+        data?.counts?.handoffs_completed ??
+        data?.summary?.handoffs_done ??
+        lastHandoffs.filter(item => ['done', 'completed'].includes(item.handoff_status ?? item.status)).length ??
+        0;
+
+      $('metricLeads').textContent = leadsTotal;
+      $('metricQualified').textContent = qualifiedTotal;
+      $('metricInProgress').textContent = inProgress;
+      $('metricDone').textContent = done;
       $('dashboardResult').textContent = data ? safeJson(data) : t('empty');
     }
 
@@ -1036,22 +1047,31 @@ def ui_page() -> str:
       }
 
       lastLeads.forEach((item) => {
+        const leadId = item.id ?? item.lead_id ?? item.lead?.id ?? '-';
+        const company = item.company ?? item.lead?.company ?? item.name ?? item.contact ?? ('lead_id ' + leadId);
+        const role = item.role ?? item.lead?.role ?? t('empty');
+        const contact = item.contact ?? item.lead?.contact ?? t('empty');
+        const useCase = item.use_case ?? item.lead?.use_case ?? t('empty');
+
+        let leadStatus = item.lead_status ?? item.status ?? item.lead?.lead_status ?? null;
+        if (!leadStatus && (company || useCase)) leadStatus = 'qualified';
+
         const el = document.createElement('div');
         el.className = 'list-item';
         el.innerHTML = `
           <div class="list-top">
             <div>
-              <div class="list-title">${item.company || item.contact || ('lead_id ' + item.id)}</div>
-              <div class="list-sub">${t('role')}: ${item.role || t('empty')} · ${t('contact')}: ${item.contact || t('empty')}</div>
+              <div class="list-title">${company}</div>
+              <div class="list-sub">${t('role')}: ${role} · ${t('contact')}: ${contact}</div>
             </div>
             <div class="badges">
-              <span class="badge badge-id">lead_id: ${item.id ?? '-'}</span>
-              <span class="badge ${badgeClass(item.lead_status)}">${mapStatus(item.lead_status)}</span>
+              <span class="badge badge-id">lead_id: ${leadId}</span>
+              <span class="badge ${badgeClass(leadStatus)}">${mapStatus(leadStatus)}</span>
             </div>
           </div>
-          <div class="list-sub">${item.use_case || t('empty')}</div>
+          <div class="list-sub">${useCase}</div>
           <div class="list-actions">
-            <button class="btn btn-blue open-lead-btn" data-lead-id="${item.id}">${t('open')}</button>
+            <button class="btn btn-blue open-lead-btn" data-lead-id="${leadId}">${t('open')}</button>
           </div>
         `;
         root.appendChild(el);
@@ -1082,24 +1102,25 @@ def ui_page() -> str:
       }
 
       lastHandoffs.forEach((item) => {
+        const leadId = item.lead_id ?? item.id ?? '-';
+        const assigned = item.assigned_to || t('notAssigned');
+        const status = item.handoff_status || item.status || 'pending';
+        const reason = item.reason || item.notes || t('empty');
+
         const el = document.createElement('div');
         el.className = 'list-item';
-
-        const assigned = item.assigned_to || t('notAssigned');
-        const status = item.handoff_status || 'pending';
-
         el.innerHTML = `
           <div class="list-top">
             <div>
-              <div class="list-title">${item.company || item.contact || ('lead_id ' + item.lead_id)}</div>
+              <div class="list-title">lead_id ${leadId}</div>
               <div class="list-sub">${t('assignedTo')}: ${assigned}</div>
             </div>
             <div class="badges">
-              <span class="badge badge-id">lead_id: ${item.lead_id ?? '-'}</span>
+              <span class="badge badge-id">lead_id: ${leadId}</span>
               <span class="badge ${badgeClass(status)}">${mapStatus(status)}</span>
             </div>
           </div>
-          <div class="list-sub">${item.reason || t('empty')}</div>
+          <div class="list-sub">${reason}</div>
         `;
         root.appendChild(el);
       });
@@ -1114,7 +1135,8 @@ def ui_page() -> str:
         try {
           await fetchJSON(url, { method: 'POST' });
           showToast(t('toastHandoffUpdated'));
-          await refreshAll();
+          await refreshAll(false);
+          await loadSummary(String(leadId), false);
           return;
         } catch (_) {}
       }
@@ -1123,49 +1145,44 @@ def ui_page() -> str:
     }
 
     async function sendMessage() {
-  const leadId = $('leadIdInput').value.trim();
-  const messageText = $('messageInput').value.trim();
+      const leadId = $('leadIdInput').value.trim();
+      const messageText = $('messageInput').value.trim();
 
-  if (!messageText) {
-    showToast(t('toastError'), 'error');
-    return;
-  }
+      if (!messageText) {
+        showToast(t('toastError'), 'error');
+        return;
+      }
 
-  const payload = {
-  message: messageText
-};
+      const payload = { message: messageText };
+      if (leadId) payload.lead_id = Number(leadId);
 
-  if (leadId) {
-    payload.lead_id = Number(leadId);
-  }
+      try {
+        const data = await fetchJSON('/chat/message', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
 
-  try {
-    const data = await fetchJSON('/chat/message', {
-      method: 'POST',
-      body: JSON.stringify(payload)
-    });
+        $('sendResult').textContent = safeJson(data);
 
-    $('sendResult').textContent = safeJson(data);
+        const newLeadId =
+          data?.lead_id ??
+          data?.lead?.id ??
+          data?.summary?.lead?.id ??
+          leadId;
 
-    const newLeadId =
-      data?.lead_id ??
-      data?.lead?.id ??
-      data?.summary?.lead?.id ??
-      leadId;
+        if (newLeadId) {
+          $('leadIdInput').value = String(newLeadId);
+          $('summaryLeadIdInput').value = String(newLeadId);
+          await loadSummary(String(newLeadId), false);
+        }
 
-    if (newLeadId) {
-      $('leadIdInput').value = String(newLeadId);
-      $('summaryLeadIdInput').value = String(newLeadId);
-      await loadSummary(String(newLeadId), false);
+        await refreshAll(false);
+        showToast(t('toastMessageSent'));
+      } catch (e) {
+        $('sendResult').textContent = String(e.message || e);
+        showToast(String(e.message || t('toastError')), 'error');
+      }
     }
-
-    await refreshAll(false);
-    showToast(t('toastMessageSent'));
-  } catch (e) {
-    $('sendResult').textContent = String(e.message || e);
-    showToast(String(e.message || t('toastError')), 'error');
-  }
-}
 
     async function loadSummary(id = null, toast = true) {
       const leadId = id || $('summaryLeadIdInput').value.trim();
@@ -1198,6 +1215,7 @@ def ui_page() -> str:
       try {
         const data = await fetchJSON('/leads');
         renderLeads(data || []);
+        renderDashboard(lastDashboard);
         if (toast) showToast(t('toastLeadsRefreshed'));
       } catch (e) {
         $('leadsRaw').textContent = String(e.message || e);
@@ -1210,6 +1228,7 @@ def ui_page() -> str:
       try {
         const data = await fetchJSON('/handoffs');
         renderHandoffs(data || []);
+        renderDashboard(lastDashboard);
         if (toast) showToast(t('toastHandoffsRefreshed'));
       } catch (e) {
         $('handoffsRaw').textContent = String(e.message || e);
