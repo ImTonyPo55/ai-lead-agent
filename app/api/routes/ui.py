@@ -1123,39 +1123,50 @@ def ui_page() -> str:
     }
 
     async function sendMessage() {
-      const leadId = $('leadIdInput').value.trim();
-      const messageText = $('messageInput').value.trim();
+  const leadId = $('leadIdInput').value.trim();
+  const messageText = $('messageInput').value.trim();
 
-      if (!messageText) {
-        showToast(t('toastError'), 'error');
-        return;
-      }
+  if (!messageText) {
+    showToast(t('toastError'), 'error');
+    return;
+  }
 
-      const payload = { message_text: messageText };
-      if (leadId) payload.lead_id = Number(leadId);
+  const payload = {
+    message: messageText,
+    message_text: messageText
+  };
 
-      try {
-        const data = await fetchJSON('/chat/message', {
-          method: 'POST',
-          body: JSON.stringify(payload)
-        });
+  if (leadId) {
+    payload.lead_id = Number(leadId);
+  }
 
-        $('sendResult').textContent = safeJson(data);
-        const newLeadId = data?.lead_id ?? data?.lead?.id;
+  try {
+    const data = await fetchJSON('/chat/message', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
 
-        if (newLeadId) {
-          $('leadIdInput').value = String(newLeadId);
-          $('summaryLeadIdInput').value = String(newLeadId);
-          await loadSummary(String(newLeadId), false);
-        }
+    $('sendResult').textContent = safeJson(data);
 
-        await refreshAll(false);
-        showToast(t('toastMessageSent'));
-      } catch (e) {
-        $('sendResult').textContent = String(e.message || e);
-        showToast(t('toastError'), 'error');
-      }
+    const newLeadId =
+      data?.lead_id ??
+      data?.lead?.id ??
+      data?.summary?.lead?.id ??
+      leadId;
+
+    if (newLeadId) {
+      $('leadIdInput').value = String(newLeadId);
+      $('summaryLeadIdInput').value = String(newLeadId);
+      await loadSummary(String(newLeadId), false);
     }
+
+    await refreshAll(false);
+    showToast(t('toastMessageSent'));
+  } catch (e) {
+    $('sendResult').textContent = String(e.message || e);
+    showToast(String(e.message || t('toastError')), 'error');
+  }
+}
 
     async function loadSummary(id = null, toast = true) {
       const leadId = id || $('summaryLeadIdInput').value.trim();
