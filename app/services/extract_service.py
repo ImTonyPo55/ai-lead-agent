@@ -5,25 +5,25 @@ from app.services.llm_service import is_llm_available, llm_extract_fields
 
 
 ROLE_MAP = {
-    "founder": "founder",
-    "cofounder": "cofounder",
-    "co-founder": "cofounder",
+    "founder": "Founder",
+    "cofounder": "Co-founder",
+    "co-founder": "Co-founder",
     "ceo": "CEO",
     "cto": "CTO",
     "cpo": "CPO",
-    "owner": "owner",
-    "director": "director",
-    "основатель": "founder",
-    "сооснователь": "cofounder",
-    "фаундер": "founder",
-    "владелец": "owner",
-    "директор": "director",
-    "fundador": "founder",
-    "cofundador": "cofounder",
-    "dueño": "owner",
-    "dueno": "owner",
-    "director general": "director",
-    "directora": "director",
+    "owner": "Owner",
+    "director": "Director",
+    "основатель": "Founder",
+    "сооснователь": "Co-founder",
+    "фаундер": "Founder",
+    "владелец": "Owner",
+    "директор": "Director",
+    "fundador": "Founder",
+    "cofundador": "Co-founder",
+    "dueño": "Owner",
+    "dueno": "Owner",
+    "director general": "Director",
+    "directora": "Director",
 }
 
 ROLE_PATTERN = re.compile(
@@ -153,6 +153,82 @@ def _clean_str(value) -> Optional[str]:
     return value or None
 
 
+def _normalize_role(value: Optional[str]) -> Optional[str]:
+    if not value:
+        return None
+
+    raw = _clean(value)
+    lowered = raw.lower()
+
+    exact_map = {
+        "founder": "Founder",
+        "cofounder": "Co-founder",
+        "co-founder": "Co-founder",
+        "ceo": "CEO",
+        "cto": "CTO",
+        "cpo": "CPO",
+        "owner": "Owner",
+        "director": "Director",
+        "fundador": "Founder",
+        "cofundador": "Co-founder",
+        "основатель": "Founder",
+        "сооснователь": "Co-founder",
+    }
+
+    if lowered in exact_map:
+        return exact_map[lowered]
+
+    if "product" in lowered and "growth" in lowered:
+        return "Product & Growth Lead"
+
+    if "product" in lowered:
+        return "Product Lead"
+
+    if "growth" in lowered:
+        return "Growth Lead"
+
+    if "sales" in lowered:
+        return "Sales Lead"
+
+    if "marketing" in lowered:
+        return "Marketing Lead"
+
+    return raw
+
+
+def _normalize_use_case(value: Optional[str]) -> Optional[str]:
+    if not value:
+        return None
+
+    raw = _clean(value)
+    lowered = raw.lower()
+
+    replacements = [
+        ("cleaned up, qualified, and pushed into crm",
+         "Inbound lead cleanup, qualification, and CRM routing"),
+        ("clean up, qualify, and push inbound requests into crm",
+         "Inbound lead cleanup, qualification, and CRM routing"),
+        ("automatización de leads entrantes", "Automatización de leads entrantes"),
+        ("автоматизация входящих b2b-заявок", "Автоматизация входящих B2B-заявок"),
+        ("inbound b2b lead automation", "Inbound B2B lead automation"),
+    ]
+
+    for src, dst in replacements:
+        if lowered == src:
+            return dst
+
+    if "telegram" in lowered and "whatsapp" in lowered and "crm" in lowered:
+        return "Inbound lead qualification and CRM routing from Telegram and WhatsApp"
+
+    if "telegram" in lowered and "crm" in lowered:
+        return "Telegram and CRM integration"
+
+    if "whatsapp" in lowered and "crm" in lowered:
+        return "WhatsApp and CRM integration"
+
+    return raw[0].upper() + raw[1:] if len(raw) > 1 else raw.upper()
+
+
 def _build_result(
     company: Optional[str],
     role: Optional[str],
@@ -161,6 +237,11 @@ def _build_result(
     extraction_method: str,
     confidence: float,
 ) -> dict:
+    company = _clean_str(company)
+    role = _normalize_role(role)
+    contact = _clean_str(contact)
+    use_case = _normalize_use_case(use_case)
+
     missing_fields = []
     if not company:
         missing_fields.append("company")
@@ -339,10 +420,10 @@ def _merge_results(rule_result: dict, llm_result: dict) -> dict:
                      llm_result.get("confidence", 0.0))
 
     return _build_result(
-        company=_clean_str(company),
-        role=_clean_str(role),
-        contact=_clean_str(contact),
-        use_case=_clean_str(use_case),
+        company=company,
+        role=role,
+        contact=contact,
+        use_case=use_case,
         extraction_method="rules_v2+llm_fallback",
         confidence=confidence,
     )
@@ -351,22 +432,16 @@ def _merge_results(rule_result: dict, llm_result: dict) -> dict:
 def extract_fields(message_text: str) -> dict:
     text = _clean(message_text)
     rule_result = _extract_rules_v2(text)
-    print("RULE_RESULT", rule_result)
 
     if not _should_try_llm(rule_result):
-        print("LLM_SKIPPED")
         return rule_result
 
     llm_result = llm_extract_fields(text)
-    print("LLM_RESULT", llm_result)
 
     if not _llm_improves(rule_result, llm_result):
-        print("LLM_NOT_BETTER")
         return rule_result
 
-    merged = _merge_results(rule_result, llm_result)
-    print("MERGED_RESULT", merged)
-    return merged
+    return _merge_results(rule_result, llm_result)
 
 
 def extract_company(message_text: str) -> Optional[str]:

@@ -71,7 +71,6 @@ def is_llm_available() -> bool:
 def llm_extract_fields(message_text: str) -> Optional[dict]:
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
-        print("LLM_DISABLED_NO_API_KEY")
         return None
 
     client = OpenAI(
@@ -118,22 +117,15 @@ Message:
         )
 
         raw_text = (response.output_text or "").strip()
-        print("LLM_RAW_TEXT", raw_text)
-
         json_block = _extract_json_block(raw_text)
         if not json_block:
-            print("LLM_NO_JSON_BLOCK")
             return None
 
         parsed = json.loads(json_block)
         if not isinstance(parsed, dict):
-            print("LLM_BAD_JSON_SHAPE", parsed)
             return None
 
-        result = _normalize_result(parsed)
-        print("LLM_OK", result)
-        return result
+        return _normalize_result(parsed)
 
-    except (APIConnectionError, APIStatusError, json.JSONDecodeError, ValueError, TypeError) as e:
-        print("LLM_ERR", repr(e))
+    except (APIConnectionError, APIStatusError, json.JSONDecodeError, ValueError, TypeError):
         return None
