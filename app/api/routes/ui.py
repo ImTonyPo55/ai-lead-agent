@@ -987,49 +987,72 @@ def ui_page() -> str:
     }
 
     function renderDashboard(data) {
-      lastDashboard = data;
+  lastDashboard = data;
 
-      const leadsTotal =
-        data?.leads_total ??
-        data?.total_leads ??
-        data?.counts?.leads_total ??
-        data?.counts?.total_leads ??
-        data?.summary?.leads_total ??
-        lastLeads.length ??
-        0;
+  const leadsFromList = Array.isArray(lastLeads) ? lastLeads.length : 0;
+  const qualifiedFromList = Array.isArray(lastLeads)
+    ? lastLeads.filter(item => {
+        const status = item.lead_status ?? item.status ?? item.lead?.lead_status ?? 'qualified';
+        return status === 'qualified';
+      }).length
+    : 0;
 
-      const qualifiedTotal =
-        data?.qualified_total ??
-        data?.qualified_leads ??
-        data?.counts?.qualified_total ??
-        data?.counts?.qualified_leads ??
-        data?.summary?.qualified_total ??
-        lastLeads.filter(item => (item.lead_status ?? item.status ?? item.lead?.lead_status ?? 'qualified') === 'qualified').length ??
-        0;
+  const inProgressFromList = Array.isArray(lastHandoffs)
+    ? lastHandoffs.filter(item => {
+        const status = item.handoff_status ?? item.status;
+        return status === 'in_progress';
+      }).length
+    : 0;
 
-      const inProgress =
-        data?.handoffs_in_progress ??
-        data?.in_progress ??
-        data?.counts?.handoffs_in_progress ??
-        data?.summary?.handoffs_in_progress ??
-        lastHandoffs.filter(item => (item.handoff_status ?? item.status) === 'in_progress').length ??
-        0;
+  const doneFromList = Array.isArray(lastHandoffs)
+    ? lastHandoffs.filter(item => {
+        const status = item.handoff_status ?? item.status;
+        return status === 'done' || status === 'completed';
+      }).length
+    : 0;
 
-      const done =
-        data?.handoffs_done ??
-        data?.handoffs_completed ??
-        data?.counts?.handoffs_done ??
-        data?.counts?.handoffs_completed ??
-        data?.summary?.handoffs_done ??
-        lastHandoffs.filter(item => ['done', 'completed'].includes(item.handoff_status ?? item.status)).length ??
-        0;
+  let leadsTotal =
+    data?.leads_total ??
+    data?.total_leads ??
+    data?.counts?.leads_total ??
+    data?.counts?.total_leads ??
+    data?.summary?.leads_total ??
+    0;
 
-      $('metricLeads').textContent = leadsTotal;
-      $('metricQualified').textContent = qualifiedTotal;
-      $('metricInProgress').textContent = inProgress;
-      $('metricDone').textContent = done;
-      $('dashboardResult').textContent = data ? safeJson(data) : t('empty');
-    }
+  let qualifiedTotal =
+    data?.qualified_total ??
+    data?.qualified_leads ??
+    data?.counts?.qualified_total ??
+    data?.counts?.qualified_leads ??
+    data?.summary?.qualified_total ??
+    0;
+
+  let inProgress =
+    data?.handoffs_in_progress ??
+    data?.in_progress ??
+    data?.counts?.handoffs_in_progress ??
+    data?.summary?.handoffs_in_progress ??
+    0;
+
+  let done =
+    data?.handoffs_done ??
+    data?.handoffs_completed ??
+    data?.counts?.handoffs_done ??
+    data?.counts?.handoffs_completed ??
+    data?.summary?.handoffs_done ??
+    0;
+
+  if (leadsTotal === 0 && leadsFromList > 0) leadsTotal = leadsFromList;
+  if (qualifiedTotal === 0 && qualifiedFromList > 0) qualifiedTotal = qualifiedFromList;
+  if (inProgress === 0 && inProgressFromList > 0) inProgress = inProgressFromList;
+  if (done === 0 && doneFromList > 0) done = doneFromList;
+
+  $('metricLeads').textContent = leadsTotal;
+  $('metricQualified').textContent = qualifiedTotal;
+  $('metricInProgress').textContent = inProgress;
+  $('metricDone').textContent = done;
+  $('dashboardResult').textContent = data ? safeJson(data) : t('empty');
+}
 
     function renderLeads(items) {
       lastLeads = Array.isArray(items) ? items : [];
