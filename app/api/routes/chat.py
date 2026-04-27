@@ -105,6 +105,17 @@ def chat_message(payload: ChatMessageRequest, db: Session = Depends(get_db)) -> 
         current_lead = None
 
     company = extract_company(payload.message)
+    if company and company.strip().lower().strip(".,!?:;") in {
+        "hi",
+        "hello",
+        "hey",
+        "thanks",
+        "thank you",
+        "good morning",
+        "good afternoon",
+        "good evening",
+    }:
+    company = None
     role = extract_role(payload.message)
     contact = extract_contact(payload.message)
     use_case = extract_use_case(payload.message)
