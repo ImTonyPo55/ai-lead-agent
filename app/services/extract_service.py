@@ -214,12 +214,31 @@ def _cleanup_company(value: str) -> Optional[str]:
 
 
 def _extract_company(text: str) -> Optional[str]:
+    banned_companies = {
+        "hi",
+        "hello",
+        "hey",
+        "thanks",
+        "thank you",
+        "good morning",
+        "good afternoon",
+        "good evening",
+    }
+
     for pattern in COMPANY_PATTERNS:
         match = pattern.search(text)
         if match:
             company = _cleanup_company(match.group(1))
-            if company:
-                return company
+            if not company:
+                continue
+
+            normalized = company.strip().lower().strip(".,!?:;")
+
+            if normalized in banned_companies:
+                continue
+
+            return company
+
     return None
 
 
