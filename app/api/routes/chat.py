@@ -115,7 +115,8 @@ def chat_message(payload: ChatMessageRequest, db: Session = Depends(get_db)) -> 
         "good afternoon",
         "good evening",
     }:
-    company = None
+        company = None
+
     role = extract_role(payload.message)
     contact = extract_contact(payload.message)
     use_case = extract_use_case(payload.message)
@@ -157,6 +158,54 @@ def chat_message(payload: ChatMessageRequest, db: Session = Depends(get_db)) -> 
     intent = decision.intent
     reply = decision.reply_text or build_followup_reply(lead, intent)
 
+    user_message = Message(
+        lead_id=lead.id,
+        sender=SenderType.USER.value,
+        text=payload.message,
+        detected_intent=intent,
+    )
+    db.add(user_message)
+    db.commit()
+    db.refresh(user_message)
+
+    assistant_message = Message(
+        lead_id=lead.id,
+        sender=SenderType.ASSISTANT.value,
+        text=reply,
+        detected_intent=intent,
+    )
+    db.add(assistant_message)
+    db.commit()
+    db.refresh(assistant_message)
+
+    handoff_id = None
+    handoff_created = False
+    if decision.should_create_handoff:
+        handoff_id, handoff_created = create_handoff_if_needed(db, lead)
+
+    return {
+        "status": "ok",
+        "lead_id": lead.id,
+        "message_id": user_message.id,
+        "assistant_message_id": assistant_message.id,
+        "lead_status": lead.status,
+        "handoff_id": handoff_id,
+        "handoff_created": handoff_created,
+        "intent": intent,
+        "company": lead.company,
+        "role": lead.role,
+        "contact": lead.contact,
+        "use_case": lead.use_case,
+        "reply": reply,
+        "next_action": decision.next_action,
+        "should_ask_followup": decision.should_ask_followup,
+        "should_create_handoff": decision.should_create_handoff,
+        "should_update_lead": decision.should_update_lead,
+        "should_create_new_lead": decision.should_create_new_lead,
+        "missing_fields": decision.missing_fields,
+        "confidence": decision.confidence,
+        "notes": decision.notes,
+    }
     user_message = Message(
         lead_id=lead.id,
         sender=SenderType.USER.value,
