@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import json
 from typing import Any, Dict, List, Optional, Literal
 
 from pydantic import BaseModel, Field
+
+from app.services.llm_service import llm_extract_fields
 
 
 CRITICAL_FIELDS = ["company", "contact", "use_case"]
@@ -116,16 +119,48 @@ Rules:
 3. If the lead is qualified and not yet handed off, create handoff.
 4. Be concise.
 5. reply_text must be short and usable as an assistant reply.
+6. Do not invent fields that are absent in the message or current lead.
+7. Confidence must be a float between 0 and 1.
 
 MESSAGE:
 {cleaned_message}
 
 EXTRACTED:
-{extracted}
+{json.dumps(extracted, ensure_ascii=False)}
 
 CURRENT_LEAD:
-{current_lead}
+{json.dumps(current_lead, ensure_ascii=False)}
 """.strip()
+
+
+def _parse_agent_decision_json(raw_text: Optional[str]) -> Optional[AgentDecision]:
+    if not raw_text:
+        return None
+
+    text = str(raw_text).strip()
+    if not text:
+        return None
+
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError:
+        start = text.find("{")
+        end = text.rfind("}")
+        if start == -1 or end == -1 or end <= start:
+            return None
+
+        try:
+            data = json.loads(text[start: end + 1])
+        except json.JSONDecodeError:
+            return None
+
+    if not isinstance(data, dict):
+        return None
+
+    try:
+        return AgentDecision.model_validate(data)
+    except Exception:
+        return None
 
 
 def rule_based_agent_decide(
@@ -133,7 +168,7 @@ def rule_based_agent_decide(
     extracted: Optional[Dict[str, Any]] = None,
     current_lead: Optional[Dict[str, Any]] = None,
 ) -> AgentDecision:
-    cleaned_message = _clean_text(message_text)
+    _ = _clean_text(message_text)
     extracted = extracted or {}
     current_lead = current_lead or {}
 
@@ -171,18 +206,58 @@ def rule_based_agent_decide(
     )
 
 
+def llm_agent_decide(
+    message_text: str,
+    extracted: Optional[Dict[str, Any]] = None,
+    current_lead: Optional[Dict[str, Any]] = None,
+) -> Optional[AgentDecision]:
+    prompt = build_agent_prompt(
+        message_text=message_text,
+        extracted=extracted,
+        current_lead=current_lead,
+    )
+
+    raw_result = llm_extract_fields(prompt)
+    if raw_result is None:
+        return None
+
+    if isinstance(raw_result, dict):
+        if "raw_text" in raw_result:
+            parsed = _parse_agent_decision_json(raw_result.get("raw_text"))
+            if parsed is not None:
+                return parsed
+
+        if "output_text" in raw_result:
+            parsed = _parse_agent_decision_json(raw_result.get("output_text"))
+            if parsed is not None:
+                return parsed
+
+        try:
+            return AgentDecision.model_validate(raw_result)
+        except Exception:
+            return None
+
+    if isinstance(raw_result, str):
+        return _parse_agent_decision_json(raw_result)
+
+    return None
+
+
 def agent_decide(
     message_text: str,
     extracted: Optional[Dict[str, Any]] = None,
     current_lead: Optional[Dict[str, Any]] = None,
     use_llm: bool = False,
 ) -> AgentDecision:
-    """
-    Step 1:
-    For now we return rule-based decisions.
-    Later we will add LLM-based decisioning here.
-    """
-    _ = use_llm
+    if use_llm:
+        llm_decision = llm_agent_decide(
+            message_text=message_text,
+            extracted=extracted,
+            current_lead=current_lead,
+        )
+        if llm_decision is not None:
+            return llm_decision
+
     return rule_based_agent_decide(
         message_text=message_text,
         extracted=extracted,
