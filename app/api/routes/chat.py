@@ -82,6 +82,7 @@ def create_handoff_if_needed(db: Session, lead: Lead) -> tuple[int | None, bool]
 def chat_message(payload: ChatMessageRequest, db: Session = Depends(get_db)) -> dict:
     import re
     from app.services.agent_service import agent_decide
+    from app.services.action_executor import apply_agent_decision
 
     if payload.lead_id:
         lead = db.get(Lead, payload.lead_id)
@@ -153,25 +154,13 @@ def chat_message(payload: ChatMessageRequest, db: Session = Depends(get_db)) -> 
         use_llm=False,
     )
 
-    if company and not lead.company:
-        lead.company = company
-
-    if role and not lead.role:
-        lead.role = role
-
-    if contact and not lead.contact:
-        lead.contact = contact
-
-    if use_case and not lead.use_case:
-        lead.use_case = use_case
-
-    lead.status = calculate_lead_status(lead)
-    if decision.should_create_handoff:
-        lead.status = "qualified"
-
-    db.add(lead)
-    db.commit()
-    db.refresh(lead)
+    action_result = apply_agent_decision(
+        db=db,
+        lead=lead,
+        extracted=extracted,
+        decision=decision,
+        create_handoff_fn=create_handoff_if_needed,
+    )
 
     intent = decision.intent
     reply = decision.reply_text or build_followup_reply(lead, intent)
@@ -196,24 +185,19 @@ def chat_message(payload: ChatMessageRequest, db: Session = Depends(get_db)) -> 
     db.commit()
     db.refresh(assistant_message)
 
-    handoff_id = None
-    handoff_created = False
-    if decision.should_create_handoff:
-        handoff_id, handoff_created = create_handoff_if_needed(db, lead)
-
     return {
         "status": "ok",
         "lead_id": lead.id,
         "message_id": user_message.id,
         "assistant_message_id": assistant_message.id,
-        "lead_status": lead.status,
-        "handoff_id": handoff_id,
-        "handoff_created": handoff_created,
+        "lead_status": action_result["lead_status"],
+        "handoff_id": action_result["handoff_id"],
+        "handoff_created": action_result["handoff_created"],
         "intent": intent,
-        "company": lead.company,
-        "role": lead.role,
-        "contact": lead.contact,
-        "use_case": lead.use_case,
+        "company": action_result["company"],
+        "role": action_result["role"],
+        "contact": action_result["contact"],
+        "use_case": action_result["use_case"],
         "reply": reply,
         "next_action": decision.next_action,
         "should_ask_followup": decision.should_ask_followup,
@@ -223,101 +207,5 @@ def chat_message(payload: ChatMessageRequest, db: Session = Depends(get_db)) -> 
         "missing_fields": decision.missing_fields,
         "confidence": decision.confidence,
         "notes": decision.notes,
-    }
-
-    user_message = Message(
-        lead_id=lead.id,
-        sender=SenderType.USER.value,
-        text=payload.message,
-        detected_intent=intent,
-    )
-    db.add(user_message)
-    db.commit()
-    db.refresh(user_message)
-
-    assistant_message = Message(
-        lead_id=lead.id,
-        sender=SenderType.ASSISTANT.value,
-        text=reply,
-        detected_intent=intent,
-    )
-    db.add(assistant_message)
-    db.commit()
-    db.refresh(assistant_message)
-
-    handoff_id = None
-    handoff_created = False
-    if decision.should_create_handoff:
-        handoff_id, handoff_created = create_handoff_if_needed(db, lead)
-
-    return {
-        "status": "ok",
-        "lead_id": lead.id,
-        "message_id": user_message.id,
-        "assistant_message_id": assistant_message.id,
-        "lead_status": lead.status,
-        "handoff_id": handoff_id,
-        "handoff_created": handoff_created,
-        "intent": intent,
-        "company": lead.company,
-        "role": lead.role,
-        "contact": lead.contact,
-        "use_case": lead.use_case,
-        "reply": reply,
-        "next_action": decision.next_action,
-        "should_ask_followup": decision.should_ask_followup,
-        "should_create_handoff": decision.should_create_handoff,
-        "should_update_lead": decision.should_update_lead,
-        "should_create_new_lead": decision.should_create_new_lead,
-        "missing_fields": decision.missing_fields,
-        "confidence": decision.confidence,
-        "notes": decision.notes,
-    }
-    user_message = Message(
-        lead_id=lead.id,
-        sender=SenderType.USER.value,
-        text=payload.message,
-        detected_intent=intent,
-    )
-    db.add(user_message)
-    db.commit()
-    db.refresh(user_message)
-
-    assistant_message = Message(
-        lead_id=lead.id,
-        sender=SenderType.ASSISTANT.value,
-        text=reply,
-        detected_intent=intent,
-    )
-    db.add(assistant_message)
-    db.commit()
-    db.refresh(assistant_message)
-
-    handoff_id = None
-    handoff_created = False
-    if decision.should_create_handoff:
-        handoff_id, handoff_created = create_handoff_if_needed(db, lead)
-
-    return {
-        "status": "ok",
-        "lead_id": lead.id,
-        "message_id": user_message.id,
-        "assistant_message_id": assistant_message.id,
-        "lead_status": lead.status,
-        "handoff_id": handoff_id,
-        "handoff_created": handoff_created,
-        "intent": intent,
-        "company": lead.company,
-        "role": lead.role,
-        "contact": lead.contact,
-        "use_case": lead.use_case,
-        "reply": reply,
-        "next_action": decision.next_action,
-        "should_ask_followup": decision.should_ask_followup,
-        "should_create_handoff": decision.should_create_handoff,
-        "should_update_lead": decision.should_update_lead,
-        "should_create_new_lead": decision.should_create_new_lead,
-        "missing_fields": decision.missing_fields,
-        "confidence": decision.confidence,
-        "notes": decision.notes,
+        "lead_changed": action_result["lead_changed"],
     }
