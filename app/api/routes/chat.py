@@ -80,6 +80,8 @@ def create_handoff_if_needed(db: Session, lead: Lead) -> tuple[int | None, bool]
 
 @router.post("/message")
 def chat_message(payload: ChatMessageRequest, db: Session = Depends(get_db)) -> dict:
+    from app.services.agent_service import agent_decide
+
     if payload.lead_id:
         lead = db.get(Lead, payload.lead_id)
         if lead is None:
@@ -87,16 +89,39 @@ def chat_message(payload: ChatMessageRequest, db: Session = Depends(get_db)) -> 
                 "status": "error",
                 "message": f"Lead {payload.lead_id} not found",
             }
+        current_lead = {
+            "id": lead.id,
+            "company": lead.company,
+            "role": lead.role,
+            "contact": lead.contact,
+            "use_case": lead.use_case,
+            "status": lead.status,
+        }
     else:
         lead = Lead()
         db.add(lead)
         db.commit()
         db.refresh(lead)
+        current_lead = None
 
     company = extract_company(payload.message)
     role = extract_role(payload.message)
     contact = extract_contact(payload.message)
     use_case = extract_use_case(payload.message)
+
+    extracted = {
+        "company": company,
+        "role": role,
+        "contact": contact,
+        "use_case": use_case,
+    }
+
+    decision = agent_decide(
+        message_text=payload.message,
+        extracted=extracted,
+        current_lead=current_lead,
+        use_llm=False,
+    )
 
     if company and not lead.company:
         lead.company = company
@@ -111,13 +136,15 @@ def chat_message(payload: ChatMessageRequest, db: Session = Depends(get_db)) -> 
         lead.use_case = use_case
 
     lead.status = calculate_lead_status(lead)
+    if decision.should_create_handoff:
+        lead.status = "qualified"
 
     db.add(lead)
     db.commit()
     db.refresh(lead)
 
-    intent = detect_intent(payload.message)
-    reply = build_followup_reply(lead, intent)
+    intent = decision.intent
+    reply = decision.reply_text or build_followup_reply(lead, intent)
 
     user_message = Message(
         lead_id=lead.id,
@@ -139,7 +166,10 @@ def chat_message(payload: ChatMessageRequest, db: Session = Depends(get_db)) -> 
     db.commit()
     db.refresh(assistant_message)
 
-    handoff_id, handoff_created = create_handoff_if_needed(db, lead)
+    handoff_id = None
+    handoff_created = False
+    if decision.should_create_handoff:
+        handoff_id, handoff_created = create_handoff_if_needed(db, lead)
 
     return {
         "status": "ok",
@@ -155,4 +185,12 @@ def chat_message(payload: ChatMessageRequest, db: Session = Depends(get_db)) -> 
         "contact": lead.contact,
         "use_case": lead.use_case,
         "reply": reply,
+        "next_action": decision.next_action,
+        "should_ask_followup": decision.should_ask_followup,
+        "should_create_handoff": decision.should_create_handoff,
+        "should_update_lead": decision.should_update_lead,
+        "should_create_new_lead": decision.should_create_new_lead,
+        "missing_fields": decision.missing_fields,
+        "confidence": decision.confidence,
+        "notes": decision.notes,
     }
