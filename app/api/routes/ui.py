@@ -1132,9 +1132,8 @@ def ui_page() -> str:
   }
 
   const payload = {
-    message: messageText,
-    message_text: messageText
-  };
+  message: messageText
+};
 
   if (leadId) {
     payload.lead_id = Number(leadId);
