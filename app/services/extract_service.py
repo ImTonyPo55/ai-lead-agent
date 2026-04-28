@@ -211,11 +211,29 @@ def _normalize_role(value: Optional[str]) -> Optional[str]:
 def _cleanup_company(value: str) -> Optional[str]:
     value = _clean(value)
     value = value.strip(" \n\t\r,.;:!?-—")
-    value = re.sub(r"\b(contact|контакт|contacto)\b.*$",
-                   "", value, flags=re.IGNORECASE).strip()
-    value = re.sub(r"\b(i am from|i'm from|from company|мы из|из компании|somos de|soy de)\b.*$",
-                   "", value, flags=re.IGNORECASE).strip()
-    value = value.strip(" \n\t\r,.;:!?-—")
+    value = re.sub(
+        r"(?i)[\s\.,;:]+best(?:\s+contact.*)?$",
+        "",
+        value,
+    ).strip(" \n\t\r,.;:!?-—")
+    value = re.sub(
+        r"(?i)[\s\.,;:]+contact(?:\s+is.*)?$",
+        "",
+        value,
+    ).strip(" \n\t\r,.;:!?-—")
+    value = re.sub(
+        r"\b(contact|контакт|contacto)\b.*$",
+        "",
+        value,
+        flags=re.IGNORECASE,
+    ).strip()
+    value = re.sub(
+        r"\b(i am from|i'm from|from company|мы из|из компании|somos de|soy de)\b",
+        "",
+        value,
+        flags=re.IGNORECASE,
+    ).strip(" \n\t\r,.;:!?-—")
+    value = re.sub(r"\s+", " ", value).strip(" \n\t\r,.;:!?-—")
 
     if not value:
         return None
@@ -223,6 +241,13 @@ def _cleanup_company(value: str) -> Optional[str]:
         return None
     if len(value) < 2 or len(value) > 64:
         return None
+    if value.startswith("@") or CONTACT_PATTERN.search(value) or EMAIL_PATTERN.search(value):
+        return None
+    if ROLE_PATTERN.fullmatch(value):
+        return None
+
+    if " " in value and value == value.lower():
+        value = " ".join(word[:1].upper() + word[1:] for word in value.split())
 
     return value
 
