@@ -151,7 +151,7 @@ def chat_message(payload: ChatMessageRequest, db: Session = Depends(get_db)) -> 
         message_text=payload.message,
         extracted=extracted,
         current_lead=current_lead,
-        use_llm=False,
+        use_llm=True,
     )
 
     action_result = apply_agent_decision(
