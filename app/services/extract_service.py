@@ -554,6 +554,50 @@ def _llm_improves(rule_result: dict, llm_result: Optional[dict]) -> bool:
     return False
 
 
+def _role_quality(value: Optional[str]) -> int:
+    normalized = _normalize_role(value)
+    if not normalized:
+        return -100
+
+    lowered = normalized.lower()
+    score_map = {
+        "product & growth lead": 120,
+        "founder": 110,
+        "co-founder": 110,
+        "ceo": 110,
+        "cto": 110,
+        "cpo": 110,
+        "product lead": 105,
+        "growth lead": 105,
+        "director": 100,
+        "owner": 100,
+    }
+    score = score_map.get(lowered, 0)
+
+    if lowered.startswith(("i am", "my name", "hello", "hi")):
+        score -= 40
+
+    if len(normalized) > 60:
+        score -= 20
+
+    return score
+
+
+def _pick_best_role(rule_value: Optional[str], llm_value: Optional[str]) -> Optional[str]:
+    rule_norm = _normalize_role(rule_value)
+    llm_norm = _normalize_role(llm_value)
+
+    if not rule_norm:
+        return llm_norm
+    if not llm_norm:
+        return rule_norm
+
+    if _role_quality(llm_norm) > _role_quality(rule_norm):
+        return llm_norm
+
+    return rule_norm
+
+
 def _merge_results(rule_result: dict, llm_result: dict) -> dict:
     company = rule_result.get("company") or llm_result.get("company")
     role = _pick_best_role(
