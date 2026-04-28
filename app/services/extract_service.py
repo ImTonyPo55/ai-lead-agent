@@ -161,37 +161,51 @@ def _normalize_role(value: Optional[str]) -> Optional[str]:
 
     raw = _clean(value)
     lowered = raw.lower()
+    compact = re.sub(r"[\s_/.-]+", " ", lowered).strip()
 
     exact_map = {
         "founder": "Founder",
-        "cofounder": "Co-founder",
-        "co-founder": "Co-founder",
+        "co founder": "Co-Founder",
+        "cofounder": "Co-Founder",
         "ceo": "CEO",
+        "chief executive officer": "CEO",
         "cto": "CTO",
+        "chief technology officer": "CTO",
         "cpo": "CPO",
+        "chief product officer": "CPO",
         "owner": "Owner",
+        "business owner": "Owner",
         "director": "Director",
+        "managing director": "Director",
+        "director general": "Director",
         "fundador": "Founder",
-        "cofundador": "Co-founder",
+        "cofundador": "Co-Founder",
         "основатель": "Founder",
-        "сооснователь": "Co-founder",
+        "сооснователь": "Co-Founder",
+        "владелец": "Owner",
+        "директор": "Director",
     }
 
-    if lowered in exact_map:
-        return exact_map[lowered]
+    if compact in exact_map:
+        return exact_map[compact]
 
-    if "product" in lowered and "growth" in lowered:
+    has_product = bool(re.search(r"\bproduct\b", compact)) or "продукт" in compact
+    has_growth = bool(re.search(r"\bgrowth\b", compact)) or "рост" in compact
+    has_lead_signal = (
+        bool(re.search(r"\b(lead|head|director|chief|vp)\b", compact))
+        or "руковод" in compact
+        or "директор" in compact
+    )
+
+    if has_product and has_growth:
         return "Product & Growth Lead"
-    if "product" in lowered:
+    if has_product and has_lead_signal:
         return "Product Lead"
-    if "growth" in lowered:
+    if has_growth and has_lead_signal:
         return "Growth Lead"
-    if "sales" in lowered:
-        return "Sales Lead"
-    if "marketing" in lowered:
-        return "Marketing Lead"
 
-    return raw
+    cleaned = raw.strip(" \n\t\r,.;:!?-—")
+    return cleaned or None
 
 
 def _cleanup_company(value: str) -> Optional[str]:
@@ -315,42 +329,76 @@ def _normalize_use_case(value: Optional[str]) -> Optional[str]:
     raw = _clean(value)
     lowered = raw.lower()
 
-    # 1. Явные хорошие каноничные варианты
     canonical_map = {
-        "inbound b2b lead automation": "Inbound B2B lead automation",
-        "telegram and crm integration": "Telegram and CRM integration",
-        "whatsapp and crm integration": "WhatsApp and CRM integration",
-        "автоматизация входящих b2b-заявок": "Автоматизация входящих B2B-заявок",
-        "automatización de leads entrantes": "Automatización de leads entrantes",
+        "inbound lead qualification": "Inbound lead qualification",
+        "inbound lead qualification and crm routing": "Inbound lead qualification and CRM routing",
+        "customer support automation": "Customer support automation",
+        "demo booking and sales triage": "Demo booking and sales triage",
+        "lead intake and qualification": "Lead intake and qualification",
+        "whatsapp and telegram inbound automation": "WhatsApp and Telegram inbound automation",
+        "inbound lead automation": "Inbound lead qualification",
+        "inbound b2b lead automation": "Inbound lead qualification",
+        "lead intake + crm": "Inbound lead qualification and CRM routing",
+        "ai lead intake": "Lead intake and qualification",
+        "ai lead intake + crm": "Inbound lead qualification and CRM routing",
+        "автоматизация входящих b2b-заявок": "Inbound lead qualification",
+        "automatización de leads entrantes": "Inbound lead qualification",
     }
     if lowered in canonical_map:
         return canonical_map[lowered]
 
-    # 2. Главный pitch-ready сценарий для нашего демо
-    has_telegram = "telegram" in lowered
+    has_telegram = "telegram" in lowered or "телеграм" in lowered
     has_whatsapp = "whatsapp" in lowered
-    has_crm = "crm" in lowered
-    has_inbound = any(x in lowered for x in (
-        "inbound", "entrantes", "входящих"))
-    has_qualify = any(x in lowered for x in ("qualif", "квалиф", "calific"))
-    has_cleanup = any(x in lowered for x in (
-        "clean", "cleanup", "clean up", "очист", "limpiar"))
-    has_push_or_route = any(x in lowered for x in (
-        "push", "route", "routing", "маршрут", "enrut"))
+    has_crm = bool(re.search(r"\bcrm\b", lowered))
+    has_inbound = bool(re.search(r"\binbound\b", lowered)) or any(
+        x in lowered for x in ("incoming", "entrantes", "входящих")
+    )
+    has_lead = bool(re.search(r"\bleads?\b", lowered)) or any(
+        x in lowered for x in ("лид", "лидов", "заяв", "prospect")
+    )
+    has_qualify = any(x in lowered for x in ("qualif", "qualify", "квалиф", "calific"))
+    has_intake = bool(re.search(r"\bintake\b", lowered)) or any(
+        x in lowered for x in ("capture", "captur", "сбор", "прием", "приём")
+    )
+    has_route = bool(re.search(r"\broute\b|\brouting\b", lowered)) or any(
+        x in lowered for x in ("enrut", "маршрут", "push")
+    )
+    has_support = bool(re.search(r"\bsupport\b", lowered)) or any(
+        x in lowered for x in ("helpdesk", "soporte", "поддерж")
+    )
+    has_demo = bool(re.search(r"\bdemo\b", lowered)) or "демо" in lowered
+    has_booking = bool(re.search(r"\bbook(?:ing)?\b", lowered)) or any(
+        x in lowered for x in ("schedule", "appointment", "meeting", "calendar", "запис", "брон")
+    )
+    has_sales = bool(re.search(r"\bsales\b", lowered)) or any(
+        x in lowered for x in ("ventas", "продаж")
+    )
+    has_triage = any(x in lowered for x in ("triage", "screening", "триаж"))
+    has_automation = bool(re.search(r"\bautomation\b|\bautomate\b", lowered)) or any(
+        x in lowered for x in ("автомат", "automatiz")
+    )
+    has_agent = bool(re.search(r"\bagent\b|\bassistant\b|\bbot\b", lowered)) or any(
+        x in lowered for x in ("агент", "бот")
+    )
 
-    if has_telegram and has_whatsapp and has_crm and (has_qualify or has_cleanup or has_push_or_route or has_inbound):
-        return "Inbound lead qualification and CRM routing from Telegram and WhatsApp"
+    if has_support and (has_automation or has_agent):
+        return "Customer support automation"
 
-    if has_telegram and has_crm and (has_qualify or has_inbound):
-        return "Inbound lead qualification and CRM routing from Telegram"
+    if has_demo and (has_booking or has_sales or has_triage):
+        return "Demo booking and sales triage"
 
-    if has_whatsapp and has_crm and (has_qualify or has_inbound):
-        return "Inbound lead qualification and CRM routing from WhatsApp"
-
-    if has_inbound and has_crm and (has_qualify or has_push_or_route):
+    if has_crm and (has_inbound or has_lead) and (has_qualify or has_intake or has_route or has_automation):
         return "Inbound lead qualification and CRM routing"
 
-    # 3. Чистка кривых формулировок
+    if has_telegram and has_whatsapp and (has_inbound or has_lead or has_automation):
+        return "WhatsApp and Telegram inbound automation"
+
+    if has_lead and (has_intake or has_qualify):
+        return "Lead intake and qualification"
+
+    if (has_inbound and has_lead) or (has_lead and has_automation):
+        return "Inbound lead qualification"
+
     raw = re.sub(r"^(them|it|this|that)\s+", "", raw, flags=re.IGNORECASE)
     raw = re.sub(r"\s+", " ", raw).strip(" \n\t\r,.;:!?-—")
 
@@ -365,27 +413,34 @@ def _use_case_quality(value: Optional[str]) -> int:
         return -100
 
     lowered = value.lower()
-    score = 0
-
-    if lowered == "inbound lead qualification and crm routing from telegram and whatsapp":
-        score += 100
+    exact_scores = {
+        "inbound lead qualification and crm routing": 120,
+        "lead intake and qualification": 115,
+        "inbound lead qualification": 110,
+        "whatsapp and telegram inbound automation": 105,
+        "customer support automation": 100,
+        "demo booking and sales triage": 100,
+    }
+    score = exact_scores.get(lowered, 0)
 
     if "crm" in lowered:
-        score += 15
-    if "telegram" in lowered:
+        score += 12
+    if "qualification" in lowered:
+        score += 10
+    if "intake" in lowered:
         score += 8
-    if "whatsapp" in lowered:
-        score += 8
-    if "qualification" in lowered or "qualif" in lowered:
-        score += 8
+    if "automation" in lowered:
+        score += 6
+    if "telegram" in lowered or "whatsapp" in lowered:
+        score += 4
     if "routing" in lowered:
         score += 6
 
     if lowered.startswith(("them ", "it ", "this ", "that ")):
         score -= 20
 
-    if len(value) > 90:
-        score -= 5
+    if len(value) > 80:
+        score -= 10
 
     return score
 
@@ -501,12 +556,19 @@ def _llm_improves(rule_result: dict, llm_result: Optional[dict]) -> bool:
 
 def _merge_results(rule_result: dict, llm_result: dict) -> dict:
     company = rule_result.get("company") or llm_result.get("company")
-    role = llm_result.get("role") or rule_result.get("role")
+    role = _pick_best_role(
+        rule_result.get("role"),
+        llm_result.get("role"),
+    )
     contact = rule_result.get("contact") or llm_result.get("contact")
-    use_case = _pick_best_use_case(rule_result.get(
-        "use_case"), llm_result.get("use_case"))
-    confidence = max(rule_result.get("confidence", 0.0),
-                     llm_result.get("confidence", 0.0))
+    use_case = _pick_best_use_case(
+        rule_result.get("use_case"),
+        llm_result.get("use_case"),
+    )
+    confidence = max(
+        rule_result.get("confidence", 0.0),
+        llm_result.get("confidence", 0.0),
+    )
 
     return _build_result(
         company=company,
