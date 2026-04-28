@@ -11,6 +11,24 @@ def _clean(value: Optional[str]) -> str:
     return " ".join(str(value).strip().split())
 
 
+def _compact_key(value: str) -> str:
+    return "".join(char for char in value.casefold() if char.isalnum())
+
+
+def _should_update_use_case(lead: Any, use_case: str, company: str) -> bool:
+    if not use_case:
+        return False
+
+    existing_use_case = _clean(getattr(lead, "use_case", None))
+    if existing_use_case:
+        return False
+
+    if company and _compact_key(use_case) == _compact_key(company):
+        return False
+
+    return True
+
+
 def update_lead_fields(lead: Any, extracted: Optional[Dict[str, Any]] = None) -> bool:
     extracted = extracted or {}
     changed = False
@@ -32,7 +50,7 @@ def update_lead_fields(lead: Any, extracted: Optional[Dict[str, Any]] = None) ->
         lead.contact = contact
         changed = True
 
-    if use_case and not getattr(lead, "use_case", None):
+    if _should_update_use_case(lead, use_case, company):
         lead.use_case = use_case
         changed = True
 
