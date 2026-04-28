@@ -211,36 +211,50 @@ def llm_agent_decide(
     extracted: Optional[Dict[str, Any]] = None,
     current_lead: Optional[Dict[str, Any]] = None,
 ) -> Optional[AgentDecision]:
-    prompt = build_agent_prompt(
-        message_text=message_text,
-        extracted=extracted,
-        current_lead=current_lead,
-    )
+    try:
+        prompt = build_agent_prompt(
+            message_text=message_text,
+            extracted=extracted,
+            current_lead=current_lead,
+        )
 
-    raw_result = llm_extract_fields(prompt)
-    if raw_result is None:
+        raw_result = llm_extract_fields(prompt)
+    except Exception:
         return None
 
-    if isinstance(raw_result, dict):
-        if "raw_text" in raw_result:
-            parsed = _parse_agent_decision_json(raw_result.get("raw_text"))
-            if parsed is not None:
-                return parsed
-
-        if "output_text" in raw_result:
-            parsed = _parse_agent_decision_json(raw_result.get("output_text"))
-            if parsed is not None:
-                return parsed
-
-        try:
-            return AgentDecision.model_validate(raw_result)
-        except Exception:
-            return None
+    if not raw_result:
+        return None
 
     if isinstance(raw_result, str):
         return _parse_agent_decision_json(raw_result)
 
-    return None
+    if not isinstance(raw_result, dict):
+        return None
+
+    for key in ("raw_text", "output_text"):
+        parsed = _parse_agent_decision_json(raw_result.get(key))
+        if parsed is not None:
+            return parsed
+
+    required_keys = {
+        "intent",
+        "next_action",
+        "should_ask_followup",
+        "should_create_handoff",
+        "should_update_lead",
+        "should_create_new_lead",
+        "confidence",
+        "missing_fields",
+        "reply_text",
+        "notes",
+    }
+    if not required_keys.issubset(raw_result.keys()):
+        return None
+
+    try:
+        return AgentDecision.model_validate(raw_result)
+    except Exception:
+        return None
 
 
 def agent_decide(
