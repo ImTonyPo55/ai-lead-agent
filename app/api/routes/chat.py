@@ -147,6 +147,11 @@ def chat_message(payload: ChatMessageRequest, db: Session = Depends(get_db)) -> 
         "use_case": use_case,
     }
 
+    if current_lead:
+        for field in ("company", "role", "contact", "use_case"):
+            if not extracted.get(field) and current_lead.get(field):
+                extracted[field] = current_lead[field]
+
     decision = agent_decide(
         message_text=payload.message,
         extracted=extracted,

@@ -282,9 +282,22 @@ def _extract_company(text: str) -> Optional[str]:
 
 
 def _extract_role(text: str) -> Optional[str]:
+    lowered = text.lower()
+
+    run_match = re.search(
+        r"\bi\s+run\s+([a-z0-9&/\- ]{2,80})",
+        lowered,
+        flags=re.IGNORECASE,
+    )
+    if run_match:
+        normalized = _normalize_role(run_match.group(1))
+        if normalized:
+            return normalized
+
     match = ROLE_PATTERN.search(text)
     if not match:
         return None
+
     raw = match.group(1).lower()
     return ROLE_MAP.get(raw, raw)
 
@@ -405,6 +418,9 @@ def _normalize_use_case(value: Optional[str]) -> Optional[str]:
     has_agent = bool(re.search(r"\bagent\b|\bassistant\b|\bbot\b", lowered)) or any(
         x in lowered for x in ("агент", "бот")
     )
+
+    if has_crm and has_qualify and has_route:
+        return "Inbound lead qualification and CRM routing"
 
     if has_support and (has_automation or has_agent):
         return "Customer support automation"
