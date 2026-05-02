@@ -11,7 +11,7 @@ from app.services.extract_service import (
     extract_use_case,
 )
 from app.services.intent_service import detect_intent
-
+from app.services.knowledge_service import answer_from_knowledge_base
 router = APIRouter(prefix="/chat", tags=["chat"])
 
 
@@ -168,7 +168,11 @@ def chat_message(payload: ChatMessageRequest, db: Session = Depends(get_db)) -> 
     )
 
     intent = decision.intent
+    knowledge_reply = answer_from_knowledge_base(payload.message)
     reply = decision.reply_text or build_followup_reply(lead, intent)
+
+    if knowledge_reply and decision.intent != "qualified_lead":
+        reply = f"{knowledge_reply}\n\n{reply}"
 
     user_message = Message(
         lead_id=lead.id,
