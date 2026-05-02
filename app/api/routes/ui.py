@@ -1060,11 +1060,32 @@ def ui_page() -> str:
   $('metricInProgress').textContent = inProgress;
   $('metricDone').textContent = done;
   $('dashboardResult').textContent = data ? safeJson(data) : t('empty');
-}
-
-    function renderLeads(items) {
-      lastLeads = Array.isArray(items) ? items : [];
-      $('leadsRaw').textContent = lastLeads.length ? safeJson(lastLeads) : t('empty');
+	}
+	
+	    function calculateLeadScore(item) {
+	      const lead = item.lead || item || {};
+	      let score = 0;
+	
+	      if (lead.company || item.company) score += 25;
+	      if (lead.contact || item.contact) score += 25;
+	      if (lead.use_case || item.use_case) score += 25;
+	      if (lead.role || item.role) score += 10;
+	
+	      const status = lead.lead_status || lead.status || item.lead_status || item.status || '';
+	      if (status === 'qualified') score += 15;
+	
+	      return Math.min(score, 100);
+	    }
+	
+	    function calculateLeadPriority(score) {
+	      if (score >= 75) return 'High';
+	      if (score >= 40) return 'Medium';
+	      return 'Low';
+	    }
+	
+	    function renderLeads(items) {
+	      lastLeads = Array.isArray(items) ? items : [];
+	      $('leadsRaw').textContent = lastLeads.length ? safeJson(lastLeads) : t('empty');
 
       const root = $('leadsList');
       root.innerHTML = '';
@@ -1080,21 +1101,24 @@ def ui_page() -> str:
       lastLeads.forEach((item) => {
         const leadId = item.id ?? item.lead_id ?? item.lead?.id ?? '-';
         const company = item.company ?? item.lead?.company ?? item.name ?? item.contact ?? ('lead_id ' + leadId);
-        const role = item.role ?? item.lead?.role ?? t('empty');
-        const contact = item.contact ?? item.lead?.contact ?? t('empty');
-        const useCase = item.use_case ?? item.lead?.use_case ?? t('empty');
-
-        let leadStatus = item.lead_status ?? item.status ?? item.lead?.lead_status ?? null;
-        if (!leadStatus && (company || useCase)) leadStatus = 'qualified';
+	        const role = item.role ?? item.lead?.role ?? t('empty');
+	        const contact = item.contact ?? item.lead?.contact ?? t('empty');
+	        const useCase = item.use_case ?? item.lead?.use_case ?? t('empty');
+	        const score = calculateLeadScore(item);
+	        const priority = calculateLeadPriority(score);
+	
+	        let leadStatus = item.lead_status ?? item.status ?? item.lead?.lead_status ?? null;
+	        if (!leadStatus && (company || useCase)) leadStatus = 'qualified';
 
         const el = document.createElement('div');
         el.className = 'list-item';
         el.innerHTML = `
-          <div class="list-top">
-            <div>
-              <div class="list-title">${company}</div>
-              <div class="list-sub">${t('role')}: ${role} · ${t('contact')}: ${contact}</div>
-            </div>
+	          <div class="list-top">
+	            <div>
+	              <div class="list-title">${company}</div>
+	              <div class="list-sub">${t('score')}: ${score} · ${t('priority')}: ${priority}</div>
+	              <div class="list-sub">${t('role')}: ${role} · ${t('contact')}: ${contact}</div>
+	            </div>
             <div class="badges">
               <span class="badge badge-id">lead_id: ${leadId}</span>
               <span class="badge ${badgeClass(leadStatus)}">${mapStatus(leadStatus)}</span>
