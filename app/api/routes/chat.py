@@ -12,6 +12,7 @@ from app.services.extract_service import (
 )
 from app.services.intent_service import detect_intent
 from app.services.knowledge_service import answer_from_knowledge_base
+from app.services.telegram_service import notify_handoff_created
 router = APIRouter(prefix="/chat", tags=["chat"])
 
 
@@ -74,6 +75,7 @@ def create_handoff_if_needed(db: Session, lead: Lead) -> tuple[int | None, bool]
     db.add(handoff)
     db.commit()
     db.refresh(handoff)
+    notify_handoff_created(lead, handoff)
 
     return handoff.id, True
 

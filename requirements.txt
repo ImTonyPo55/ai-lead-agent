@@ -3,3 +3,4 @@ uvicorn
 sqlalchemy
 pydantic
 openai>=2.32.0,<3.0.0
+certifi
