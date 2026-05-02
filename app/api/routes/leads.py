@@ -223,11 +223,35 @@ def get_lead_summary(lead_id: int, db: Session = Depends(get_db)) -> dict:
         .first()
     )
 
+    score = 0
+
+    if lead.company:
+        score += 25
+    if lead.contact:
+        score += 25
+    if lead.use_case:
+        score += 25
+    if lead.role:
+        score += 10
+    if latest_handoff:
+        score += 15
+
+    score = min(score, 100)
+
+    if score >= 75:
+        priority = "High"
+    elif score >= 40:
+        priority = "Medium"
+    else:
+        priority = "Low"
+
     message_count = db.query(Message).filter(
         Message.lead_id == lead_id).count()
 
     return {
         "status": "ok",
+        "score": score,
+        "priority": priority,
         "lead": {
             "id": lead.id,
             "name": lead.name,

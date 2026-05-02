@@ -612,6 +612,8 @@ def ui_page() -> str:
         role: 'Роль',
         contact: 'Контакт',
         useCase: 'Сценарий использования',
+        score: 'Оценка',
+        priority: 'Приоритет',
         assignedTo: 'Назначен',
         lastSender: 'Последний отправитель',
         lastIntent: 'Последнее намерение',
@@ -676,6 +678,8 @@ def ui_page() -> str:
         role: 'Role',
         contact: 'Contact',
         useCase: 'Use case',
+        score: 'Score',
+        priority: 'Priority',
         assignedTo: 'Assigned to',
         lastSender: 'Last sender',
         lastIntent: 'Last intent',
@@ -740,6 +744,8 @@ def ui_page() -> str:
         role: 'Rol',
         contact: 'Contacto',
         useCase: 'Caso de uso',
+        score: 'Puntuación',
+        priority: 'Prioridad',
         assignedTo: 'Asignado a',
         lastSender: 'Último remitente',
         lastIntent: 'Última intención',
@@ -948,6 +954,8 @@ def ui_page() -> str:
       wrap.appendChild(badges);
 
       const rows = [
+        [t('score'), data.score ?? t('empty')],
+        [t('priority'), data.priority || t('empty')],
         [t('company'), lead.company || t('empty')],
         [t('role'), lead.role || t('empty')],
         [t('contact'), lead.contact || t('empty')],
