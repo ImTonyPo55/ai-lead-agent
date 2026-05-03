@@ -86,8 +86,8 @@ def create_handoff_if_needed(db: Session, lead: Lead) -> tuple[int | None, bool]
     log_event(
         db,
         lead.id,
-        "telegram_notification_sent" if telegram_sent else "telegram_notification_skipped",
-        {"handoff_id": handoff.id},
+        "telegram_notification_sent" if telegram_sent else "telegram_notification_failed",
+        {"handoff_id": handoff.id, "success": telegram_sent},
     )
 
     return handoff.id, True

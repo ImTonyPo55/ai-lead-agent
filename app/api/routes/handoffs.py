@@ -8,10 +8,19 @@ from app.services.event_service import log_event
 
 router = APIRouter(prefix="/handoffs", tags=["handoffs"])
 
+HANDOFF_STATUSES = {"pending", "in_progress", "done"}
+HANDOFF_STATUS_ALIASES = {"completed": "done"}
+
 
 class UpdateHandoffRequest(BaseModel):
     assigned_to: str | None = None
     status: str | None = None
+
+
+def _normalize_handoff_status(status: str | None) -> str | None:
+    if status is None:
+        return None
+    return HANDOFF_STATUS_ALIASES.get(status, status)
 
 
 def _log_handoff_status_event(db: Session, handoff: Handoff, previous_status: str | None) -> None:
@@ -20,7 +29,7 @@ def _log_handoff_status_event(db: Session, handoff: Handoff, previous_status: st
 
     if handoff.status == "in_progress":
         event_type = "handoff_moved_to_in_progress"
-    elif handoff.status in {"done", "completed"}:
+    elif handoff.status == "done":
         event_type = "handoff_completed"
     else:
         return
@@ -50,6 +59,7 @@ def _handoff_response(handoff: Handoff) -> dict:
 
 
 def _update_latest_handoff_status(lead_id: int, status: str, db: Session) -> dict:
+    status = _normalize_handoff_status(status) or status
     handoff = (
         db.query(Handoff)
         .filter(Handoff.lead_id == lead_id)
@@ -83,6 +93,7 @@ def list_handoffs(db: Session = Depends(get_db)) -> list[dict]:
             "reason": handoff.reason,
             "assigned_to": handoff.assigned_to,
             "status": handoff.status,
+            "handoff_status": handoff.status,
             "created_at": str(handoff.created_at),
         }
         for handoff in handoffs
@@ -122,12 +133,12 @@ def update_handoff(
             "message": f"Handoff {handoff_id} not found",
         }
 
-    allowed_statuses = {"pending", "in_progress", "done", "completed"}
+    allowed_statuses = HANDOFF_STATUSES | set(HANDOFF_STATUS_ALIASES)
 
     if payload.status is not None and payload.status not in allowed_statuses:
         return {
             "status": "error",
-            "message": "Invalid status. Use: pending, in_progress, done, completed",
+            "message": "Invalid status. Use: pending, in_progress, done",
         }
 
     previous_status = handoff.status
@@ -136,7 +147,7 @@ def update_handoff(
         handoff.assigned_to = payload.assigned_to
 
     if payload.status is not None:
-        handoff.status = payload.status
+        handoff.status = _normalize_handoff_status(payload.status) or payload.status
 
     db.add(handoff)
     db.commit()

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.db.models import Lead, Message, Handoff, EventLog
 from app.db.session import get_db
-from app.services.event_service import log_event
+from app.services.event_service import format_event, log_event
 
 router = APIRouter(prefix="/leads", tags=["leads"])
 
@@ -22,6 +22,15 @@ class UpdateLeadRequest(BaseModel):
     timeline: str | None = None
     notes: str | None = None
     status: str | None = None
+
+
+def _latest_handoff(db: Session, lead_id: int) -> Handoff | None:
+    return (
+        db.query(Handoff)
+        .filter(Handoff.lead_id == lead_id)
+        .order_by(Handoff.id.desc())
+        .first()
+    )
 
 
 def create_handoff_if_needed(db: Session, lead: Lead) -> tuple[int | None, bool]:
@@ -57,19 +66,25 @@ def create_handoff_if_needed(db: Session, lead: Lead) -> tuple[int | None, bool]
 def list_leads(db: Session = Depends(get_db)) -> list[dict]:
     leads = db.query(Lead).order_by(Lead.id.desc()).all()
 
-    return [
-        {
-            "id": lead.id,
-            "name": lead.name,
-            "company": lead.company,
-            "role": lead.role,
-            "contact": lead.contact,
-            "use_case": lead.use_case,
-            "status": lead.status,
-            "created_at": str(lead.created_at),
-        }
-        for lead in leads
-    ]
+    items = []
+    for lead in leads:
+        latest_handoff = _latest_handoff(db, lead.id)
+        items.append(
+            {
+                "id": lead.id,
+                "name": lead.name,
+                "company": lead.company,
+                "role": lead.role,
+                "contact": lead.contact,
+                "use_case": lead.use_case,
+                "status": lead.status,
+                "handoff_id": latest_handoff.id if latest_handoff else None,
+                "handoff_status": latest_handoff.status if latest_handoff else None,
+                "created_at": str(lead.created_at),
+            }
+        )
+
+    return items
 
 
 @router.get("/{lead_id}")
@@ -233,12 +248,7 @@ def get_lead_summary(lead_id: int, db: Session = Depends(get_db)) -> dict:
         .first()
     )
 
-    latest_handoff = (
-        db.query(Handoff)
-        .filter(Handoff.lead_id == lead_id)
-        .order_by(Handoff.id.desc())
-        .first()
-    )
+    latest_handoff = _latest_handoff(db, lead_id)
 
     score = 0
 
@@ -270,6 +280,7 @@ def get_lead_summary(lead_id: int, db: Session = Depends(get_db)) -> dict:
             db.query(EventLog)
             .filter(EventLog.lead_id == lead_id)
             .order_by(EventLog.id.desc())
+            .limit(8)
             .all()
         )
     except Exception:
@@ -302,13 +313,5 @@ def get_lead_summary(lead_id: int, db: Session = Depends(get_db)) -> dict:
             "last_text": latest_message.text if latest_message else None,
             "last_intent": latest_message.detected_intent if latest_message else None,
         },
-        "events": [
-            {
-                "id": event.id,
-                "event_type": event.event_type,
-                "payload": event.payload,
-                "created_at": str(event.created_at),
-            }
-            for event in events
-        ],
+        "events": [format_event(event) for event in events],
     }

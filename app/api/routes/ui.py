@@ -616,6 +616,7 @@ def ui_page() -> str:
         priority: 'Приоритет',
         eventTimeline: 'История событий',
         noEvents: 'Событий пока нет.',
+        crmEvent: 'Событие CRM',
         assignedTo: 'Назначен',
         lastSender: 'Последний отправитель',
         lastIntent: 'Последнее намерение',
@@ -685,6 +686,7 @@ def ui_page() -> str:
         priority: 'Priority',
         eventTimeline: 'Event timeline',
         noEvents: 'No events yet.',
+        crmEvent: 'CRM event',
         assignedTo: 'Assigned to',
         lastSender: 'Last sender',
         lastIntent: 'Last intent',
@@ -754,6 +756,7 @@ def ui_page() -> str:
         priority: 'Prioridad',
         eventTimeline: 'Historial de eventos',
         noEvents: 'Aún no hay eventos.',
+        crmEvent: 'Evento CRM',
         assignedTo: 'Asignado a',
         lastSender: 'Último remitente',
         lastIntent: 'Última intención',
@@ -858,17 +861,34 @@ def ui_page() -> str:
     }
 
     function mapStatus(status) {
-      if (!status) return t('status_unknown');
-      const key = `status_${String(status).toLowerCase()}`;
+      const normalized = normalizeHandoffStatus(status);
+      if (!normalized) return t('status_unknown');
+      const key = `status_${normalized}`;
       return t(key);
     }
 
     function badgeClass(status) {
-      const s = String(status || '').toLowerCase();
+      const s = normalizeHandoffStatus(status);
       if (['qualified', 'done'].includes(s)) return 'badge-green';
       if (['pending', 'needs_followup'].includes(s)) return 'badge-orange';
       if (['in_progress'].includes(s)) return 'badge-blue';
       return 'badge-gray';
+    }
+
+    function normalizeHandoffStatus(status) {
+      const value = String(status || '').toLowerCase();
+      if (value === 'completed') return 'done';
+      return value;
+    }
+
+    function getHandoffStatus(item) {
+      return normalizeHandoffStatus(
+        item?.handoff_status ||
+        item?.handoff?.handoff_status ||
+        item?.handoff?.status ||
+        (item?.reason !== undefined || item?.assigned_to !== undefined ? item?.status : null) ||
+        null
+      );
     }
 
     function prettyAssistantText(text, sender) {
@@ -964,7 +984,7 @@ def ui_page() -> str:
       const handoff = data.handoff || {};
       const convo = data.conversation || {};
 
-      const effectiveHandoffStatus = handoff.handoff_status || (lead.lead_status === 'qualified' ? 'pending' : null);
+      const effectiveHandoffStatus = getHandoffStatus({ handoff });
 
       const wrap = document.createElement('div');
       wrap.className = 'summary-box';
@@ -974,7 +994,7 @@ def ui_page() -> str:
       badges.innerHTML = `
         <span class="badge badge-id">lead_id: ${lead.id ?? '-'}</span>
         <span class="badge ${badgeClass(lead.lead_status)}">${mapStatus(lead.lead_status)}</span>
-        <span class="badge ${badgeClass(effectiveHandoffStatus)}">${mapStatus(effectiveHandoffStatus)}</span>
+        ${effectiveHandoffStatus ? `<span class="badge ${badgeClass(effectiveHandoffStatus)}">${mapStatus(effectiveHandoffStatus)}</span>` : ''}
       `;
       wrap.appendChild(badges);
 
@@ -998,7 +1018,7 @@ def ui_page() -> str:
         wrap.appendChild(row);
       });
 
-      const events = Array.isArray(data.events) ? data.events.slice(0, 5) : [];
+      const events = Array.isArray(data.events) ? data.events.slice(0, 8) : [];
       const timeline = document.createElement('div');
       timeline.className = 'list-item';
 
@@ -1015,11 +1035,11 @@ def ui_page() -> str:
       } else {
         events.forEach((event) => {
           const row = document.createElement('div');
-          const payloadText = formatEventPayload(event.payload);
+          const details = event.details || '';
           row.className = 'list-sub';
           row.textContent = [
-            event.event_type || t('empty'),
-            payloadText,
+            event.label || t('crmEvent'),
+            details,
             event.created_at || '',
           ].filter(Boolean).join(' · ');
           timeline.appendChild(row);
@@ -1030,20 +1050,24 @@ def ui_page() -> str:
 
       const actions = document.createElement('div');
       actions.className = 'summary-actions';
-      actions.innerHTML = `
-        <button class="btn btn-gray" id="setInProgressBtn">${t('moveToInProgress')}</button>
-        <button class="btn btn-green" id="setDoneBtn">${t('markDone')}</button>
-      `;
-      wrap.appendChild(actions);
+      if (effectiveHandoffStatus === 'pending') {
+        actions.innerHTML = `<button class="btn btn-gray" id="setInProgressBtn">${t('moveToInProgress')}</button>`;
+        wrap.appendChild(actions);
+      } else if (effectiveHandoffStatus === 'in_progress') {
+        actions.innerHTML = `<button class="btn btn-green" id="setDoneBtn">${t('markDone')}</button>`;
+        wrap.appendChild(actions);
+      }
       box.appendChild(wrap);
 
       const leadId = lead.id;
-      $('setInProgressBtn').onclick = async () => {
+      const setInProgressBtn = $('setInProgressBtn');
+      if (setInProgressBtn) setInProgressBtn.onclick = async () => {
         if (!leadId) return;
         await tryHandoffAction(leadId, 'in_progress');
       };
 
-      $('setDoneBtn').onclick = async () => {
+      const setDoneBtn = $('setDoneBtn');
+      if (setDoneBtn) setDoneBtn.onclick = async () => {
         if (!leadId) return;
         await tryHandoffAction(leadId, 'done');
       };
@@ -1062,15 +1086,15 @@ def ui_page() -> str:
 
   const inProgressFromList = Array.isArray(lastHandoffs)
     ? lastHandoffs.filter(item => {
-        const status = item.handoff_status ?? item.status;
+        const status = getHandoffStatus(item);
         return status === 'in_progress';
       }).length
     : 0;
 
   const doneFromList = Array.isArray(lastHandoffs)
     ? lastHandoffs.filter(item => {
-        const status = item.handoff_status ?? item.status;
-        return status === 'done' || status === 'completed';
+        const status = getHandoffStatus(item);
+        return status === 'done';
       }).length
     : 0;
 
@@ -1162,8 +1186,9 @@ def ui_page() -> str:
 	        const score = calculateLeadScore(item);
 	        const priority = calculateLeadPriority(score);
 	
-	        let leadStatus = item.lead_status ?? item.status ?? item.lead?.lead_status ?? null;
-	        if (!leadStatus && (company || useCase)) leadStatus = 'qualified';
+		        let leadStatus = item.lead_status ?? item.status ?? item.lead?.lead_status ?? null;
+		        const handoffStatus = getHandoffStatus(item);
+		        if (!leadStatus && (company || useCase)) leadStatus = 'qualified';
 
         const el = document.createElement('div');
         el.className = 'list-item';
@@ -1174,10 +1199,11 @@ def ui_page() -> str:
 	              <div class="list-sub">${t('score')}: ${score} · ${t('priority')}: ${priority}</div>
 	              <div class="list-sub">${t('role')}: ${role} · ${t('contact')}: ${contact}</div>
 	            </div>
-            <div class="badges">
-              <span class="badge badge-id">lead_id: ${leadId}</span>
-              <span class="badge ${badgeClass(leadStatus)}">${mapStatus(leadStatus)}</span>
-            </div>
+	            <div class="badges">
+	              <span class="badge badge-id">lead_id: ${leadId}</span>
+	              <span class="badge ${badgeClass(leadStatus)}">${mapStatus(leadStatus)}</span>
+	              ${handoffStatus ? `<span class="badge ${badgeClass(handoffStatus)}">${mapStatus(handoffStatus)}</span>` : ''}
+	            </div>
           </div>
           <div class="list-sub">${useCase}</div>
           <div class="list-actions">
@@ -1214,7 +1240,7 @@ def ui_page() -> str:
       lastHandoffs.forEach((item) => {
         const leadId = item.lead_id ?? item.id ?? '-';
         const assigned = item.assigned_to || t('notAssigned');
-        const status = item.handoff_status || item.status || 'pending';
+        const status = getHandoffStatus(item) || 'pending';
         const reason = item.reason || item.notes || t('empty');
 
         const el = document.createElement('div');
