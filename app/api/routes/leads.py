@@ -2,8 +2,9 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from app.db.models import Lead, Message, Handoff
+from app.db.models import Lead, Message, Handoff, EventLog
 from app.db.session import get_db
+from app.services.event_service import log_event
 
 router = APIRouter(prefix="/leads", tags=["leads"])
 
@@ -42,6 +43,12 @@ def create_handoff_if_needed(db: Session, lead: Lead) -> tuple[int | None, bool]
     db.add(handoff)
     db.commit()
     db.refresh(handoff)
+    log_event(
+        db,
+        lead.id,
+        "handoff_created",
+        {"handoff_id": handoff.id, "reason": handoff.reason},
+    )
 
     return handoff.id, True
 
@@ -115,6 +122,8 @@ def update_lead(
             "message": "Invalid status. Use: new, needs_followup, qualified",
         }
 
+    previous_status = lead.status
+
     if payload.name is not None:
         lead.name = payload.name
     if payload.company is not None:
@@ -143,6 +152,14 @@ def update_lead(
     db.add(lead)
     db.commit()
     db.refresh(lead)
+
+    if previous_status != "qualified" and lead.status == "qualified":
+        log_event(
+            db,
+            lead.id,
+            "lead_qualified",
+            {"previous_status": previous_status, "status": lead.status},
+        )
 
     handoff_id, handoff_created = create_handoff_if_needed(db, lead)
 
@@ -248,6 +265,17 @@ def get_lead_summary(lead_id: int, db: Session = Depends(get_db)) -> dict:
     message_count = db.query(Message).filter(
         Message.lead_id == lead_id).count()
 
+    try:
+        events = (
+            db.query(EventLog)
+            .filter(EventLog.lead_id == lead_id)
+            .order_by(EventLog.id.desc())
+            .all()
+        )
+    except Exception:
+        db.rollback()
+        events = []
+
     return {
         "status": "ok",
         "score": score,
@@ -274,4 +302,13 @@ def get_lead_summary(lead_id: int, db: Session = Depends(get_db)) -> dict:
             "last_text": latest_message.text if latest_message else None,
             "last_intent": latest_message.detected_intent if latest_message else None,
         },
+        "events": [
+            {
+                "id": event.id,
+                "event_type": event.event_type,
+                "payload": event.payload,
+                "created_at": str(event.created_at),
+            }
+            for event in events
+        ],
     }

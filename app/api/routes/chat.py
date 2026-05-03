@@ -12,6 +12,7 @@ from app.services.extract_service import (
 )
 from app.services.intent_service import detect_intent
 from app.services.knowledge_service import answer_from_knowledge_base
+from app.services.event_service import log_event
 from app.services.telegram_service import notify_handoff_created
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -75,7 +76,19 @@ def create_handoff_if_needed(db: Session, lead: Lead) -> tuple[int | None, bool]
     db.add(handoff)
     db.commit()
     db.refresh(handoff)
-    notify_handoff_created(lead, handoff)
+    log_event(
+        db,
+        lead.id,
+        "handoff_created",
+        {"handoff_id": handoff.id, "reason": handoff.reason},
+    )
+    telegram_sent = notify_handoff_created(lead, handoff)
+    log_event(
+        db,
+        lead.id,
+        "telegram_notification_sent" if telegram_sent else "telegram_notification_skipped",
+        {"handoff_id": handoff.id},
+    )
 
     return handoff.id, True
 
@@ -106,6 +119,7 @@ def chat_message(payload: ChatMessageRequest, db: Session = Depends(get_db)) -> 
         db.add(lead)
         db.commit()
         db.refresh(lead)
+        log_event(db, lead.id, "lead_created", {"source": "chat"})
         current_lead = None
 
     company = extract_company(payload.message)
@@ -161,6 +175,8 @@ def chat_message(payload: ChatMessageRequest, db: Session = Depends(get_db)) -> 
         use_llm=True,
     )
 
+    previous_status = lead.status
+
     action_result = apply_agent_decision(
         db=db,
         lead=lead,
@@ -168,6 +184,14 @@ def chat_message(payload: ChatMessageRequest, db: Session = Depends(get_db)) -> 
         decision=decision,
         create_handoff_fn=create_handoff_if_needed,
     )
+
+    if previous_status != "qualified" and action_result["lead_status"] == "qualified":
+        log_event(
+            db,
+            lead.id,
+            "lead_qualified",
+            {"previous_status": previous_status, "status": action_result["lead_status"]},
+        )
 
     intent = decision.intent
     knowledge_reply = answer_from_knowledge_base(payload.message)
@@ -185,6 +209,16 @@ def chat_message(payload: ChatMessageRequest, db: Session = Depends(get_db)) -> 
     db.add(user_message)
     db.commit()
     db.refresh(user_message)
+    log_event(
+        db,
+        lead.id,
+        "message_received",
+        {
+            "message_id": user_message.id,
+            "intent": intent,
+            "text": payload.message[:160],
+        },
+    )
 
     assistant_message = Message(
         lead_id=lead.id,

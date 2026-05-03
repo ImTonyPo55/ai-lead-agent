@@ -614,6 +614,8 @@ def ui_page() -> str:
         useCase: 'Сценарий использования',
         score: 'Оценка',
         priority: 'Приоритет',
+        eventTimeline: 'История событий',
+        noEvents: 'Событий пока нет.',
         assignedTo: 'Назначен',
         lastSender: 'Последний отправитель',
         lastIntent: 'Последнее намерение',
@@ -625,6 +627,7 @@ def ui_page() -> str:
         status_pending: 'готов к передаче',
         status_in_progress: 'в работе',
         status_done: 'завершено',
+        status_completed: 'завершено',
         status_unknown: 'неизвестно',
         moveToInProgress: 'Перевести в работу',
         markDone: 'Отметить как завершённую',
@@ -680,6 +683,8 @@ def ui_page() -> str:
         useCase: 'Use case',
         score: 'Score',
         priority: 'Priority',
+        eventTimeline: 'Event timeline',
+        noEvents: 'No events yet.',
         assignedTo: 'Assigned to',
         lastSender: 'Last sender',
         lastIntent: 'Last intent',
@@ -691,6 +696,7 @@ def ui_page() -> str:
         status_pending: 'ready for handoff',
         status_in_progress: 'in progress',
         status_done: 'done',
+        status_completed: 'completed',
         status_unknown: 'unknown',
         moveToInProgress: 'Set handoff in progress',
         markDone: 'Set handoff done',
@@ -746,6 +752,8 @@ def ui_page() -> str:
         useCase: 'Caso de uso',
         score: 'Puntuación',
         priority: 'Prioridad',
+        eventTimeline: 'Historial de eventos',
+        noEvents: 'Aún no hay eventos.',
         assignedTo: 'Asignado a',
         lastSender: 'Último remitente',
         lastIntent: 'Última intención',
@@ -757,6 +765,7 @@ def ui_page() -> str:
         status_pending: 'listo para transferencia',
         status_in_progress: 'en progreso',
         status_done: 'completado',
+        status_completed: 'completado',
         status_unknown: 'desconocido',
         moveToInProgress: 'Mover a en progreso',
         markDone: 'Marcar como completada',
@@ -879,6 +888,22 @@ def ui_page() -> str:
       return raw;
     }
 
+    function formatEventPayload(payload) {
+      if (!payload) return '';
+
+      let text = '';
+      if (typeof payload === 'string') {
+        text = payload;
+      } else {
+        text = Object.entries(payload)
+          .filter(([, value]) => value !== null && value !== undefined && value !== '')
+          .map(([key, value]) => `${key}: ${value}`)
+          .join(' · ');
+      }
+
+      return text.length > 140 ? `${text.slice(0, 137)}...` : text;
+    }
+
     function normalizeSummaryForDisplay(summary) {
       if (!summary || !summary.lead) return summary;
 
@@ -972,6 +997,36 @@ def ui_page() -> str:
         row.innerHTML = `<div class="k">${k}:</div><div class="v">${v}</div>`;
         wrap.appendChild(row);
       });
+
+      const events = Array.isArray(data.events) ? data.events.slice(0, 5) : [];
+      const timeline = document.createElement('div');
+      timeline.className = 'list-item';
+
+      const timelineTitle = document.createElement('div');
+      timelineTitle.className = 'list-title';
+      timelineTitle.textContent = t('eventTimeline');
+      timeline.appendChild(timelineTitle);
+
+      if (!events.length) {
+        const emptyEvent = document.createElement('div');
+        emptyEvent.className = 'list-sub';
+        emptyEvent.textContent = t('noEvents');
+        timeline.appendChild(emptyEvent);
+      } else {
+        events.forEach((event) => {
+          const row = document.createElement('div');
+          const payloadText = formatEventPayload(event.payload);
+          row.className = 'list-sub';
+          row.textContent = [
+            event.event_type || t('empty'),
+            payloadText,
+            event.created_at || '',
+          ].filter(Boolean).join(' · ');
+          timeline.appendChild(row);
+        });
+      }
+
+      wrap.appendChild(timeline);
 
       const actions = document.createElement('div');
       actions.className = 'summary-actions';
