@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from app.services.action_queue_service import get_action_status
+from app.services.campaign_intelligence_service import build_campaign_intelligence
 from app.services.owner_routing_service import resolve_owner_routing
 
 
@@ -41,16 +42,24 @@ def _priority(score: int) -> str:
     return "Low"
 
 
-def _summary(lead: Any, latest_handoff: Any = None) -> str:
+def _summary(
+    lead: Any,
+    latest_handoff: Any = None,
+    campaign_summary: str | None = None,
+    recommended_mechanic: str | None = None,
+) -> str:
+    if campaign_summary:
+        return campaign_summary
+
     company = _display(getattr(lead, "company", None))
-    role = _display(getattr(lead, "role", None))
-    use_case = _display(getattr(lead, "use_case", None))
     contact = _display(getattr(lead, "contact", None))
     handoff_status = _display(getattr(latest_handoff, "status", None))
+    goal = _display(getattr(lead, "use_case", None))
+    mechanic = _display(recommended_mechanic)
 
     return (
-        f"{company} is a qualified B2B lead for {use_case}. "
-        f"Primary contact is {contact}; role is {role}; handoff status is {handoff_status}."
+        f"{company} is a qualified campaign lead for {goal}. "
+        f"Recommended mechanic: {mechanic}; primary contact is {contact}; handoff status is {handoff_status}."
     )
 
 
@@ -65,12 +74,12 @@ def _qualification_reason(lead: Any, latest_handoff: Any = None) -> str:
         missing.append("use case")
 
     if missing:
-        return f"Missing required CRM handoff fields: {', '.join(missing)}."
+        return f"Missing required campaign handoff fields: {', '.join(missing)}."
 
     if latest_handoff is not None:
-        return "Qualified because company, contact and use case are available, and a handoff is created."
+        return "Qualified because company, contact and campaign goal are available, and a handoff is created."
 
-    return "Qualified because company, contact and use case are available."
+    return "Qualified because company, contact and campaign goal are available."
 
 
 def build_handoff_package(
@@ -89,34 +98,52 @@ def build_handoff_package(
     handoff_status = _clean(getattr(latest_handoff, "status", None)) or None
     owner_routing = resolve_owner_routing(lead, latest_handoff, events)
     action_queue = get_action_status(lead, latest_handoff, events)
+    campaign_intelligence = build_campaign_intelligence(lead, latest_message)
+    client_type = campaign_intelligence["client_type"]
+    campaign_goal = campaign_intelligence["campaign_goal"]
+    platform = campaign_intelligence["platform"]
+    recommended_mechanic = campaign_intelligence["recommended_mechanic"]
+    mechanic_reason = campaign_intelligence["mechanic_reason"]
+    pricing_tier = campaign_intelligence["pricing_tier"]
+    recommended_next_action = campaign_intelligence["recommended_next_action"]
+    campaign_summary = campaign_intelligence["campaign_summary"]
+    copy_ready_followup = campaign_intelligence["copy_text"]
 
-    recommended_next_action = (
-        "Send to CRM and assign owner"
-        if contact and use_case
-        else "Request missing info before CRM export"
-    )
     crm_payload = {
         "company": company,
         "contact": contact,
         "role": role,
         "use_case": use_case,
+        "client_type": client_type,
+        "campaign_goal": campaign_goal,
+        "platform": platform,
+        "recommended_mechanic": recommended_mechanic,
+        "mechanic_reason": mechanic_reason,
+        "pricing_tier": pricing_tier,
         "priority": priority,
         "score": score,
-        "source": "AI Lead Agent",
+        "source": "MechanicFlow AI",
         "handoff_status": handoff_status,
         "owner": owner_routing["owner"],
         "team": owner_routing["team"],
         "action_status": action_queue["status"],
         "next_action": action_queue["next_action"],
+        "recommended_next_action": recommended_next_action,
     }
-    copy_text = "\n".join(
+    package_copy_text = "\n".join(
         [
-            "AI Lead Agent handoff package",
+            "MechanicFlow AI campaign handoff package",
             f"Lead ID: {_display(getattr(lead, 'id', None))}",
+            f"Campaign summary: {_display(campaign_summary)}",
             f"Company: {_display(company)}",
             f"Role: {_display(role)}",
             f"Contact: {_display(contact)}",
-            f"Use case: {_display(use_case)}",
+            f"Client type: {_display(client_type)}",
+            f"Campaign goal: {_display(campaign_goal)}",
+            f"Platform: {_display(platform)}",
+            f"Recommended mechanic: {_display(recommended_mechanic)}",
+            f"Why it fits: {_display(mechanic_reason)}",
+            f"Suggested tier: {_display(pricing_tier)}",
             f"Lead status: {_display(lead_status)}",
             f"Handoff status: {_display(handoff_status)}",
             f"Owner: {_display(owner_routing['owner'])}",
@@ -126,9 +153,10 @@ def build_handoff_package(
             f"Next action: {_display(action_queue['next_action'])}",
             f"Score: {score}",
             f"Priority: {priority}",
-            f"Summary: {_summary(lead, latest_handoff)}",
+            f"Summary: {_summary(lead, latest_handoff, campaign_summary, recommended_mechanic)}",
             f"Qualification reason: {_qualification_reason(lead, latest_handoff)}",
             f"Recommended next action: {recommended_next_action}",
+            f"Copy-ready follow-up: {_display(copy_ready_followup)}",
         ]
     )
 
@@ -138,6 +166,16 @@ def build_handoff_package(
         "role": role,
         "contact": contact,
         "use_case": use_case,
+        "campaign_summary": campaign_summary,
+        "client_type": client_type,
+        "client_type_label": campaign_intelligence["client_type_label"],
+        "campaign_goal": campaign_goal,
+        "campaign_goal_label": campaign_intelligence["campaign_goal_label"],
+        "platform": platform,
+        "recommended_mechanic": recommended_mechanic,
+        "mechanic_reason": mechanic_reason,
+        "recommended_mechanic_reason": mechanic_reason,
+        "pricing_tier": pricing_tier,
         "lead_status": lead_status,
         "handoff_status": handoff_status,
         "owner": owner_routing["owner"],
@@ -147,9 +185,12 @@ def build_handoff_package(
         "next_action": action_queue["next_action"],
         "score": score,
         "priority": priority,
-        "summary": _summary(lead, latest_handoff),
+        "summary": _summary(lead, latest_handoff, campaign_summary, recommended_mechanic),
         "qualification_reason": _qualification_reason(lead, latest_handoff),
         "recommended_next_action": recommended_next_action,
         "crm_payload": crm_payload,
-        "copy_text": copy_text,
+        "campaign_intelligence": campaign_intelligence,
+        "copy_text": copy_ready_followup,
+        "copy_ready_followup": copy_ready_followup,
+        "package_copy_text": package_copy_text,
     }

@@ -8,6 +8,8 @@ from typing import Any
 
 import certifi
 
+from app.services.handoff_package_service import build_handoff_package
+
 
 def _field(value: Any) -> str:
     if value is None:
@@ -39,15 +41,17 @@ def notify_handoff_created(
 
         handoff_id = getattr(handoff, "id", None) if handoff is not None else None
         owner, team = _owner_team(owner_routing)
+        handoff_package = build_handoff_package(lead, latest_handoff=handoff)
         message = "\n".join(
             [
-                "🔥 New qualified lead",
+                "🔥 New campaign lead",
                 "",
                 f"Company: {_field(getattr(lead, 'company', None))}",
-                f"Role: {_field(getattr(lead, 'role', None))}",
                 f"Contact: {_field(getattr(lead, 'contact', None))}",
-                f"Use case: {_field(getattr(lead, 'use_case', None))}",
-                f"Status: {_field(getattr(lead, 'status', None))}",
+                f"Client type: {_field(handoff_package.get('client_type'))}",
+                f"Goal: {_field(handoff_package.get('campaign_goal'))}",
+                f"Mechanic: {_field(handoff_package.get('recommended_mechanic'))}",
+                f"Tier: {_field(handoff_package.get('pricing_tier'))}",
                 f"Owner: {owner}",
                 f"Team: {team}",
                 f"Handoff: {_field(handoff_id)}",

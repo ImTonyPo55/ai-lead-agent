@@ -11,22 +11,22 @@ def ui_page() -> str:
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AI Lead Agent UI</title>
+  <title>MechanicFlow AI</title>
   <style>
     :root {
-      --bg: #081225;
-      --panel: #0d1b34;
-      --panel-2: #102141;
-      --border: #2c4f87;
-      --text: #eef4ff;
-      --muted: #a9b9d4;
-      --blue: #2f8cff;
-      --blue-2: #4aa3ff;
-      --green: #39d353;
-      --red: #ff5d5d;
-      --orange: #ff9f43;
-      --gray: #8fa4c5;
-      --shadow: 0 18px 44px rgba(0, 0, 0, 0.24);
+      --bg: #202428;
+      --panel: #2A2F35;
+      --panel-2: rgba(255,255,255,0.06);
+      --border: rgba(255,255,255,0.14);
+      --text: #F5F7FA;
+      --muted: #B8C0CC;
+      --muted-2: #7D8794;
+      --green: #33FF00;
+      --red: #FF3300;
+      --orange: #FFB84D;
+      --gray: #7D8794;
+      --button-text: #111418;
+      --shadow: 0 20px 50px rgba(0, 0, 0, 0.28);
       --radius: 18px;
     }
 
@@ -35,8 +35,8 @@ def ui_page() -> str:
     body {
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background:
-        radial-gradient(circle at top, rgba(59,130,246,0.16), transparent 28%),
-        linear-gradient(180deg, #07111f 0%, #081225 100%);
+        radial-gradient(circle at 18% 0%, rgba(255,255,255,0.08), transparent 28%),
+        linear-gradient(180deg, #2A2F35 0%, #202428 52%, #1A1E22 100%);
       color: var(--text);
       min-height: 100vh;
     }
@@ -106,10 +106,10 @@ def ui_page() -> str:
     }
 
     .lang-btn.active {
-      background: var(--blue);
-      color: #fff;
+      background: #F5F7FA;
+      color: #111418;
       border-color: rgba(255,255,255,0.16);
-      box-shadow: 0 6px 18px rgba(47,140,255,0.32);
+      box-shadow: 0 8px 22px rgba(0,0,0,0.24);
     }
 
     .btn {
@@ -120,11 +120,23 @@ def ui_page() -> str:
       box-shadow: var(--shadow);
     }
 
-    .btn-blue { background: linear-gradient(180deg, var(--blue-2), var(--blue)); }
-    .btn-blue:hover { transform: translateY(-1px); }
-    .btn-green { background: linear-gradient(180deg, #46e061, #2ec84a); }
-    .btn-red { background: linear-gradient(180deg, #ff7474, #ff4b4b); }
-    .btn-gray { background: linear-gradient(180deg, #c6d2e3, #a8b9d2); color: #18304f; }
+    .btn-action {
+      background: #33FF00;
+      color: var(--button-text);
+      box-shadow: 0 0 0 1px rgba(51,255,0,0.28), 0 14px 34px rgba(51,255,0,0.18);
+    }
+    .btn-action:hover { transform: translateY(-1px); box-shadow: 0 0 0 1px rgba(51,255,0,0.42), 0 18px 42px rgba(51,255,0,0.22); }
+    .btn-green {
+      background: #33FF00;
+      color: var(--button-text);
+      box-shadow: 0 0 0 1px rgba(51,255,0,0.28), 0 14px 34px rgba(51,255,0,0.18);
+    }
+    .btn-red {
+      background: #FF3300;
+      color: var(--button-text);
+      box-shadow: 0 0 0 1px rgba(255,51,0,0.30), 0 14px 34px rgba(255,51,0,0.18);
+    }
+    .btn-gray { background: rgba(255,255,255,0.10); color: var(--text); border: 1px solid var(--border); }
     .btn-ghost {
       background: rgba(255,255,255,0.06);
       border: 1px solid rgba(255,255,255,0.1);
@@ -153,8 +165,8 @@ def ui_page() -> str:
     }
 
     .card {
-      background: linear-gradient(180deg, rgba(16,33,65,0.96), rgba(11,24,48,0.96));
-      border: 1px solid rgba(95,132,194,0.36);
+      background: var(--panel-2);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 18px;
       box-shadow: var(--shadow);
@@ -183,8 +195,8 @@ def ui_page() -> str:
 
     input, textarea, pre {
       width: 100%;
-      background: rgba(6, 17, 33, 0.46);
-      border: 1px solid rgba(115, 148, 204, 0.32);
+      background: rgba(255,255,255,0.045);
+      border: 1px solid var(--border);
       color: var(--text);
       border-radius: 12px;
       outline: none;
@@ -218,10 +230,46 @@ def ui_page() -> str:
       margin-bottom: 12px;
     }
 
-    details {
-      border: 1px solid rgba(115, 148, 204, 0.28);
+    .example-panel {
+      margin-top: 10px;
+      margin-bottom: 12px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.035);
+    }
+
+    .example-title {
+      color: var(--muted-2);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .example-grid {
+      display: grid;
+      gap: 8px;
+    }
+
+    .example-pill {
+      width: 100%;
+      text-align: left;
+      padding: 10px 12px;
       border-radius: 12px;
-      background: rgba(6, 17, 33, 0.32);
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.055);
+      color: var(--text);
+      box-shadow: none;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    details {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.035);
       overflow: hidden;
     }
 
@@ -238,7 +286,7 @@ def ui_page() -> str:
     summary::-webkit-details-marker { display: none; }
 
     details[open] summary {
-      border-bottom-color: rgba(115, 148, 204, 0.2);
+      border-bottom-color: var(--border);
       background: rgba(255,255,255,0.03);
     }
 
@@ -249,7 +297,7 @@ def ui_page() -> str:
       white-space: pre-wrap;
       word-break: break-word;
       font-size: 12px;
-      color: #d7e5ff;
+      color: var(--text);
       border: 0;
       border-radius: 0;
     }
@@ -278,10 +326,10 @@ def ui_page() -> str:
     }
 
     .badge-id { background: rgba(255,255,255,0.08); color: #fff; }
-    .badge-green { background: rgba(57,211,83,0.2); color: #9effad; border: 1px solid rgba(57,211,83,0.34); }
-    .badge-orange { background: rgba(255,159,67,0.18); color: #ffd39f; border: 1px solid rgba(255,159,67,0.34); }
-    .badge-gray { background: rgba(143,164,197,0.16); color: #d1def2; border: 1px solid rgba(143,164,197,0.28); }
-    .badge-blue { background: rgba(47,140,255,0.16); color: #bdddff; border: 1px solid rgba(47,140,255,0.32); }
+    .badge-green { background: rgba(51,255,0,0.15); color: #33FF00; border: 1px solid rgba(51,255,0,0.38); }
+    .badge-orange { background: rgba(255,184,77,0.16); color: var(--orange); border: 1px solid rgba(255,184,77,0.34); }
+    .badge-gray { background: rgba(125,135,148,0.18); color: #D5DBE3; border: 1px solid rgba(125,135,148,0.34); }
+    .badge-graphite { background: rgba(245,247,250,0.14); color: var(--text); border: 1px solid rgba(245,247,250,0.30); }
 
     .kv {
       display: grid;
@@ -303,8 +351,8 @@ def ui_page() -> str:
     }
 
     .metric {
-      background: rgba(7, 18, 36, 0.44);
-      border: 1px solid rgba(115,148,204,0.24);
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
       border-radius: 14px;
       padding: 14px;
     }
@@ -328,8 +376,8 @@ def ui_page() -> str:
     }
 
     .list-item {
-      background: rgba(7,18,36,0.42);
-      border: 1px solid rgba(115,148,204,0.24);
+      background: rgba(255,255,255,0.045);
+      border: 1px solid var(--border);
       border-radius: 14px;
       padding: 14px;
       display: grid;
@@ -379,7 +427,7 @@ def ui_page() -> str:
     }
 
     .footer a {
-      color: #bdddff;
+      color: var(--text);
       text-decoration: none;
     }
 
@@ -398,8 +446,8 @@ def ui_page() -> str:
     }
 
     .toast {
-      background: rgba(8, 18, 37, 0.96);
-      border: 1px solid rgba(115,148,204,0.28);
+      background: rgba(32,36,40,0.96);
+      border: 1px solid var(--border);
       color: #fff;
       border-radius: 14px;
       padding: 12px 14px;
@@ -408,8 +456,8 @@ def ui_page() -> str:
       line-height: 1.45;
     }
 
-    .toast.success { border-color: rgba(57,211,83,0.35); }
-    .toast.error { border-color: rgba(255,93,93,0.35); }
+    .toast.success { border-color: rgba(51,255,0,0.42); }
+    .toast.error { border-color: rgba(255,51,0,0.42); }
 
     @media (max-width: 1080px) {
       .grid-2, .grid-bottom { grid-template-columns: 1fr; }
@@ -429,8 +477,8 @@ def ui_page() -> str:
   <div class="wrap">
     <div class="topbar">
       <div class="title">
-        <h1 id="pageTitle">ИИ-Агент для лидов</h1>
-        <p id="pageSubtitle">Готовый к демо MVP для входящих B2B-лидов, квалификации и передачи.</p>
+        <h1 id="pageTitle">MechanicFlow AI</h1>
+        <p id="pageSubtitle">AI workflow for qualifying campaign leads, recommending gamified mechanics, and preparing CRM-ready handoff.</p>
       </div>
 
       <div class="controls">
@@ -454,9 +502,13 @@ def ui_page() -> str:
         <input id="leadIdInput" placeholder="lead_id — необязательно для первого сообщения" />
         <div style="height: 10px;"></div>
         <textarea id="messageInput" placeholder="Введите входящее сообщение..."></textarea>
+        <div class="example-panel">
+          <div id="demoExamplesTitle" class="example-title">Campaign examples</div>
+          <div id="demoExamples" class="example-grid"></div>
+        </div>
 
         <div class="actions">
-          <button id="sendBtn" class="btn btn-blue">Отправить</button>
+          <button id="sendBtn" class="btn btn-action">Отправить</button>
           <button id="clearBtn" class="btn btn-gray">Очистить</button>
         </div>
 
@@ -472,12 +524,12 @@ def ui_page() -> str:
 
       <div class="card">
         <div class="section-title">
-          <h3 id="summarySectionTitle">Сводка по лиду</h3>
+          <h3 id="summarySectionTitle">Сводка campaign lead</h3>
         </div>
 
         <input id="summaryLeadIdInput" placeholder="Введите lead_id" />
         <div style="height: 10px;"></div>
-        <button id="loadSummaryBtn" class="btn btn-blue">Загрузить сводку</button>
+        <button id="loadSummaryBtn" class="btn btn-action">Загрузить сводку</button>
 
         <div style="height: 14px;"></div>
 
@@ -495,12 +547,12 @@ def ui_page() -> str:
     <div class="card">
       <div class="section-title">
         <h3 id="dashboardSectionTitle">Обзор панели</h3>
-        <button id="refreshDashboardBtn" class="btn btn-blue">Обновить панель</button>
+        <button id="refreshDashboardBtn" class="btn btn-action">Обновить панель</button>
       </div>
 
       <div class="grid-4">
         <div class="metric">
-          <div class="label" id="metricLeadsLabel">Всего лидов</div>
+          <div class="label" id="metricLeadsLabel">Campaign leads</div>
           <div id="metricLeads" class="value">0</div>
         </div>
         <div class="metric">
@@ -528,8 +580,8 @@ def ui_page() -> str:
     <div class="grid-bottom">
       <div class="card">
         <div class="section-title">
-          <h3 id="leadsSectionTitle">Последние лиды</h3>
-          <button id="refreshLeadsBtn" class="btn btn-blue">Обновить</button>
+          <h3 id="leadsSectionTitle">Последние campaign leads</h3>
+          <button id="refreshLeadsBtn" class="btn btn-action">Обновить</button>
         </div>
 
         <div id="leadsList" class="list"></div>
@@ -545,7 +597,7 @@ def ui_page() -> str:
       <div class="card">
         <div class="section-title">
           <h3 id="handoffsSectionTitle">Последние передачи</h3>
-          <button id="refreshHandoffsBtn" class="btn btn-blue">Обновить</button>
+          <button id="refreshHandoffsBtn" class="btn btn-action">Обновить</button>
         </div>
 
         <div id="handoffsList" class="list"></div>
@@ -575,24 +627,32 @@ def ui_page() -> str:
   <script>
     const i18n = {
       ru: {
-        pageTitle: 'ИИ-Агент для лидов',
-        pageSubtitle: 'Готовый к демо MVP для входящих B2B-лидов, квалификации и передачи.',
+        pageTitle: 'MechanicFlow AI',
+        pageSubtitle: 'AI workflow for qualifying campaign leads, recommending gamified mechanics, and preparing CRM-ready handoff.',
         sendSectionTitle: 'Отправить сообщение',
         sendBtn: 'Отправить',
         clearBtn: 'Очистить',
-        sendHint: 'После ответа lead_id автоматически подставится в сводку.',
+        sendHint: 'Попробуйте один из campaign-примеров или отправьте входящий запрос бренда, eCommerce-команды или агентства.',
+        demoExamplesTitle: 'Campaign examples',
+        demoExamples: [
+          'We are Bloom Retail. Need a holiday promo game to collect emails and boost repeat purchases. Contact @bloom_growth',
+          'We are UrbanFit. Need a spin-to-win campaign for Shopify lead capture. Contact @urbanfit_cmo',
+          'We are FreshBox. Need a retention campaign with rewards for returning customers. Contact @freshbox_growth',
+          'We are Nova Agency. Need a branded Advent Calendar campaign for a client. Contact @nova_agency',
+          'We are GameLaunch Studio. Need a quiz lead magnet for a new product launch. Contact @gamelaunch_cmo',
+        ],
         rawResponseSummary: 'Сырой ответ',
-        summarySectionTitle: 'Сводка по лиду',
+        summarySectionTitle: 'Сводка campaign lead',
         loadSummaryBtn: 'Загрузить сводку',
         rawSummarySummary: 'Сырой JSON сводки',
         dashboardSectionTitle: 'Обзор панели',
         refreshDashboardBtn: 'Обновить панель',
-        metricLeadsLabel: 'Всего лидов',
+        metricLeadsLabel: 'Campaign leads',
         metricQualifiedLabel: 'Квалифицировано',
         metricInProgressLabel: 'Передачи в работе',
         metricDoneLabel: 'Передачи завершены',
         rawDashboardSummary: 'Сырой JSON панели',
-        leadsSectionTitle: 'Последние лиды',
+        leadsSectionTitle: 'Последние campaign leads',
         refreshLeadsBtn: 'Обновить',
         rawLeadsSummary: 'Сырой JSON лидов',
         handoffsSectionTitle: 'Последние передачи',
@@ -600,7 +660,7 @@ def ui_page() -> str:
         rawHandoffsSummary: 'Сырой JSON передач',
         loadDemoBtn: 'Загрузить демо',
         resetDemoBtn: 'Сбросить демо',
-        footerText: 'Публичный демо-MVP задеплоен на Render.',
+        footerText: 'MechanicFlow AI demo workflow for campaign lead qualification and gamified mechanics.',
         leadIdPlaceholder: 'lead_id — необязательно для первого сообщения',
         summaryLeadIdPlaceholder: 'Введите lead_id',
         messagePlaceholder: 'Введите входящее сообщение...',
@@ -611,16 +671,28 @@ def ui_page() -> str:
         company: 'Компания',
         role: 'Роль',
         contact: 'Контакт',
-        useCase: 'Сценарий использования',
+        useCase: 'Campaign need',
+        clientType: 'Тип клиента',
+        campaignGoal: 'Цель кампании',
+        platform: 'Платформа',
+        campaignIntelligence: 'Campaign Intelligence',
+        recommendedMechanic: 'Рекомендованная механика',
+        mechanicName: 'Механика',
+        mechanicReason: 'Почему подходит',
+        pricingTier: 'Тариф',
+        suggestedTier: 'Рекомендуемый тариф',
+        copyReadyFollowup: 'Copy-ready follow-up',
+        copyFollowup: 'Copy follow-up',
         score: 'Оценка',
         priority: 'Приоритет',
         eventTimeline: 'История событий',
         noEvents: 'Событий пока нет.',
         crmEvent: 'Событие CRM',
-        handoffPackage: 'Пакет передачи',
+        handoffPackage: 'Campaign handoff package',
         packageSummary: 'Резюме',
         qualificationReason: 'Причина квалификации',
         recommendedNextAction: 'Следующее действие',
+        recommendedMechanicSection: 'Recommended Mechanic',
         crmPayloadPreview: 'CRM payload preview',
         exportCrm: 'Экспорт в CRM',
         copyPackage: 'Скопировать пакет',
@@ -668,30 +740,39 @@ def ui_page() -> str:
         toastHandoffUpdated: 'Статус передачи обновлён.',
         toastCrmExported: 'CRM export simulated',
         toastPackageCopied: 'Пакет скопирован.',
+        toastFollowupCopied: 'Follow-up скопирован.',
         toastOwnerAssigned: 'Ответственный назначен.',
         toastActionUpdated: 'Статус действия обновлён.',
         toastError: 'Что-то пошло не так.',
-        polishedAssistantReply: 'Спасибо. Ключевые данные извлечены, лид квалифицирован и готов к передаче в работу.',
+        polishedAssistantReply: 'Спасибо. Campaign lead квалифицирован, механика подобрана и пакет передачи готов.',
       },
       en: {
-        pageTitle: 'AI Lead Agent',
-        pageSubtitle: 'Demo-ready MVP for inbound B2B lead intake, qualification, and handoff.',
+        pageTitle: 'MechanicFlow AI',
+        pageSubtitle: 'AI workflow for qualifying campaign leads, recommending gamified mechanics, and preparing CRM-ready handoff.',
         sendSectionTitle: 'Send message',
         sendBtn: 'Send',
         clearBtn: 'Clear',
-        sendHint: 'After the reply, lead_id will be automatically filled into summary.',
+        sendHint: 'Try a campaign example or send an inbound request from a brand, eCommerce team, or agency.',
+        demoExamplesTitle: 'Campaign examples',
+        demoExamples: [
+          'We are Bloom Retail. Need a holiday promo game to collect emails and boost repeat purchases. Contact @bloom_growth',
+          'We are UrbanFit. Need a spin-to-win campaign for Shopify lead capture. Contact @urbanfit_cmo',
+          'We are FreshBox. Need a retention campaign with rewards for returning customers. Contact @freshbox_growth',
+          'We are Nova Agency. Need a branded Advent Calendar campaign for a client. Contact @nova_agency',
+          'We are GameLaunch Studio. Need a quiz lead magnet for a new product launch. Contact @gamelaunch_cmo',
+        ],
         rawResponseSummary: 'Raw response',
-        summarySectionTitle: 'Lead summary',
+        summarySectionTitle: 'Campaign lead summary',
         loadSummaryBtn: 'Load summary',
         rawSummarySummary: 'Raw summary JSON',
         dashboardSectionTitle: 'Dashboard overview',
         refreshDashboardBtn: 'Refresh dashboard',
-        metricLeadsLabel: 'Leads total',
+        metricLeadsLabel: 'Campaign leads',
         metricQualifiedLabel: 'Qualified',
         metricInProgressLabel: 'Handoffs in progress',
         metricDoneLabel: 'Handoffs done',
         rawDashboardSummary: 'Raw dashboard JSON',
-        leadsSectionTitle: 'Recent leads',
+        leadsSectionTitle: 'Recent campaign leads',
         refreshLeadsBtn: 'Refresh',
         rawLeadsSummary: 'Raw leads JSON',
         handoffsSectionTitle: 'Recent handoffs',
@@ -699,7 +780,7 @@ def ui_page() -> str:
         rawHandoffsSummary: 'Raw handoffs JSON',
         loadDemoBtn: 'Load demo data',
         resetDemoBtn: 'Reset demo',
-        footerText: 'Public demo MVP deployed on Render.',
+        footerText: 'MechanicFlow AI demo workflow for campaign lead qualification and gamified mechanics.',
         leadIdPlaceholder: 'lead_id — optional for the first message',
         summaryLeadIdPlaceholder: 'Enter lead_id',
         messagePlaceholder: 'Enter inbound message...',
@@ -710,16 +791,28 @@ def ui_page() -> str:
         company: 'Company',
         role: 'Role',
         contact: 'Contact',
-        useCase: 'Use case',
+        useCase: 'Campaign need',
+        clientType: 'Client type',
+        campaignGoal: 'Campaign goal',
+        platform: 'Platform',
+        campaignIntelligence: 'Campaign Intelligence',
+        recommendedMechanic: 'Recommended mechanic',
+        mechanicName: 'Mechanic name',
+        mechanicReason: 'Why it fits',
+        pricingTier: 'Pricing tier',
+        suggestedTier: 'Suggested tier',
+        copyReadyFollowup: 'Copy-ready follow-up',
+        copyFollowup: 'Copy follow-up',
         score: 'Score',
         priority: 'Priority',
         eventTimeline: 'Event timeline',
         noEvents: 'No events yet.',
         crmEvent: 'CRM event',
-        handoffPackage: 'Handoff package',
+        handoffPackage: 'Campaign handoff package',
         packageSummary: 'Summary',
         qualificationReason: 'Qualification reason',
         recommendedNextAction: 'Recommended next action',
+        recommendedMechanicSection: 'Recommended Mechanic',
         crmPayloadPreview: 'CRM payload preview',
         exportCrm: 'Export to CRM',
         copyPackage: 'Copy package',
@@ -767,30 +860,39 @@ def ui_page() -> str:
         toastHandoffUpdated: 'Handoff updated.',
         toastCrmExported: 'CRM export simulated',
         toastPackageCopied: 'Package copied.',
+        toastFollowupCopied: 'Follow-up copied.',
         toastOwnerAssigned: 'Owner assigned.',
         toastActionUpdated: 'Action status updated.',
         toastError: 'Something went wrong.',
-        polishedAssistantReply: 'Thanks. Key data was extracted, the lead is qualified and ready for handoff.',
+        polishedAssistantReply: 'Thanks. The campaign lead is qualified, the mechanic is recommended, and the handoff package is ready.',
       },
       es: {
-        pageTitle: 'Agente IA para Leads',
-        pageSubtitle: 'MVP listo para demo de leads B2B entrantes, calificación y transferencia.',
+        pageTitle: 'MechanicFlow AI',
+        pageSubtitle: 'AI workflow for qualifying campaign leads, recommending gamified mechanics, and preparing CRM-ready handoff.',
         sendSectionTitle: 'Enviar mensaje',
         sendBtn: 'Enviar',
         clearBtn: 'Limpiar',
-        sendHint: 'Después de la respuesta, el lead_id se completará automáticamente en el resumen.',
+        sendHint: 'Prueba un ejemplo de campaña o envía una solicitud de una marca, eCommerce o agencia.',
+        demoExamplesTitle: 'Campaign examples',
+        demoExamples: [
+          'We are Bloom Retail. Need a holiday promo game to collect emails and boost repeat purchases. Contact @bloom_growth',
+          'We are UrbanFit. Need a spin-to-win campaign for Shopify lead capture. Contact @urbanfit_cmo',
+          'We are FreshBox. Need a retention campaign with rewards for returning customers. Contact @freshbox_growth',
+          'We are Nova Agency. Need a branded Advent Calendar campaign for a client. Contact @nova_agency',
+          'We are GameLaunch Studio. Need a quiz lead magnet for a new product launch. Contact @gamelaunch_cmo',
+        ],
         rawResponseSummary: 'Respuesta bruta',
-        summarySectionTitle: 'Resumen del lead',
+        summarySectionTitle: 'Resumen del campaign lead',
         loadSummaryBtn: 'Cargar resumen',
         rawSummarySummary: 'JSON bruto del resumen',
         dashboardSectionTitle: 'Resumen del panel',
         refreshDashboardBtn: 'Actualizar panel',
-        metricLeadsLabel: 'Leads totales',
+        metricLeadsLabel: 'Campaign leads',
         metricQualifiedLabel: 'Calificados',
         metricInProgressLabel: 'Transferencias en progreso',
         metricDoneLabel: 'Transferencias completadas',
         rawDashboardSummary: 'JSON bruto del panel',
-        leadsSectionTitle: 'Leads recientes',
+        leadsSectionTitle: 'Campaign leads recientes',
         refreshLeadsBtn: 'Actualizar',
         rawLeadsSummary: 'JSON bruto de leads',
         handoffsSectionTitle: 'Transferencias recientes',
@@ -798,7 +900,7 @@ def ui_page() -> str:
         rawHandoffsSummary: 'JSON bruto de transferencias',
         loadDemoBtn: 'Cargar demo',
         resetDemoBtn: 'Restablecer demo',
-        footerText: 'MVP público de demo desplegado en Render.',
+        footerText: 'MechanicFlow AI demo workflow for campaign lead qualification and gamified mechanics.',
         leadIdPlaceholder: 'lead_id — opcional para el primer mensaje',
         summaryLeadIdPlaceholder: 'Ingresa lead_id',
         messagePlaceholder: 'Ingresa el mensaje entrante...',
@@ -809,16 +911,28 @@ def ui_page() -> str:
         company: 'Empresa',
         role: 'Rol',
         contact: 'Contacto',
-        useCase: 'Caso de uso',
+        useCase: 'Necesidad de campaña',
+        clientType: 'Tipo de cliente',
+        campaignGoal: 'Objetivo de campaña',
+        platform: 'Plataforma',
+        campaignIntelligence: 'Campaign Intelligence',
+        recommendedMechanic: 'Mecánica recomendada',
+        mechanicName: 'Mecánica',
+        mechanicReason: 'Por qué encaja',
+        pricingTier: 'Plan',
+        suggestedTier: 'Plan sugerido',
+        copyReadyFollowup: 'Copy-ready follow-up',
+        copyFollowup: 'Copy follow-up',
         score: 'Puntuación',
         priority: 'Prioridad',
         eventTimeline: 'Historial de eventos',
         noEvents: 'Aún no hay eventos.',
         crmEvent: 'Evento CRM',
-        handoffPackage: 'Paquete de transferencia',
+        handoffPackage: 'Campaign handoff package',
         packageSummary: 'Resumen',
         qualificationReason: 'Razón de calificación',
         recommendedNextAction: 'Siguiente acción',
+        recommendedMechanicSection: 'Recommended Mechanic',
         crmPayloadPreview: 'Vista previa de CRM payload',
         exportCrm: 'Exportar a CRM',
         copyPackage: 'Copiar paquete',
@@ -866,10 +980,11 @@ def ui_page() -> str:
         toastHandoffUpdated: 'Transferencia actualizada.',
         toastCrmExported: 'CRM export simulated',
         toastPackageCopied: 'Paquete copiado.',
+        toastFollowupCopied: 'Follow-up copiado.',
         toastOwnerAssigned: 'Responsable asignado.',
         toastActionUpdated: 'Estado de acción actualizado.',
         toastError: 'Algo salió mal.',
-        polishedAssistantReply: 'Gracias. Los datos clave fueron extraídos, el lead quedó calificado y listo para transferencia.',
+        polishedAssistantReply: 'Gracias. El campaign lead quedó calificado, la mecánica fue recomendada y el paquete está listo.',
       }
     };
 
@@ -901,6 +1016,25 @@ def ui_page() -> str:
       return String(value);
     }
 
+    function renderDemoExamples() {
+      const root = $('demoExamples');
+      if (!root) return;
+
+      const examples = Array.isArray(t('demoExamples')) ? t('demoExamples') : [];
+      root.innerHTML = '';
+      examples.forEach((example) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'example-pill';
+        btn.textContent = example;
+        btn.onclick = () => {
+          $('messageInput').value = example;
+          $('messageInput').focus();
+        };
+        root.appendChild(btn);
+      });
+    }
+
     function setLang(lang) {
       currentLang = lang;
       localStorage.setItem('ui_lang', lang);
@@ -915,6 +1049,7 @@ def ui_page() -> str:
       $('sendBtn').textContent = t('sendBtn');
       $('clearBtn').textContent = t('clearBtn');
       $('sendHint').textContent = t('sendHint');
+      $('demoExamplesTitle').textContent = t('demoExamplesTitle');
       $('rawResponseSummary').textContent = t('rawResponseSummary');
       $('summarySectionTitle').textContent = t('summarySectionTitle');
       $('loadSummaryBtn').textContent = t('loadSummaryBtn');
@@ -950,6 +1085,7 @@ def ui_page() -> str:
       renderDashboard(lastDashboard);
       renderLeads(lastLeads);
       renderHandoffs(lastHandoffs);
+      renderDemoExamples();
     }
 
     function mapStatus(status) {
@@ -971,7 +1107,7 @@ def ui_page() -> str:
       const s = normalizeHandoffStatus(status);
       if (['qualified', 'done'].includes(s)) return 'badge-green';
       if (['pending', 'needs_followup'].includes(s)) return 'badge-orange';
-      if (['in_progress'].includes(s)) return 'badge-blue';
+      if (['in_progress'].includes(s)) return 'badge-graphite';
       return 'badge-gray';
     }
 
@@ -1116,6 +1252,13 @@ def ui_page() -> str:
         [t('role'), lead.role || t('empty')],
         [t('contact'), lead.contact || t('empty')],
         [t('useCase'), lead.use_case || t('empty')],
+        [t('clientType'), handoffPackage?.client_type || lead.client_type || t('empty')],
+        [t('campaignGoal'), handoffPackage?.campaign_goal || lead.campaign_goal || t('empty')],
+        [t('platform'), handoffPackage?.platform || lead.platform || t('empty')],
+        [t('recommendedMechanic'), handoffPackage?.recommended_mechanic || lead.recommended_mechanic || t('empty')],
+        [t('mechanicReason'), handoffPackage?.mechanic_reason || lead.mechanic_reason || t('empty')],
+        [t('pricingTier'), handoffPackage?.pricing_tier || lead.pricing_tier || t('empty')],
+        [t('recommendedNextAction'), handoffPackage?.recommended_next_action || lead.recommended_next_action || t('empty')],
         [t('assignedTo'), ownerRouting.owner && ownerRouting.owner !== 'Unassigned' ? ownerRouting.owner : t('notAssigned')],
         [t('lastSender'), convo.last_sender || t('empty')],
         [t('lastIntent'), convo.last_intent || t('empty')],
@@ -1146,9 +1289,27 @@ def ui_page() -> str:
       `;
       wrap.appendChild(ownerBox);
 
+      if (handoffPackage) {
+        const mechanicBox = document.createElement('div');
+        mechanicBox.className = 'list-item';
+        mechanicBox.innerHTML = `
+          <div class="list-title">${t('campaignIntelligence')}</div>
+          <div class="list-sub">${t('clientType')}: ${displayValue(handoffPackage.client_type)}</div>
+          <div class="list-sub">${t('campaignGoal')}: ${displayValue(handoffPackage.campaign_goal)}</div>
+          <div class="list-sub">${t('platform')}: ${displayValue(handoffPackage.platform)}</div>
+          <div class="list-sub">${t('mechanicName')}: ${displayValue(handoffPackage.recommended_mechanic)}</div>
+          <div class="list-sub">${t('mechanicReason')}: ${displayValue(handoffPackage.mechanic_reason || handoffPackage.recommended_mechanic_reason)}</div>
+          <div class="list-sub">${t('suggestedTier')}: ${displayValue(handoffPackage.pricing_tier)}</div>
+          <div class="list-sub">${t('recommendedNextAction')}: ${displayValue(handoffPackage.recommended_next_action)}</div>
+          <div class="list-sub"><strong>${t('copyReadyFollowup')}:</strong> ${displayValue(handoffPackage.copy_text)}</div>
+          ${handoffPackage.copy_text ? `<div class="list-actions"><button class="btn btn-gray" id="copyFollowupBtn">${t('copyFollowup')}</button></div>` : ''}
+        `;
+        wrap.appendChild(mechanicBox);
+      }
+
       const actionButtons = [];
       if (handoff.id && actionStatus === 'new') {
-        actionButtons.push(`<button class="btn btn-blue action-status-btn" data-action-status="contacted">${t('actionContacted')}</button>`);
+        actionButtons.push(`<button class="btn btn-action action-status-btn" data-action-status="contacted">${t('actionContacted')}</button>`);
       } else if (handoff.id && actionStatus === 'contacted') {
         actionButtons.push(`<button class="btn btn-gray action-status-btn" data-action-status="waiting_reply">${t('actionWaitingReply')}</button>`);
         actionButtons.push(`<button class="btn btn-green action-status-btn" data-action-status="closed">${t('actionClosed')}</button>`);
@@ -1178,6 +1339,12 @@ def ui_page() -> str:
           [t('company'), payload.company],
           [t('contact'), payload.contact],
           [t('useCase'), payload.use_case],
+          [t('clientType'), payload.client_type],
+          [t('campaignGoal'), payload.campaign_goal],
+          [t('platform'), payload.platform],
+          [t('recommendedMechanic'), payload.recommended_mechanic],
+          [t('mechanicReason'), payload.mechanic_reason],
+          [t('pricingTier'), payload.pricing_tier],
           [t('score'), payload.score],
           [t('priority'), payload.priority],
           [t('assignedTo'), payload.owner],
@@ -1194,8 +1361,8 @@ def ui_page() -> str:
           <div class="list-sub"><strong>${t('crmPayloadPreview')}:</strong></div>
           ${payloadRows.map(([label, value]) => `<div class="list-sub">${label}: ${displayValue(value)}</div>`).join('')}
           <div class="list-actions">
-            ${lead.lead_status === 'qualified' && handoff.id ? `<button class="btn btn-blue" id="exportCrmBtn">${t('exportCrm')}</button>` : ''}
-            ${handoffPackage.copy_text ? `<button class="btn btn-gray" id="copyPackageBtn">${t('copyPackage')}</button>` : ''}
+            ${lead.lead_status === 'qualified' && handoff.id ? `<button class="btn btn-action" id="exportCrmBtn">${t('exportCrm')}</button>` : ''}
+            ${(handoffPackage.package_copy_text || handoffPackage.copy_text) ? `<button class="btn btn-gray" id="copyPackageBtn">${t('copyPackage')}</button>` : ''}
           </div>
         `;
         wrap.appendChild(packageBox);
@@ -1265,7 +1432,12 @@ def ui_page() -> str:
 
       const copyPackageBtn = $('copyPackageBtn');
       if (copyPackageBtn) copyPackageBtn.onclick = async () => {
-        await copyHandoffPackage(handoffPackage.copy_text);
+        await copyHandoffPackage(handoffPackage.package_copy_text || handoffPackage.copy_text);
+      };
+
+      const copyFollowupBtn = $('copyFollowupBtn');
+      if (copyFollowupBtn) copyFollowupBtn.onclick = async () => {
+        await copyHandoffPackage(handoffPackage.copy_text, t('toastFollowupCopied'));
       };
 
       const setInProgressBtn = $('setInProgressBtn');
@@ -1393,6 +1565,7 @@ def ui_page() -> str:
 		        const useCase = item.use_case ?? item.lead?.use_case ?? t('empty');
 		        const score = calculateLeadScore(item);
 		        const priority = calculateLeadPriority(score);
+		        const mechanic = item.recommended_mechanic ?? item.handoff_package?.recommended_mechanic ?? t('empty');
 		        const actionQueue = item.action_queue || {};
 		        const actionText = mapActionStatus(
 		          actionQueue.status || item.action_status,
@@ -1410,6 +1583,7 @@ def ui_page() -> str:
 	            <div>
 		              <div class="list-title">${company}</div>
 		              <div class="list-sub">${t('score')}: ${score} · ${t('priority')}: ${priority}</div>
+		              <div class="list-sub">${t('recommendedMechanic')}: ${mechanic}</div>
 		              <div class="list-sub">${t('actionLabel')}: ${actionText}</div>
 		              <div class="list-sub">${t('role')}: ${role} · ${t('contact')}: ${contact}</div>
 		            </div>
@@ -1421,7 +1595,7 @@ def ui_page() -> str:
           </div>
           <div class="list-sub">${useCase}</div>
           <div class="list-actions">
-            <button class="btn btn-blue open-lead-btn" data-lead-id="${leadId}">${t('open')}</button>
+            <button class="btn btn-action open-lead-btn" data-lead-id="${leadId}">${t('open')}</button>
           </div>
         `;
         root.appendChild(el);
@@ -1547,7 +1721,7 @@ def ui_page() -> str:
       }
     }
 
-    async function copyHandoffPackage(text) {
+    async function copyHandoffPackage(text, toastMessage=null) {
       if (!text) return;
 
       try {
@@ -1564,7 +1738,7 @@ def ui_page() -> str:
           document.execCommand('copy');
           area.remove();
         }
-        showToast(t('toastPackageCopied'));
+        showToast(toastMessage || t('toastPackageCopied'));
       } catch (e) {
         showToast(String(e.message || t('toastError')), 'error');
       }

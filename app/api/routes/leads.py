@@ -119,6 +119,11 @@ def list_leads(db: Session = Depends(get_db)) -> list[dict]:
         latest_handoff = _latest_handoff(db, lead.id)
         routing_events = _latest_routing_events(db, lead.id)
         action_queue = get_action_status(lead, latest_handoff, routing_events)
+        handoff_package = build_handoff_package(
+            lead,
+            latest_handoff=latest_handoff,
+            events=routing_events,
+        )
         items.append(
             {
                 "id": lead.id,
@@ -127,6 +132,12 @@ def list_leads(db: Session = Depends(get_db)) -> list[dict]:
                 "role": lead.role,
                 "contact": lead.contact,
                 "use_case": lead.use_case,
+                "client_type": handoff_package["client_type"],
+                "campaign_goal": handoff_package["campaign_goal"],
+                "platform": handoff_package["platform"],
+                "recommended_mechanic": handoff_package["recommended_mechanic"],
+                "mechanic_reason": handoff_package["mechanic_reason"],
+                "pricing_tier": handoff_package["pricing_tier"],
                 "status": lead.status,
                 "handoff_id": latest_handoff.id if latest_handoff else None,
                 "handoff_status": latest_handoff.status if latest_handoff else None,
@@ -349,6 +360,12 @@ def get_lead_summary(lead_id: int, db: Session = Depends(get_db)) -> dict:
     ]
     owner_routing = resolve_owner_routing(lead, latest_handoff, routing_events)
     action_queue = get_action_status(lead, latest_handoff, routing_events)
+    handoff_package = build_handoff_package(
+        lead,
+        latest_handoff=latest_handoff,
+        latest_message=latest_message,
+        events=routing_events,
+    )
 
     return {
         "status": "ok",
@@ -361,6 +378,14 @@ def get_lead_summary(lead_id: int, db: Session = Depends(get_db)) -> dict:
             "role": lead.role,
             "contact": lead.contact,
             "use_case": lead.use_case,
+            "campaign_summary": handoff_package["campaign_summary"],
+            "client_type": handoff_package["client_type"],
+            "campaign_goal": handoff_package["campaign_goal"],
+            "platform": handoff_package["platform"],
+            "recommended_mechanic": handoff_package["recommended_mechanic"],
+            "mechanic_reason": handoff_package["mechanic_reason"],
+            "pricing_tier": handoff_package["pricing_tier"],
+            "recommended_next_action": handoff_package["recommended_next_action"],
             "lead_status": lead.status,
         },
         "handoff": {
@@ -378,11 +403,6 @@ def get_lead_summary(lead_id: int, db: Session = Depends(get_db)) -> dict:
         },
         "owner_routing": owner_routing,
         "action_queue": action_queue,
-        "handoff_package": build_handoff_package(
-            lead,
-            latest_handoff=latest_handoff,
-            latest_message=latest_message,
-            events=routing_events,
-        ),
+        "handoff_package": handoff_package,
         "events": [format_event(event) for event in events],
     }
