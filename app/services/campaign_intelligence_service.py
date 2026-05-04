@@ -47,6 +47,15 @@ MECHANIC_REASONS = {
     ),
 }
 
+EXPLICIT_MECHANICS = (
+    ("Spin-to-Win", ("spin-to-win", "spin to win", "spin wheel", "wheel popup")),
+    ("Advent Calendar", ("advent", "advent calendar", "christmas", "holiday", "seasonal promo")),
+    ("Memory Match", ("memory match", "matching game", "pairs game")),
+    ("Wheel of Fortune", ("wheel of fortune", "fortune wheel")),
+    ("Quiz / Lead Magnet", ("lead magnet quiz", "product quiz", "quiz")),
+    ("Rewards Campaign", ("rewards", "loyalty", "points", "retention", "returning customers")),
+)
+
 
 def _clean(value: Any) -> str:
     if value is None:
@@ -70,9 +79,18 @@ def _has_any(text: str, keywords: tuple[str, ...]) -> bool:
     return any(keyword in text for keyword in keywords)
 
 
+def detect_explicit_mechanic(text: str) -> str | None:
+    for mechanic, keywords in EXPLICIT_MECHANICS:
+        if _has_any(text, keywords):
+            return mechanic
+    return None
+
+
 def detect_client_type(text: str) -> str:
     if _has_any(text, ("enterprise", "global brand", "multiple markets", "multi-market", "multimarket")):
         return "enterprise_brand"
+    if _has_any(text, ("shopify", "shopify store", "ecommerce", "e-commerce", "cart", "online store")):
+        return "ecommerce_brand"
     if _has_any(text, ("agency", "client", "campaign for a client")):
         return "agency"
     if _has_any(text, ("mobile app", "in-app", "in app", "app retention")):
@@ -98,17 +116,18 @@ def detect_client_type(text: str) -> str:
 
 
 def detect_campaign_goal(text: str) -> str:
-    if _has_any(text, ("christmas", "holiday", "advent", "seasonal")):
+    if _has_any(text, ("christmas", "holiday", "advent", "advent calendar", "seasonal", "seasonal promo")):
         return "holiday_promo"
     if _has_any(text, ("launch", "new product")):
         return "product_launch"
     if _has_any(text, ("repeat purchase", "repeat purchases", "repeat buyers")):
         return "repeat_purchase"
-    if _has_any(text, ("returning customers", "retention", "churn")):
+    if _has_any(text, ("returning customers", "retention", "churn", "rewards", "loyalty", "points")):
         return "retention"
-    if _has_any(text, ("points", "rewards", "loyalty")):
-        return "loyalty"
-    if _has_any(text, ("collect emails", "email list", "signups", "sign ups", "leads", "lead capture")):
+    if _has_any(
+        text,
+        ("lead capture", "collect emails", "email list", "signups", "sign ups", "subscribers", "popup", "leads"),
+    ):
         return "lead_capture"
     if _has_any(text, ("engagement", "activation")):
         return "engagement"
@@ -137,7 +156,11 @@ def detect_platform(text: str) -> str:
     return "unknown"
 
 
-def recommend_mechanic(client_type: str, campaign_goal: str) -> str:
+def recommend_mechanic(client_type: str, campaign_goal: str, text: str = "") -> str:
+    explicit_mechanic = detect_explicit_mechanic(text)
+    if explicit_mechanic:
+        return explicit_mechanic
+
     if campaign_goal == "holiday_promo":
         return "Advent Calendar"
     if campaign_goal == "lead_capture":
@@ -162,6 +185,8 @@ def recommend_pricing_tier(
     mechanic: str,
     text: str,
 ) -> str:
+    if platform == "Shopify" and campaign_goal == "lead_capture" and mechanic == "Spin-to-Win":
+        return "DIY Tier"
     if (
         client_type == "enterprise_brand"
         or campaign_goal == "loyalty"
@@ -202,7 +227,7 @@ def build_campaign_summary(company: str, campaign_goal: str, mechanic: str, plat
     company_display = company or "This campaign lead"
     goal_display = CAMPAIGN_GOAL_LABELS.get(campaign_goal, campaign_goal)
     platform_part = "" if platform == "unknown" else f" on {platform}"
-    return f"{company_display} needs a gamified marketing campaign for {goal_display}{platform_part}. Recommended mechanic: {mechanic}."
+    return f"{company_display} needs a gamified marketing campaign for {goal_display}{platform_part}. Best game for this campaign: {mechanic}."
 
 
 def build_copy_ready_followup(
@@ -227,7 +252,7 @@ def build_campaign_intelligence(lead: Any, latest_message: Any = None) -> dict:
     client_type = detect_client_type(text)
     campaign_goal = detect_campaign_goal(text)
     platform = detect_platform(text)
-    mechanic = recommend_mechanic(client_type, campaign_goal)
+    mechanic = recommend_mechanic(client_type, campaign_goal, text)
     mechanic_reason = MECHANIC_REASONS[mechanic]
     pricing_tier = recommend_pricing_tier(client_type, campaign_goal, platform, mechanic, text)
     next_action = recommend_next_action(
@@ -246,6 +271,7 @@ def build_campaign_intelligence(lead: Any, latest_message: Any = None) -> dict:
         "campaign_goal_label": CAMPAIGN_GOAL_LABELS[campaign_goal],
         "platform": platform,
         "recommended_mechanic": mechanic,
+        "best_game": mechanic,
         "mechanic_reason": mechanic_reason,
         "pricing_tier": pricing_tier,
         "recommended_next_action": next_action,

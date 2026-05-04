@@ -150,6 +150,42 @@ USE_CASE_HINTS = (
     "enrutamiento",
 )
 
+GAME_CAMPAIGN_USE_CASE_HINTS = (
+    "spin-to-win",
+    "spin to win",
+    "spin wheel",
+    "wheel popup",
+    "lead capture",
+    "collect emails",
+    "email list",
+    "signups",
+    "subscribers",
+    "popup",
+    "advent",
+    "advent calendar",
+    "christmas",
+    "holiday",
+    "seasonal promo",
+    "memory match",
+    "matching game",
+    "pairs game",
+    "wheel of fortune",
+    "fortune wheel",
+    "quiz",
+    "lead magnet quiz",
+    "product quiz",
+    "rewards",
+    "loyalty",
+    "points",
+    "retention",
+    "returning customers",
+    "shopify",
+    "ecommerce",
+    "online store",
+    "campaign",
+    "promo game",
+)
+
 BAD_COMPANY_VALUES = {
     "we",
     "we are",
@@ -237,6 +273,11 @@ def _normalize_role(value: Optional[str]) -> Optional[str]:
 def _cleanup_company(value: str) -> Optional[str]:
     value = _clean(value)
     value = value.strip(" \n\t\r,.;:!?-—")
+    value = re.split(
+        r"(?i)(?:[.!?]\s+|\s+)(?:we\s+need|need|needs|looking\s+for|looking\s+to|want|wants|interested\s+in|best\s+contact|contact|reach\s+me)\b",
+        value,
+        maxsplit=1,
+    )[0].strip(" \n\t\r,.;:!?-—")
     value = re.sub(
         r"(?i)[\s\.,;:]+best(?:\s+contact.*)?$",
         "",
@@ -386,6 +427,23 @@ def _extract_use_case(text: str) -> Optional[str]:
     return _cleanup_use_case(scored[0][0])
 
 
+def _normalize_game_campaign_use_case(raw: str, lowered: str) -> Optional[str]:
+    if not any(hint in lowered for hint in GAME_CAMPAIGN_USE_CASE_HINTS):
+        return None
+
+    value = re.sub(r"^(a|an|the)\s+", "", raw, flags=re.IGNORECASE)
+    value = re.sub(r"\bspin\s+to\s+win\b", "spin-to-win", value, flags=re.IGNORECASE)
+    value = re.sub(r"\bspin-to-win\b", "spin-to-win", value, flags=re.IGNORECASE)
+    value = re.sub(r"\bshopify\b", "Shopify", value, flags=re.IGNORECASE)
+    value = re.sub(r"\becommerce\b", "eCommerce", value, flags=re.IGNORECASE)
+    value = re.sub(r"\s+", " ", value).strip(" \n\t\r,.;:!?-—")
+
+    if not value:
+        return None
+
+    return value[0].upper() + value[1:] if len(value) > 1 else value.upper()
+
+
 def _normalize_use_case(value: Optional[str]) -> Optional[str]:
     if not value:
         return None
@@ -445,6 +503,10 @@ def _normalize_use_case(value: Optional[str]) -> Optional[str]:
         x in lowered for x in ("агент", "бот")
     )
 
+    campaign_use_case = _normalize_game_campaign_use_case(raw, lowered)
+    if campaign_use_case:
+        return campaign_use_case
+
     if has_crm and has_qualify and has_route:
         return "Inbound lead qualification and CRM routing"
 
@@ -502,6 +564,14 @@ def _use_case_quality(value: Optional[str]) -> int:
         score += 4
     if "routing" in lowered:
         score += 6
+    if any(hint in lowered for hint in GAME_CAMPAIGN_USE_CASE_HINTS):
+        score += 130
+    if "campaign" in lowered:
+        score += 15
+    if "shopify" in lowered:
+        score += 12
+    if "lead capture" in lowered or "collect emails" in lowered:
+        score += 15
 
     if lowered.startswith(("them ", "it ", "this ", "that ")):
         score -= 20

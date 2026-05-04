@@ -59,7 +59,7 @@ def _summary(
 
     return (
         f"{company} is a qualified campaign lead for {goal}. "
-        f"Recommended mechanic: {mechanic}; primary contact is {contact}; handoff status is {handoff_status}."
+        f"Best game for this campaign: {mechanic}; primary contact is {contact}; handoff status is {handoff_status}."
     )
 
 
@@ -118,6 +118,7 @@ def build_handoff_package(
         "campaign_goal": campaign_goal,
         "platform": platform,
         "recommended_mechanic": recommended_mechanic,
+        "best_game": recommended_mechanic,
         "mechanic_reason": mechanic_reason,
         "pricing_tier": pricing_tier,
         "priority": priority,
@@ -141,7 +142,7 @@ def build_handoff_package(
             f"Client type: {_display(client_type)}",
             f"Campaign goal: {_display(campaign_goal)}",
             f"Platform: {_display(platform)}",
-            f"Recommended mechanic: {_display(recommended_mechanic)}",
+            f"Recommended game mechanic: {_display(recommended_mechanic)}",
             f"Why it fits: {_display(mechanic_reason)}",
             f"Suggested tier: {_display(pricing_tier)}",
             f"Lead status: {_display(lead_status)}",
@@ -173,6 +174,7 @@ def build_handoff_package(
         "campaign_goal_label": campaign_intelligence["campaign_goal_label"],
         "platform": platform,
         "recommended_mechanic": recommended_mechanic,
+        "best_game": recommended_mechanic,
         "mechanic_reason": mechanic_reason,
         "recommended_mechanic_reason": mechanic_reason,
         "pricing_tier": pricing_tier,

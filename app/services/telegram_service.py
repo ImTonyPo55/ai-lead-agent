@@ -44,13 +44,13 @@ def notify_handoff_created(
         handoff_package = build_handoff_package(lead, latest_handoff=handoff)
         message = "\n".join(
             [
-                "🔥 New campaign lead",
+                "🔥 New game campaign lead",
                 "",
                 f"Company: {_field(getattr(lead, 'company', None))}",
                 f"Contact: {_field(getattr(lead, 'contact', None))}",
                 f"Client type: {_field(handoff_package.get('client_type'))}",
                 f"Goal: {_field(handoff_package.get('campaign_goal'))}",
-                f"Mechanic: {_field(handoff_package.get('recommended_mechanic'))}",
+                f"Best game: {_field(handoff_package.get('best_game') or handoff_package.get('recommended_mechanic'))}",
                 f"Tier: {_field(handoff_package.get('pricing_tier'))}",
                 f"Owner: {owner}",
                 f"Team: {team}",
