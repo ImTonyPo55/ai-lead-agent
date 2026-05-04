@@ -4,11 +4,14 @@ from sqlalchemy.orm import Session
 
 from app.db.models import Lead, Message, Handoff, EventLog
 from app.db.session import get_db
+from app.services.action_queue_service import get_action_status
 from app.services.event_service import format_event, log_event
 from app.services.handoff_package_service import build_handoff_package
 from app.services.owner_routing_service import recommend_owner, resolve_owner_routing
 
 router = APIRouter(prefix="/leads", tags=["leads"])
+
+ACTION_EVENT_TYPES = {"action_contacted", "action_waiting_reply", "action_closed"}
 
 
 class UpdateLeadRequest(BaseModel):
@@ -42,6 +45,26 @@ def _latest_owner_event(db: Session, lead_id: int) -> EventLog | None:
         .order_by(EventLog.id.desc())
         .first()
     )
+
+
+def _latest_action_event(db: Session, lead_id: int) -> EventLog | None:
+    return (
+        db.query(EventLog)
+        .filter(EventLog.lead_id == lead_id, EventLog.event_type.in_(ACTION_EVENT_TYPES))
+        .order_by(EventLog.id.desc())
+        .first()
+    )
+
+
+def _latest_routing_events(db: Session, lead_id: int) -> list[EventLog]:
+    events = []
+    owner_event = _latest_owner_event(db, lead_id)
+    action_event = _latest_action_event(db, lead_id)
+    if owner_event is not None:
+        events.append(owner_event)
+    if action_event is not None:
+        events.append(action_event)
+    return events
 
 
 def create_handoff_if_needed(db: Session, lead: Lead) -> tuple[int | None, bool]:
@@ -94,6 +117,8 @@ def list_leads(db: Session = Depends(get_db)) -> list[dict]:
     items = []
     for lead in leads:
         latest_handoff = _latest_handoff(db, lead.id)
+        routing_events = _latest_routing_events(db, lead.id)
+        action_queue = get_action_status(lead, latest_handoff, routing_events)
         items.append(
             {
                 "id": lead.id,
@@ -105,6 +130,9 @@ def list_leads(db: Session = Depends(get_db)) -> list[dict]:
                 "status": lead.status,
                 "handoff_id": latest_handoff.id if latest_handoff else None,
                 "handoff_status": latest_handoff.status if latest_handoff else None,
+                "action_queue": action_queue,
+                "action_status": action_queue["status"],
+                "action_label": action_queue["label"],
                 "created_at": str(lead.created_at),
             }
         )
@@ -312,11 +340,15 @@ def get_lead_summary(lead_id: int, db: Session = Depends(get_db)) -> dict:
         db.rollback()
         events = []
     latest_owner_event = _latest_owner_event(db, lead_id)
-    owner_events = [latest_owner_event] if latest_owner_event is not None else []
-    routing_events = owner_events + [
-        event for event in events if event.event_type != "owner_assigned"
+    latest_action_event = _latest_action_event(db, lead_id)
+    routing_events = [
+        event for event in (latest_owner_event, latest_action_event) if event is not None
+    ] + [
+        event for event in events
+        if event.event_type != "owner_assigned" and event.event_type not in ACTION_EVENT_TYPES
     ]
     owner_routing = resolve_owner_routing(lead, latest_handoff, routing_events)
+    action_queue = get_action_status(lead, latest_handoff, routing_events)
 
     return {
         "status": "ok",
@@ -345,6 +377,7 @@ def get_lead_summary(lead_id: int, db: Session = Depends(get_db)) -> dict:
             "last_intent": latest_message.detected_intent if latest_message else None,
         },
         "owner_routing": owner_routing,
+        "action_queue": action_queue,
         "handoff_package": build_handoff_package(
             lead,
             latest_handoff=latest_handoff,

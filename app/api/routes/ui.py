@@ -627,6 +627,18 @@ def ui_page() -> str:
         ownerSection: 'Ответственный',
         team: 'Команда',
         routingReason: 'Причина назначения',
+        actionSection: 'Следующее действие',
+        actionStatus: 'Статус',
+        actionNext: 'Следующее действие',
+        actionReason: 'Причина',
+        actionLabel: 'Действие',
+        actionContacted: 'Связаться',
+        actionWaitingReply: 'Ждём ответ',
+        actionClosed: 'Закрыть действие',
+        actionStatus_new: 'Новое',
+        actionStatus_contacted: 'Связались',
+        actionStatus_waiting_reply: 'Ждём ответ',
+        actionStatus_closed: 'Закрыто',
         assignTony: 'Назначить Tony',
         assignSales: 'Назначить Sales',
         assignSupport: 'Назначить Support',
@@ -657,6 +669,7 @@ def ui_page() -> str:
         toastCrmExported: 'CRM export simulated',
         toastPackageCopied: 'Пакет скопирован.',
         toastOwnerAssigned: 'Ответственный назначен.',
+        toastActionUpdated: 'Статус действия обновлён.',
         toastError: 'Что-то пошло не так.',
         polishedAssistantReply: 'Спасибо. Ключевые данные извлечены, лид квалифицирован и готов к передаче в работу.',
       },
@@ -713,6 +726,18 @@ def ui_page() -> str:
         ownerSection: 'Owner',
         team: 'Team',
         routingReason: 'Assignment reason',
+        actionSection: 'Next action',
+        actionStatus: 'Status',
+        actionNext: 'Next action',
+        actionReason: 'Reason',
+        actionLabel: 'Action',
+        actionContacted: 'Contact',
+        actionWaitingReply: 'Waiting reply',
+        actionClosed: 'Close action',
+        actionStatus_new: 'New',
+        actionStatus_contacted: 'Contacted',
+        actionStatus_waiting_reply: 'Waiting reply',
+        actionStatus_closed: 'Closed',
         assignTony: 'Assign Tony',
         assignSales: 'Assign Sales',
         assignSupport: 'Assign Support',
@@ -743,6 +768,7 @@ def ui_page() -> str:
         toastCrmExported: 'CRM export simulated',
         toastPackageCopied: 'Package copied.',
         toastOwnerAssigned: 'Owner assigned.',
+        toastActionUpdated: 'Action status updated.',
         toastError: 'Something went wrong.',
         polishedAssistantReply: 'Thanks. Key data was extracted, the lead is qualified and ready for handoff.',
       },
@@ -799,6 +825,18 @@ def ui_page() -> str:
         ownerSection: 'Responsable',
         team: 'Equipo',
         routingReason: 'Razón de asignación',
+        actionSection: 'Siguiente acción',
+        actionStatus: 'Estado',
+        actionNext: 'Siguiente acción',
+        actionReason: 'Razón',
+        actionLabel: 'Acción',
+        actionContacted: 'Contactar',
+        actionWaitingReply: 'Esperando respuesta',
+        actionClosed: 'Cerrar acción',
+        actionStatus_new: 'Nueva',
+        actionStatus_contacted: 'Contactado',
+        actionStatus_waiting_reply: 'Esperando respuesta',
+        actionStatus_closed: 'Cerrada',
         assignTony: 'Asignar Tony',
         assignSales: 'Asignar Sales',
         assignSupport: 'Asignar Support',
@@ -829,6 +867,7 @@ def ui_page() -> str:
         toastCrmExported: 'CRM export simulated',
         toastPackageCopied: 'Paquete copiado.',
         toastOwnerAssigned: 'Responsable asignado.',
+        toastActionUpdated: 'Estado de acción actualizado.',
         toastError: 'Algo salió mal.',
         polishedAssistantReply: 'Gracias. Los datos clave fueron extraídos, el lead quedó calificado y listo para transferencia.',
       }
@@ -918,6 +957,14 @@ def ui_page() -> str:
       if (!normalized) return t('status_unknown');
       const key = `status_${normalized}`;
       return t(key);
+    }
+
+    function mapActionStatus(status, fallback='') {
+      const normalized = String(status || '').toLowerCase();
+      if (!normalized) return displayValue(fallback);
+      const key = `actionStatus_${normalized}`;
+      const translated = t(key);
+      return translated === key ? displayValue(fallback || status) : translated;
     }
 
     function badgeClass(status) {
@@ -1038,6 +1085,15 @@ def ui_page() -> str:
       const convo = data.conversation || {};
       const handoffPackage = data.handoff_package || null;
       const ownerRouting = data.owner_routing || handoffPackage || {};
+      const actionQueue = data.action_queue || {
+        status: handoffPackage?.action_status || 'new',
+        label: handoffPackage?.action_status || 'new',
+        next_action: handoffPackage?.next_action || '',
+        reason: '',
+        owner: ownerRouting.owner,
+        team: ownerRouting.team,
+      };
+      const actionStatus = actionQueue.status || 'new';
 
       const effectiveHandoffStatus = getHandoffStatus({ handoff });
 
@@ -1090,6 +1146,29 @@ def ui_page() -> str:
       `;
       wrap.appendChild(ownerBox);
 
+      const actionButtons = [];
+      if (handoff.id && actionStatus === 'new') {
+        actionButtons.push(`<button class="btn btn-blue action-status-btn" data-action-status="contacted">${t('actionContacted')}</button>`);
+      } else if (handoff.id && actionStatus === 'contacted') {
+        actionButtons.push(`<button class="btn btn-gray action-status-btn" data-action-status="waiting_reply">${t('actionWaitingReply')}</button>`);
+        actionButtons.push(`<button class="btn btn-green action-status-btn" data-action-status="closed">${t('actionClosed')}</button>`);
+      } else if (handoff.id && actionStatus === 'waiting_reply') {
+        actionButtons.push(`<button class="btn btn-green action-status-btn" data-action-status="closed">${t('actionClosed')}</button>`);
+      }
+
+      const actionBox = document.createElement('div');
+      actionBox.className = 'list-item';
+      actionBox.innerHTML = `
+        <div class="list-title">${t('actionSection')}</div>
+        <div class="list-sub">${t('actionStatus')}: ${mapActionStatus(actionQueue.status, actionQueue.label)}</div>
+        <div class="list-sub">${t('actionNext')}: ${displayValue(actionQueue.next_action)}</div>
+        <div class="list-sub">${t('actionReason')}: ${displayValue(actionQueue.reason)}</div>
+        <div class="list-sub">${t('assignedTo')}: ${displayValue(actionQueue.owner || ownerRouting.owner)}</div>
+        <div class="list-sub">${t('team')}: ${displayValue(actionQueue.team || ownerRouting.team)}</div>
+        ${actionButtons.length ? `<div class="list-actions">${actionButtons.join('')}</div>` : ''}
+      `;
+      wrap.appendChild(actionBox);
+
       if (handoffPackage) {
         const payload = handoffPackage.crm_payload || {};
         const packageBox = document.createElement('div');
@@ -1103,6 +1182,8 @@ def ui_page() -> str:
           [t('priority'), payload.priority],
           [t('assignedTo'), payload.owner],
           [t('team'), payload.team],
+          [t('actionStatus'), mapActionStatus(payload.action_status || handoffPackage.action_status, handoffPackage.action_status)],
+          [t('actionNext'), payload.next_action || handoffPackage.next_action],
         ];
 
         packageBox.innerHTML = `
@@ -1166,6 +1247,13 @@ def ui_page() -> str:
         btn.onclick = async () => {
           if (!leadId) return;
           await assignOwner(leadId, btn.dataset.owner, btn.dataset.team);
+        };
+      });
+
+      document.querySelectorAll('.action-status-btn').forEach(btn => {
+        btn.onclick = async () => {
+          if (!leadId) return;
+          await updateActionStatus(leadId, btn.dataset.actionStatus);
         };
       });
 
@@ -1302,12 +1390,17 @@ def ui_page() -> str:
         const company = item.company ?? item.lead?.company ?? item.name ?? item.contact ?? ('lead_id ' + leadId);
 	        const role = item.role ?? item.lead?.role ?? t('empty');
 	        const contact = item.contact ?? item.lead?.contact ?? t('empty');
-	        const useCase = item.use_case ?? item.lead?.use_case ?? t('empty');
-	        const score = calculateLeadScore(item);
-	        const priority = calculateLeadPriority(score);
-	
-		        let leadStatus = item.lead_status ?? item.status ?? item.lead?.lead_status ?? null;
-		        const handoffStatus = getHandoffStatus(item);
+		        const useCase = item.use_case ?? item.lead?.use_case ?? t('empty');
+		        const score = calculateLeadScore(item);
+		        const priority = calculateLeadPriority(score);
+		        const actionQueue = item.action_queue || {};
+		        const actionText = mapActionStatus(
+		          actionQueue.status || item.action_status,
+		          actionQueue.label || item.action_label
+		        );
+		
+			        let leadStatus = item.lead_status ?? item.status ?? item.lead?.lead_status ?? null;
+			        const handoffStatus = getHandoffStatus(item);
 		        if (!leadStatus && (company || useCase)) leadStatus = 'qualified';
 
         const el = document.createElement('div');
@@ -1315,10 +1408,11 @@ def ui_page() -> str:
         el.innerHTML = `
 	          <div class="list-top">
 	            <div>
-	              <div class="list-title">${company}</div>
-	              <div class="list-sub">${t('score')}: ${score} · ${t('priority')}: ${priority}</div>
-	              <div class="list-sub">${t('role')}: ${role} · ${t('contact')}: ${contact}</div>
-	            </div>
+		              <div class="list-title">${company}</div>
+		              <div class="list-sub">${t('score')}: ${score} · ${t('priority')}: ${priority}</div>
+		              <div class="list-sub">${t('actionLabel')}: ${actionText}</div>
+		              <div class="list-sub">${t('role')}: ${role} · ${t('contact')}: ${contact}</div>
+		            </div>
 	            <div class="badges">
 	              <span class="badge badge-id">lead_id: ${leadId}</span>
 	              <span class="badge ${badgeClass(leadStatus)}">${mapStatus(leadStatus)}</span>
@@ -1359,18 +1453,24 @@ def ui_page() -> str:
 
       lastHandoffs.forEach((item) => {
         const leadId = item.lead_id ?? item.id ?? '-';
-        const assigned = item.assigned_to || t('notAssigned');
-        const status = getHandoffStatus(item) || 'pending';
-        const reason = item.reason || item.notes || t('empty');
+	        const assigned = item.assigned_to || t('notAssigned');
+	        const status = getHandoffStatus(item) || 'pending';
+	        const reason = item.reason || item.notes || t('empty');
+	        const actionQueue = item.action_queue || {};
+	        const actionText = mapActionStatus(
+	          actionQueue.status || item.action_status,
+	          actionQueue.label || item.action_label
+	        );
 
-        const el = document.createElement('div');
+	        const el = document.createElement('div');
         el.className = 'list-item';
         el.innerHTML = `
           <div class="list-top">
-            <div>
-              <div class="list-title">lead_id ${leadId}</div>
-              <div class="list-sub">${t('assignedTo')}: ${assigned}</div>
-            </div>
+	            <div>
+	              <div class="list-title">lead_id ${leadId}</div>
+	              <div class="list-sub">${t('assignedTo')}: ${assigned}</div>
+	              <div class="list-sub">${t('actionLabel')}: ${actionText}</div>
+	            </div>
             <div class="badges">
               <span class="badge badge-id">lead_id: ${leadId}</span>
               <span class="badge ${badgeClass(status)}">${mapStatus(status)}</span>
@@ -1398,6 +1498,28 @@ def ui_page() -> str:
       }
 
       showToast(t('toastError'), 'error');
+    }
+
+    async function updateActionStatus(leadId, actionStatus) {
+      const paths = {
+        contacted: 'contacted',
+        waiting_reply: 'waiting-reply',
+        closed: 'closed',
+      };
+      const path = paths[actionStatus];
+      if (!path) {
+        showToast(t('toastError'), 'error');
+        return;
+      }
+
+      try {
+        await fetchJSON(`/handoffs/${leadId}/action/${path}`, { method: 'POST' });
+        showToast(t('toastActionUpdated'));
+        await refreshAll(false);
+        await loadSummary(String(leadId), false);
+      } catch (e) {
+        showToast(String(e.message || t('toastError')), 'error');
+      }
     }
 
     async function exportCrm(leadId) {

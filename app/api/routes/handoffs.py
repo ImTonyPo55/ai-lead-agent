@@ -4,14 +4,17 @@ from sqlalchemy.orm import Session
 
 from app.db.models import EventLog, Handoff, Lead, Message
 from app.db.session import get_db
+from app.services.action_queue_service import get_action_status
 from app.services.event_service import log_event
 from app.services.handoff_package_service import build_handoff_package
 from app.services.owner_routing_service import resolve_owner_routing
+from app.services.telegram_service import notify_action_updated
 
 router = APIRouter(prefix="/handoffs", tags=["handoffs"])
 
 HANDOFF_STATUSES = {"pending", "in_progress", "done"}
 HANDOFF_STATUS_ALIASES = {"completed": "done"}
+ACTION_EVENT_TYPES = {"action_contacted", "action_waiting_reply", "action_closed"}
 
 
 class UpdateHandoffRequest(BaseModel):
@@ -116,10 +119,77 @@ def _latest_owner_event(db: Session, lead_id: int) -> EventLog | None:
     )
 
 
+def _latest_action_event(db: Session, lead_id: int) -> EventLog | None:
+    return (
+        db.query(EventLog)
+        .filter(EventLog.lead_id == lead_id, EventLog.event_type.in_(ACTION_EVENT_TYPES))
+        .order_by(EventLog.id.desc())
+        .first()
+    )
+
+
+def _latest_routing_events(db: Session, lead_id: int) -> list[EventLog]:
+    events = []
+    owner_event = _latest_owner_event(db, lead_id)
+    action_event = _latest_action_event(db, lead_id)
+    if owner_event is not None:
+        events.append(owner_event)
+    if action_event is not None:
+        events.append(action_event)
+    return events
+
+
 def _clean(value: str | None) -> str:
     if value is None:
         return ""
     return " ".join(str(value).strip().split())
+
+
+def _update_action_status(
+    lead_id: int,
+    event_type: str,
+    status: str,
+    db: Session,
+) -> dict:
+    lead = db.get(Lead, lead_id)
+    if lead is None:
+        return {
+            "status": "error",
+            "message": f"Lead {lead_id} not found",
+        }
+
+    handoff = _latest_handoff(db, lead_id)
+    if handoff is None:
+        return {
+            "status": "error",
+            "message": f"Handoff for lead {lead_id} not found",
+        }
+
+    previous_events = _latest_routing_events(db, lead_id)
+    previous_action = get_action_status(lead, handoff, previous_events)
+    owner_routing = resolve_owner_routing(lead, handoff, previous_events)
+    event = log_event(
+        db,
+        lead_id,
+        event_type,
+        {
+            "handoff_id": handoff.id,
+            "owner": owner_routing["owner"],
+            "team": owner_routing["team"],
+            "previous_status": previous_action["status"],
+            "status": status,
+        },
+    )
+    current_events = ([event] if event is not None else []) + previous_events
+    action_queue = get_action_status(lead, handoff, current_events)
+    notify_action_updated(lead, handoff, action_queue)
+
+    return {
+        "status": "ok",
+        "lead_id": lead_id,
+        "action_status": action_queue["status"],
+        "label": action_queue["label"],
+    }
 
 
 @router.get("")
@@ -129,12 +199,13 @@ def list_handoffs(db: Session = Depends(get_db)) -> list[dict]:
     items = []
     for handoff in handoffs:
         lead = db.get(Lead, handoff.lead_id)
-        owner_event = _latest_owner_event(db, handoff.lead_id)
+        routing_events = _latest_routing_events(db, handoff.lead_id)
         owner_routing = resolve_owner_routing(
             lead,
             handoff,
-            [owner_event] if owner_event is not None else [],
+            routing_events,
         )
+        action_queue = get_action_status(lead, handoff, routing_events)
         assigned_to = owner_routing["owner"]
         if assigned_to == "Unassigned":
             assigned_to = None
@@ -146,6 +217,9 @@ def list_handoffs(db: Session = Depends(get_db)) -> list[dict]:
                 "reason": handoff.reason,
                 "assigned_to": assigned_to,
                 "owner_routing": owner_routing,
+                "action_queue": action_queue,
+                "action_status": action_queue["status"],
+                "action_label": action_queue["label"],
                 "status": handoff.status,
                 "handoff_status": handoff.status,
                 "created_at": str(handoff.created_at),
@@ -225,6 +299,26 @@ def set_handoff_done(lead_id: int, db: Session = Depends(get_db)) -> dict:
     return _update_latest_handoff_status(lead_id, "done", db)
 
 
+@router.post("/{lead_id}/action/contacted")
+def set_action_contacted(lead_id: int, db: Session = Depends(get_db)) -> dict:
+    return _update_action_status(lead_id, "action_contacted", "contacted", db)
+
+
+@router.post("/{lead_id}/action/waiting-reply")
+def set_action_waiting_reply(lead_id: int, db: Session = Depends(get_db)) -> dict:
+    return _update_action_status(
+        lead_id,
+        "action_waiting_reply",
+        "waiting_reply",
+        db,
+    )
+
+
+@router.post("/{lead_id}/action/closed")
+def set_action_closed(lead_id: int, db: Session = Depends(get_db)) -> dict:
+    return _update_action_status(lead_id, "action_closed", "closed", db)
+
+
 @router.post("/{lead_id}/assign")
 def assign_handoff_owner(
     lead_id: int,
@@ -288,7 +382,7 @@ def export_handoff_to_crm(lead_id: int, db: Session = Depends(get_db)) -> dict:
         lead,
         latest_handoff=latest_handoff,
         latest_message=_latest_message(db, lead_id),
-        events=[_latest_owner_event(db, lead_id)],
+        events=_latest_routing_events(db, lead_id),
     )
     log_event(
         db,

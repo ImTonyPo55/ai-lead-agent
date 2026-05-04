@@ -71,3 +71,60 @@ def notify_handoff_created(
             return 200 <= response.status < 300
     except Exception:
         return False
+
+
+def notify_action_updated(
+    lead: Any,
+    handoff: Any = None,
+    action_queue: Any = None,
+) -> bool:
+    try:
+        token = os.getenv("TELEGRAM_BOT_TOKEN")
+        chat_id = os.getenv("TELEGRAM_CHAT_ID")
+        if not token or not chat_id:
+            return False
+
+        owner, team = _owner_team(action_queue)
+        if isinstance(action_queue, dict):
+            action = _field(action_queue.get("label")) or _field(action_queue.get("status"))
+            next_action = _field(action_queue.get("next_action"))
+        else:
+            action = _field(getattr(action_queue, "label", None)) or _field(
+                getattr(action_queue, "status", None)
+            )
+            next_action = _field(getattr(action_queue, "next_action", None))
+
+        lead_label = (
+            _field(getattr(lead, "company", None))
+            or _field(getattr(lead, "contact", None))
+            or f"lead_id {_field(getattr(lead, 'id', None))}"
+        )
+        message = "\n".join(
+            [
+                "⚡ Lead action updated",
+                "",
+                f"Lead: {lead_label}",
+                f"Owner: {owner}",
+                f"Team: {team}",
+                f"Action: {action}",
+                f"Next: {next_action}",
+            ]
+        )
+
+        data = urllib.parse.urlencode(
+            {
+                "chat_id": chat_id,
+                "text": message,
+            }
+        ).encode("utf-8")
+        request = urllib.request.Request(
+            f"https://api.telegram.org/bot{token}/sendMessage",
+            data=data,
+            method="POST",
+        )
+        context = ssl.create_default_context(cafile=certifi.where())
+
+        with urllib.request.urlopen(request, timeout=5, context=context) as response:
+            return 200 <= response.status < 300
+    except Exception:
+        return False

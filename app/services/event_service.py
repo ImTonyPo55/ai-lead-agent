@@ -17,6 +17,9 @@ EVENT_LABELS = {
     "handoff_completed": "Передача завершена",
     "crm_export_simulated": "CRM-экспорт подготовлен",
     "owner_assigned": "Ответственный назначен",
+    "action_contacted": "Связались с лидом",
+    "action_waiting_reply": "Ждём ответ от лида",
+    "action_closed": "Действие закрыто",
 }
 
 STATUS_LABELS = {
@@ -147,6 +150,19 @@ def format_event_details(event_type: str, payload: dict[str, Any] | None = None)
         team = _short(payload.get("team"))
         reason = _short(payload.get("reason"))
         return " · ".join(part for part in (owner, team, reason) if part)
+
+    if event_type in {"action_contacted", "action_waiting_reply", "action_closed"}:
+        previous_status = _short(payload.get("previous_status"))
+        status = _short(payload.get("status"))
+        owner = _short(payload.get("owner"))
+        team = _short(payload.get("team"))
+        parts = []
+        if previous_status and status:
+            parts.append(f"{previous_status} → {status}")
+        elif status:
+            parts.append(status)
+        parts.extend(part for part in (owner, team) if part)
+        return " · ".join(parts)
 
     return ""
 

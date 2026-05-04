@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.services.action_queue_service import get_action_status
 from app.services.owner_routing_service import resolve_owner_routing
 
 
@@ -87,6 +88,7 @@ def build_handoff_package(
     lead_status = _clean(getattr(lead, "status", None)) or None
     handoff_status = _clean(getattr(latest_handoff, "status", None)) or None
     owner_routing = resolve_owner_routing(lead, latest_handoff, events)
+    action_queue = get_action_status(lead, latest_handoff, events)
 
     recommended_next_action = (
         "Send to CRM and assign owner"
@@ -104,6 +106,8 @@ def build_handoff_package(
         "handoff_status": handoff_status,
         "owner": owner_routing["owner"],
         "team": owner_routing["team"],
+        "action_status": action_queue["status"],
+        "next_action": action_queue["next_action"],
     }
     copy_text = "\n".join(
         [
@@ -118,6 +122,8 @@ def build_handoff_package(
             f"Owner: {_display(owner_routing['owner'])}",
             f"Team: {_display(owner_routing['team'])}",
             f"Routing reason: {_display(owner_routing['reason'])}",
+            f"Action status: {_display(action_queue['label'])}",
+            f"Next action: {_display(action_queue['next_action'])}",
             f"Score: {score}",
             f"Priority: {priority}",
             f"Summary: {_summary(lead, latest_handoff)}",
@@ -137,6 +143,8 @@ def build_handoff_package(
         "owner": owner_routing["owner"],
         "team": owner_routing["team"],
         "routing_reason": owner_routing["reason"],
+        "action_status": action_queue["status"],
+        "next_action": action_queue["next_action"],
         "score": score,
         "priority": priority,
         "summary": _summary(lead, latest_handoff),
