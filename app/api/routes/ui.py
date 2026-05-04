@@ -726,6 +726,8 @@ def ui_page() -> str:
         status_new: 'новый',
         status_qualified: 'квалифицирован',
         status_ready_to_handoff: 'готов к передаче',
+        status_active_handoff: 'в работе',
+        status_completed_handoff: 'завершено',
         status_needs_followup: 'требует продолжения',
         status_needs_follow_up: 'требует продолжения',
         status_pending: 'готов к передаче',
@@ -852,6 +854,8 @@ def ui_page() -> str:
         status_new: 'new',
         status_qualified: 'qualified',
         status_ready_to_handoff: 'ready for handoff',
+        status_active_handoff: 'in work',
+        status_completed_handoff: 'completed',
         status_needs_followup: 'needs follow-up',
         status_needs_follow_up: 'needs follow-up',
         status_pending: 'ready for handoff',
@@ -978,6 +982,8 @@ def ui_page() -> str:
         status_new: 'nuevo',
         status_qualified: 'calificado',
         status_ready_to_handoff: 'listo para transferencia',
+        status_active_handoff: 'en trabajo',
+        status_completed_handoff: 'completado',
         status_needs_followup: 'requiere seguimiento',
         status_needs_follow_up: 'requiere seguimiento',
         status_pending: 'listo para transferencia',
@@ -1129,15 +1135,16 @@ def ui_page() -> str:
 
     function badgeClass(status) {
       const s = normalizeHandoffStatus(status);
-      if (['qualified', 'ready_to_handoff', 'done'].includes(s)) return 'badge-green';
+      if (['qualified', 'ready_to_handoff', 'completed_handoff'].includes(s)) return 'badge-green';
       if (['pending', 'needs_followup', 'needs_follow_up'].includes(s)) return 'badge-orange';
-      if (['in_progress'].includes(s)) return 'badge-graphite';
+      if (['active_handoff'].includes(s)) return 'badge-graphite';
       return 'badge-gray';
     }
 
     function normalizeHandoffStatus(status) {
       const value = String(status || '').toLowerCase();
-      if (value === 'completed') return 'done';
+      if (value === 'in_progress') return 'active_handoff';
+      if (value === 'done' || value === 'completed') return 'completed_handoff';
       if (value === 'needs_followup') return 'needs_follow_up';
       return value;
     }
@@ -1265,7 +1272,7 @@ def ui_page() -> str:
         ? missingFields.length > 0
         : Boolean(missingFields);
       const isReadyPackage = handoffPackage
-        && ['ready_to_handoff', 'in_progress', 'done'].includes(qualificationStatus)
+        && ['ready_to_handoff', 'active_handoff', 'completed_handoff'].includes(qualificationStatus)
         && !hasMissingFields;
       const isFollowupPackage = handoffPackage
         && (qualificationStatus === 'needs_follow_up' || hasMissingFields);
@@ -1377,21 +1384,27 @@ def ui_page() -> str:
         packageBox.className = 'list-item';
 
         const payloadRows = [
+          ['lead_id', payload.lead_id],
+          ['handoff_id', payload.handoff_id],
           [t('company'), payload.company],
           [t('contact'), payload.contact],
-          [t('useCase'), payload.use_case],
+          [t('role'), payload.role],
           [t('clientType'), payload.client_type],
           [t('campaignGoal'), payload.campaign_goal],
           [t('platform'), payload.platform],
-          [t('recommendedMechanic'), payload.recommended_mechanic],
-          [t('mechanicReason'), payload.mechanic_reason],
-          [t('pricingTier'), payload.pricing_tier],
+          [t('useCase'), payload.campaign_need || payload.use_case],
+          [t('recommendedMechanic'), payload.best_game || payload.recommended_mechanic],
+          [t('pricingTier'), payload.pricing_tier || payload.recommended_tier],
           [t('score'), payload.score],
           [t('priority'), payload.priority],
           [t('assignedTo'), payload.owner],
           [t('team'), payload.team],
-          [t('actionStatus'), mapActionStatus(payload.action_status || handoffPackage.action_status, handoffPackage.action_status)],
-          [t('actionNext'), payload.next_action || handoffPackage.next_action],
+          [t('actionNext'), payload.next_action],
+          [t('qualificationStatus'), mapStatus(payload.qualification_status)],
+          ['handoff_status', mapStatus(payload.handoff_status)],
+          ['source_message', payload.source_message],
+          ['created_at', payload.created_at],
+          ['updated_at', payload.updated_at],
         ];
 
         packageBox.innerHTML = `
@@ -1402,7 +1415,7 @@ def ui_page() -> str:
           <div class="list-sub"><strong>${t('crmPayloadPreview')}:</strong></div>
           ${payloadRows.map(([label, value]) => `<div class="list-sub">${label}: ${displayValue(value)}</div>`).join('')}
           <div class="list-actions">
-            ${handoff.id ? `<button class="btn btn-action" id="exportCrmBtn">${t('exportCrm')}</button>` : ''}
+            ${qualificationStatus === 'ready_to_handoff' && handoff.id ? `<button class="btn btn-action" id="exportCrmBtn">${t('exportCrm')}</button>` : ''}
             ${(handoffPackage.package_copy_text || handoffPackage.copy_text) ? `<button class="btn btn-gray" id="copyPackageBtn">${t('copyPackage')}</button>` : ''}
           </div>
         `;
@@ -1455,7 +1468,7 @@ def ui_page() -> str:
       if (effectiveHandoffStatus === 'pending') {
         actions.innerHTML = `<button class="btn btn-gray" id="setInProgressBtn">${t('moveToInProgress')}</button>`;
         wrap.appendChild(actions);
-      } else if (effectiveHandoffStatus === 'in_progress') {
+      } else if (effectiveHandoffStatus === 'active_handoff') {
         actions.innerHTML = `<button class="btn btn-green" id="setDoneBtn">${t('markDone')}</button>`;
         wrap.appendChild(actions);
       }
@@ -1521,14 +1534,14 @@ def ui_page() -> str:
   const inProgressFromList = Array.isArray(lastHandoffs)
     ? lastHandoffs.filter(item => {
         const status = getHandoffStatus(item);
-        return status === 'in_progress';
+        return status === 'active_handoff';
       }).length
     : 0;
 
   const doneFromList = Array.isArray(lastHandoffs)
     ? lastHandoffs.filter(item => {
         const status = getHandoffStatus(item);
-        return status === 'done';
+        return status === 'completed_handoff';
       }).length
     : 0;
 
@@ -1591,7 +1604,7 @@ def ui_page() -> str:
 	      if (lead.role || item.role) score += 10;
 	
 	      const status = lead.lead_status || lead.status || item.lead_status || item.status || '';
-	      if (['qualified', 'ready_to_handoff'].includes(status)) score += 15;
+	      if (['qualified', 'ready_to_handoff', 'active_handoff', 'completed_handoff'].includes(normalizeHandoffStatus(status))) score += 15;
 	
 	      return Math.min(score, 100);
 	    }

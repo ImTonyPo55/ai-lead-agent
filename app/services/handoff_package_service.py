@@ -17,29 +17,10 @@ def _display(value: Any) -> str:
     return _clean(value) or "-"
 
 
-def _score(lead: Any, latest_handoff: Any = None) -> int:
-    score = 0
-
-    if _clean(getattr(lead, "company", None)):
-        score += 25
-    if _clean(getattr(lead, "contact", None)):
-        score += 25
-    if _clean(getattr(lead, "use_case", None)):
-        score += 25
-    if _clean(getattr(lead, "role", None)):
-        score += 10
-    if latest_handoff is not None:
-        score += 15
-
-    return min(score, 100)
-
-
-def _priority(score: int) -> str:
-    if score >= 80:
-        return "High"
-    if score >= 40:
-        return "Medium"
-    return "Low"
+def _timestamp(value: Any) -> str | None:
+    if value is None:
+        return None
+    return str(value)
 
 
 def _summary(
@@ -87,6 +68,66 @@ def _qualification_reason(
     return "Qualified because company, contact and campaign goal are available."
 
 
+def build_crm_handoff_payload(
+    lead: Any,
+    latest_handoff: Any,
+    latest_message: Any,
+    campaign_intelligence: dict,
+    owner_routing: dict,
+    action_queue: dict,
+    qualification_status: str,
+    handoff_status: str | None,
+) -> dict | None:
+    if campaign_intelligence.get("missing_fields"):
+        return None
+    if qualification_status not in {
+        "ready_to_handoff",
+        "active_handoff",
+        "completed_handoff",
+    }:
+        return None
+
+    qualification_reason = _qualification_reason(
+        lead,
+        latest_handoff,
+        campaign_intelligence.get("missing_fields"),
+    )
+
+    return {
+        "lead_id": getattr(lead, "id", None),
+        "handoff_id": getattr(latest_handoff, "id", None),
+        "company": _clean(getattr(lead, "company", None)) or None,
+        "contact": _clean(getattr(lead, "contact", None)) or None,
+        "role": _clean(getattr(lead, "role", None)) or None,
+        "campaign_need": _clean(getattr(lead, "use_case", None)) or None,
+        "client_type": campaign_intelligence["client_type"],
+        "campaign_goal": campaign_intelligence["campaign_goal"],
+        "platform": campaign_intelligence["platform"],
+        "recommended_mechanic": campaign_intelligence["recommended_mechanic"],
+        "best_game": campaign_intelligence["recommended_mechanic"],
+        "recommended_tier": campaign_intelligence["pricing_tier"],
+        "pricing_tier": campaign_intelligence["pricing_tier"],
+        "score": campaign_intelligence["score"],
+        "priority": campaign_intelligence["priority"],
+        "owner": owner_routing["owner"],
+        "team": owner_routing["team"],
+        "next_action": campaign_intelligence["recommended_next_action"],
+        "qualification_reason": qualification_reason,
+        "qualification_status": qualification_status,
+        "handoff_status": handoff_status,
+        "source_message": _clean(getattr(latest_message, "text", None)) or None,
+        "created_at": _timestamp(
+            getattr(latest_handoff, "created_at", None)
+            or getattr(lead, "created_at", None)
+        ),
+        "updated_at": _timestamp(
+            getattr(lead, "updated_at", None)
+            or getattr(latest_handoff, "created_at", None)
+            or getattr(lead, "created_at", None)
+        ),
+    }
+
+
 def build_handoff_package(
     lead: Any,
     latest_handoff: Any = None,
@@ -108,8 +149,10 @@ def build_handoff_package(
     mechanic_reason = campaign_intelligence["mechanic_reason"]
     pricing_tier = campaign_intelligence["pricing_tier"]
     qualification_status = campaign_intelligence["qualification_status"]
-    if handoff_status in {"in_progress", "done"}:
-        qualification_status = handoff_status
+    if handoff_status in {"in_progress", "active_handoff"}:
+        qualification_status = "active_handoff"
+    elif handoff_status in {"done", "completed", "completed_handoff"}:
+        qualification_status = "completed_handoff"
     elif latest_handoff is not None:
         qualification_status = "ready_to_handoff"
     lead_status = qualification_status
@@ -121,31 +164,16 @@ def build_handoff_package(
     owner_routing = resolve_owner_routing(lead, latest_handoff, events)
     action_queue = get_action_status(lead, latest_handoff, events)
 
-    crm_payload = {
-        "company": company,
-        "contact": contact,
-        "role": role,
-        "use_case": use_case,
-        "client_type": client_type,
-        "campaign_goal": campaign_goal,
-        "platform": platform,
-        "recommended_mechanic": recommended_mechanic,
-        "best_game": recommended_mechanic,
-        "mechanic_reason": mechanic_reason,
-        "pricing_tier": pricing_tier,
-        "recommended_package": pricing_tier,
-        "qualification_status": qualification_status,
-        "missing_fields": missing_fields,
-        "priority": priority,
-        "score": score,
-        "source": "MechanicFlow AI",
-        "handoff_status": handoff_status,
-        "owner": owner_routing["owner"],
-        "team": owner_routing["team"],
-        "action_status": action_queue["status"],
-        "next_action": action_queue["next_action"],
-        "recommended_next_action": recommended_next_action,
-    }
+    crm_payload = build_crm_handoff_payload(
+        lead=lead,
+        latest_handoff=latest_handoff,
+        latest_message=latest_message,
+        campaign_intelligence=campaign_intelligence,
+        owner_routing=owner_routing,
+        action_queue=action_queue,
+        qualification_status=qualification_status,
+        handoff_status=handoff_status,
+    )
     package_copy_text = "\n".join(
         [
             "MechanicFlow AI campaign handoff package",

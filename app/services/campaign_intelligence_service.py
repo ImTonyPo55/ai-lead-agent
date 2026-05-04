@@ -445,8 +445,10 @@ def lead_status_from_campaign_intelligence(
     latest_handoff: Any = None,
 ) -> str:
     handoff_status = _clean(getattr(latest_handoff, "status", None))
-    if handoff_status in {"in_progress", "done"}:
-        return handoff_status
+    if handoff_status in {"in_progress", "active_handoff"}:
+        return "active_handoff"
+    if handoff_status in {"done", "completed", "completed_handoff"}:
+        return "completed_handoff"
     if latest_handoff is not None:
         return "ready_to_handoff"
     if can_create_campaign_handoff(intelligence):

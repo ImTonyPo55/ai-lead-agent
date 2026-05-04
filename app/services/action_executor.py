@@ -88,6 +88,14 @@ def update_lead_fields(lead: Any, extracted: Optional[Dict[str, Any]] = None) ->
 
 def apply_agent_status(lead: Any, decision: Any) -> bool:
     current_status = getattr(lead, "status", None)
+    if current_status in {
+        "active_handoff",
+        "completed_handoff",
+        "in_progress",
+        "done",
+    }:
+        return False
+
     next_action = getattr(decision, "next_action", "noop")
     should_create_handoff = bool(
         getattr(decision, "should_create_handoff", False))

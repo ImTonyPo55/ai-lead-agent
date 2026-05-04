@@ -13,7 +13,12 @@ from app.services.telegram_service import notify_action_updated
 router = APIRouter(prefix="/handoffs", tags=["handoffs"])
 
 HANDOFF_STATUSES = {"pending", "in_progress", "done"}
-HANDOFF_STATUS_ALIASES = {"completed": "done"}
+HANDOFF_STATUS_ALIASES = {
+    "active_handoff": "in_progress",
+    "completed": "done",
+    "completed_handoff": "done",
+    "ready_to_handoff": "pending",
+}
 ACTION_EVENT_TYPES = {"action_contacted", "action_waiting_reply", "action_closed"}
 
 
@@ -31,6 +36,16 @@ def _normalize_handoff_status(status: str | None) -> str | None:
     if status is None:
         return None
     return HANDOFF_STATUS_ALIASES.get(status, status)
+
+
+def _lead_status_for_handoff_status(status: str | None) -> str | None:
+    if status == "pending":
+        return "ready_to_handoff"
+    if status == "in_progress":
+        return "active_handoff"
+    if status == "done":
+        return "completed_handoff"
+    return None
 
 
 def _log_handoff_status_event(db: Session, handoff: Handoff, previous_status: str | None) -> None:
@@ -52,6 +67,7 @@ def _log_handoff_status_event(db: Session, handoff: Handoff, previous_status: st
             "handoff_id": handoff.id,
             "previous_status": previous_status,
             "status": handoff.status,
+            "lead_status": _lead_status_for_handoff_status(handoff.status),
         },
     )
 
@@ -85,8 +101,9 @@ def _update_latest_handoff_status(lead_id: int, status: str, db: Session) -> dic
     previous_status = handoff.status
     handoff.status = status
     lead = db.get(Lead, lead_id)
-    if lead is not None and status in {"in_progress", "done"}:
-        lead.status = status
+    lead_status = _lead_status_for_handoff_status(status)
+    if lead is not None and lead_status is not None:
+        lead.status = lead_status
         db.add(lead)
     db.add(handoff)
     db.commit()
@@ -108,7 +125,7 @@ def _latest_handoff(db: Session, lead_id: int) -> Handoff | None:
 def _latest_message(db: Session, lead_id: int) -> Message | None:
     return (
         db.query(Message)
-        .filter(Message.lead_id == lead_id)
+        .filter(Message.lead_id == lead_id, Message.sender == "user")
         .order_by(Message.id.desc())
         .first()
     )
@@ -281,10 +298,11 @@ def update_handoff(
 
     if payload.status is not None:
         handoff.status = _normalize_handoff_status(payload.status) or payload.status
-        if handoff.status in {"in_progress", "done"}:
+        lead_status = _lead_status_for_handoff_status(handoff.status)
+        if lead_status is not None:
             lead = db.get(Lead, handoff.lead_id)
             if lead is not None:
-                lead.status = handoff.status
+                lead.status = lead_status
                 db.add(lead)
 
     db.add(handoff)
@@ -393,6 +411,19 @@ def export_handoff_to_crm(lead_id: int, db: Session = Depends(get_db)) -> dict:
         latest_message=_latest_message(db, lead_id),
         events=_latest_routing_events(db, lead_id),
     )
+    if (
+        handoff_package["qualification_status"] != "ready_to_handoff"
+        or handoff_package["missing_fields"]
+        or not handoff_package["crm_payload"]
+    ):
+        return {
+            "status": "error",
+            "message": "Lead is not ready for CRM export",
+            "lead_id": lead.id,
+            "qualification_status": handoff_package["qualification_status"],
+            "missing_fields": handoff_package["missing_fields"],
+        }
+
     log_event(
         db,
         lead_id,

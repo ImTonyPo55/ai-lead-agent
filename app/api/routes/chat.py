@@ -63,7 +63,12 @@ def create_handoff_if_needed(db: Session, lead: Lead) -> tuple[int | None, bool]
     intelligence = build_campaign_intelligence(lead)
     if not intelligence.get("can_create_handoff"):
         next_status = intelligence.get("lead_status") or "needs_followup"
-        if lead.status not in {"in_progress", "done"} and lead.status != next_status:
+        if lead.status not in {
+            "active_handoff",
+            "completed_handoff",
+            "in_progress",
+            "done",
+        } and lead.status != next_status:
             lead.status = next_status
             db.add(lead)
             db.commit()
@@ -76,7 +81,13 @@ def create_handoff_if_needed(db: Session, lead: Lead) -> tuple[int | None, bool]
         .first()
     )
     if existing_handoff:
-        if lead.status not in {"ready_to_handoff", "in_progress", "done"}:
+        if lead.status not in {
+            "ready_to_handoff",
+            "active_handoff",
+            "completed_handoff",
+            "in_progress",
+            "done",
+        }:
             lead.status = "ready_to_handoff"
             db.add(lead)
             db.commit()

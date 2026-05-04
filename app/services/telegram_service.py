@@ -42,7 +42,10 @@ def notify_handoff_created(
         handoff_id = getattr(handoff, "id", None) if handoff is not None else None
         owner, team = _owner_team(owner_routing)
         handoff_package = build_handoff_package(lead, latest_handoff=handoff)
-        if handoff_package.get("missing_fields"):
+        if (
+            handoff_package.get("qualification_status") != "ready_to_handoff"
+            or handoff_package.get("missing_fields")
+        ):
             return False
         message = "\n".join(
             [
@@ -94,6 +97,8 @@ def notify_followup_needed(
             qualification = build_handoff_package(lead)
 
         package = build_handoff_package(lead)
+        if not (qualification.get("missing_fields") or package.get("missing_fields")):
+            return False
         owner, team = _owner_team(owner_routing or package)
         missing = qualification.get("missing_fields") or package.get("missing_fields") or []
         next_question = (

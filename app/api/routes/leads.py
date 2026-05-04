@@ -72,7 +72,12 @@ def create_handoff_if_needed(db: Session, lead: Lead) -> tuple[int | None, bool]
     intelligence = build_campaign_intelligence(lead)
     if not intelligence.get("can_create_handoff"):
         next_status = intelligence.get("lead_status") or "needs_followup"
-        if lead.status not in {"in_progress", "done"} and lead.status != next_status:
+        if lead.status not in {
+            "active_handoff",
+            "completed_handoff",
+            "in_progress",
+            "done",
+        } and lead.status != next_status:
             lead.status = next_status
             db.add(lead)
             db.commit()
@@ -85,7 +90,13 @@ def create_handoff_if_needed(db: Session, lead: Lead) -> tuple[int | None, bool]
         .first()
     )
     if existing_handoff:
-        if lead.status not in {"ready_to_handoff", "in_progress", "done"}:
+        if lead.status not in {
+            "ready_to_handoff",
+            "active_handoff",
+            "completed_handoff",
+            "in_progress",
+            "done",
+        }:
             lead.status = "ready_to_handoff"
             db.add(lead)
             db.commit()
@@ -222,6 +233,8 @@ def update_lead(
         "needs_follow_up",
         "qualified",
         "ready_to_handoff",
+        "active_handoff",
+        "completed_handoff",
         "in_progress",
         "done",
     }
@@ -229,7 +242,7 @@ def update_lead(
     if payload.status is not None and payload.status not in allowed_statuses:
         return {
             "status": "error",
-            "message": "Invalid status. Use: new, needs_followup, qualified, ready_to_handoff, in_progress, done",
+            "message": "Invalid status. Use: new, needs_followup, qualified, ready_to_handoff, active_handoff, completed_handoff",
         }
 
     previous_status = lead.status
@@ -342,6 +355,12 @@ def get_lead_summary(lead_id: int, db: Session = Depends(get_db)) -> dict:
         .order_by(Message.id.desc())
         .first()
     )
+    latest_user_message = (
+        db.query(Message)
+        .filter(Message.lead_id == lead_id, Message.sender == "user")
+        .order_by(Message.id.desc())
+        .first()
+    )
 
     latest_handoff = _latest_handoff(db, lead_id)
 
@@ -372,7 +391,7 @@ def get_lead_summary(lead_id: int, db: Session = Depends(get_db)) -> dict:
     handoff_package = build_handoff_package(
         lead,
         latest_handoff=latest_handoff,
-        latest_message=latest_message,
+        latest_message=latest_user_message,
         events=routing_events,
     )
     score = handoff_package["score"]

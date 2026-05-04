@@ -6,6 +6,7 @@ from typing import Any
 
 from app.services.campaign_intelligence_service import build_campaign_intelligence
 from app.services.extract_service import extract_company, extract_contact, extract_use_case
+from app.services.handoff_package_service import build_handoff_package
 from app.services.owner_routing_service import recommend_owner
 
 
@@ -33,6 +34,7 @@ CASES = [
             "can_create_handoff": True,
             "owner": "Tony",
             "team": "Sales",
+            "has_crm_payload": True,
         },
     ),
     Case(
@@ -51,6 +53,7 @@ CASES = [
             "can_create_handoff": False,
             "owner": "Unassigned",
             "team": "Intake",
+            "has_crm_payload": False,
         },
     ),
     Case(
@@ -69,6 +72,7 @@ CASES = [
             "can_create_handoff": True,
             "owner": "Tony",
             "team": "Sales / Delivery",
+            "has_crm_payload": True,
         },
     ),
     Case(
@@ -87,6 +91,7 @@ CASES = [
             "can_create_handoff": True,
             "owner": "Tony",
             "team": "Sales / Delivery",
+            "has_crm_payload": True,
         },
     ),
     Case(
@@ -105,6 +110,7 @@ CASES = [
             "can_create_handoff": True,
             "owner": "Tony",
             "team": "Sales / Delivery",
+            "has_crm_payload": True,
         },
     ),
 ]
@@ -128,6 +134,37 @@ def _actual(case: Case) -> dict[str, Any]:
         latest_message=SimpleNamespace(text=case.message),
     )
     owner = recommend_owner(lead)
+    fake_handoff = None
+    if intelligence["can_create_handoff"]:
+        fake_handoff = SimpleNamespace(
+            id=100,
+            status="pending",
+            assigned_to=None,
+            created_at="2026-01-01 00:00:00",
+        )
+    package = build_handoff_package(
+        lead,
+        latest_handoff=fake_handoff,
+        latest_message=SimpleNamespace(text=case.message),
+    )
+    crm_payload = package.get("crm_payload")
+    required_crm_fields = {
+        "company",
+        "contact",
+        "role",
+        "campaign_need",
+        "client_type",
+        "campaign_goal",
+        "platform",
+        "best_game",
+        "pricing_tier",
+        "priority",
+        "score",
+        "owner",
+        "team",
+        "next_action",
+        "qualification_reason",
+    }
     return {
         "company": lead.company or "",
         "contact": lead.contact or "",
@@ -141,13 +178,18 @@ def _actual(case: Case) -> dict[str, Any]:
         "can_create_handoff": intelligence["can_create_handoff"],
         "owner": owner["owner"],
         "team": owner["team"],
+        "has_crm_payload": bool(crm_payload),
+        "crm_payload_has_required_fields": (
+            not crm_payload
+            or required_crm_fields.issubset(set(crm_payload))
+        ),
     }
 
 
 def main() -> None:
     failures: list[str] = []
-    print("case | status | mechanic | tier | handoff | owner/team")
-    print("-" * 78)
+    print("case | status | mechanic | tier | handoff | crm_payload | owner/team")
+    print("-" * 92)
 
     for case in CASES:
         actual = _actual(case)
@@ -156,11 +198,14 @@ def main() -> None:
                 failures.append(
                     f"{case.name}: {key} expected {expected_value!r}, got {actual.get(key)!r}"
                 )
+        if not actual["crm_payload_has_required_fields"]:
+            failures.append(f"{case.name}: CRM payload is missing required fields")
 
         print(
             f"{case.name} | {actual['qualification_status']} | "
             f"{actual['recommended_mechanic']} | {actual['pricing_tier']} | "
-            f"{actual['can_create_handoff']} | {actual['owner']} / {actual['team']}"
+            f"{actual['can_create_handoff']} | {actual['has_crm_payload']} | "
+            f"{actual['owner']} / {actual['team']}"
         )
 
     if failures:
