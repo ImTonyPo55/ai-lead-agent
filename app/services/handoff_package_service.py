@@ -87,42 +87,25 @@ def build_crm_handoff_payload(
     }:
         return None
 
-    qualification_reason = _qualification_reason(
-        lead,
-        latest_handoff,
-        campaign_intelligence.get("missing_fields"),
-    )
-
     return {
-        "lead_id": getattr(lead, "id", None),
-        "handoff_id": getattr(latest_handoff, "id", None),
         "company": _clean(getattr(lead, "company", None)) or None,
         "contact": _clean(getattr(lead, "contact", None)) or None,
         "role": _clean(getattr(lead, "role", None)) or None,
-        "campaign_need": _clean(getattr(lead, "use_case", None)) or None,
         "client_type": campaign_intelligence["client_type"],
         "campaign_goal": campaign_intelligence["campaign_goal"],
         "platform": campaign_intelligence["platform"],
+        "campaign_need": _clean(getattr(lead, "use_case", None)) or None,
         "recommended_mechanic": campaign_intelligence["recommended_mechanic"],
-        "best_game": campaign_intelligence["recommended_mechanic"],
-        "recommended_tier": campaign_intelligence["pricing_tier"],
         "pricing_tier": campaign_intelligence["pricing_tier"],
+        "qualification_status": qualification_status,
         "score": campaign_intelligence["score"],
         "priority": campaign_intelligence["priority"],
         "owner": owner_routing["owner"],
         "team": owner_routing["team"],
         "next_action": campaign_intelligence["recommended_next_action"],
-        "qualification_reason": qualification_reason,
-        "qualification_status": qualification_status,
-        "handoff_status": handoff_status,
-        "source_message": _clean(getattr(latest_message, "text", None)) or None,
+        "handoff_id": getattr(latest_handoff, "id", None),
         "created_at": _timestamp(
             getattr(latest_handoff, "created_at", None)
-            or getattr(lead, "created_at", None)
-        ),
-        "updated_at": _timestamp(
-            getattr(lead, "updated_at", None)
-            or getattr(latest_handoff, "created_at", None)
             or getattr(lead, "created_at", None)
         ),
     }

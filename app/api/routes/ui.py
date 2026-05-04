@@ -1415,7 +1415,9 @@ def ui_page() -> str:
         <div class="list-sub">${t('team')}: ${displayValue(actionQueue.team || ownerRouting.team)}</div>
         ${actionButtons.length ? `<div class="list-actions">${actionButtons.join('')}</div>` : ''}
       `;
-      wrap.appendChild(actionBox);
+      if (handoff.id && !isFollowupPackage) {
+        wrap.appendChild(actionBox);
+      }
 
       if (isReadyPackage) {
         const payload = handoffPackage.crm_payload || {};
@@ -1423,8 +1425,6 @@ def ui_page() -> str:
         packageBox.className = 'list-item';
 
         const payloadRows = [
-          ['lead_id', payload.lead_id],
-          ['handoff_id', payload.handoff_id],
           [t('company'), payload.company],
           [t('contact'), payload.contact],
           [t('role'), payload.role],
@@ -1432,18 +1432,16 @@ def ui_page() -> str:
           [t('campaignGoal'), payload.campaign_goal],
           [t('platform'), payload.platform],
           [t('useCase'), payload.campaign_need || payload.use_case],
-          [t('recommendedMechanic'), payload.best_game || payload.recommended_mechanic],
-          [t('pricingTier'), payload.pricing_tier || payload.recommended_tier],
+          [t('recommendedMechanic'), payload.recommended_mechanic],
+          [t('pricingTier'), payload.pricing_tier],
+          [t('qualificationStatus'), mapStatus(payload.qualification_status)],
           [t('score'), payload.score],
           [t('priority'), payload.priority],
           [t('assignedTo'), payload.owner],
           [t('team'), payload.team],
           [t('actionNext'), payload.next_action],
-          [t('qualificationStatus'), mapStatus(payload.qualification_status)],
-          ['handoff_status', mapStatus(payload.handoff_status)],
-          ['source_message', payload.source_message],
+          ['handoff_id', payload.handoff_id],
           ['created_at', payload.created_at],
-          ['updated_at', payload.updated_at],
         ];
 
         packageBox.innerHTML = `
@@ -1506,10 +1504,18 @@ def ui_page() -> str:
 
       const actions = document.createElement('div');
       actions.className = 'summary-actions';
-      if (effectiveHandoffStatus === 'pending') {
+      if (
+        effectiveHandoffStatus === 'pending'
+        && qualificationStatus === 'ready_to_handoff'
+        && !hasMissingFields
+      ) {
         actions.innerHTML = `<button class="btn btn-gray" id="setInProgressBtn">${t('moveToInProgress')}</button>`;
         wrap.appendChild(actions);
-      } else if (effectiveHandoffStatus === 'active_handoff') {
+      } else if (
+        effectiveHandoffStatus === 'active_handoff'
+        && qualificationStatus === 'active_handoff'
+        && !hasMissingFields
+      ) {
         actions.innerHTML = `<button class="btn btn-green" id="setDoneBtn">${t('markDone')}</button>`;
         wrap.appendChild(actions);
       }

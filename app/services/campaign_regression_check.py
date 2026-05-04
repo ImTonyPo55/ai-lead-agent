@@ -148,22 +148,24 @@ def _actual(case: Case) -> dict[str, Any]:
         latest_message=SimpleNamespace(text=case.message),
     )
     crm_payload = package.get("crm_payload")
-    required_crm_fields = {
+    expected_crm_fields = {
         "company",
         "contact",
         "role",
-        "campaign_need",
         "client_type",
         "campaign_goal",
         "platform",
-        "best_game",
+        "campaign_need",
+        "recommended_mechanic",
         "pricing_tier",
-        "priority",
+        "qualification_status",
         "score",
+        "priority",
         "owner",
         "team",
         "next_action",
-        "qualification_reason",
+        "handoff_id",
+        "created_at",
     }
     return {
         "company": lead.company or "",
@@ -179,9 +181,9 @@ def _actual(case: Case) -> dict[str, Any]:
         "owner": owner["owner"],
         "team": owner["team"],
         "has_crm_payload": bool(crm_payload),
-        "crm_payload_has_required_fields": (
+        "crm_payload_has_expected_fields": (
             not crm_payload
-            or required_crm_fields.issubset(set(crm_payload))
+            or set(crm_payload) == expected_crm_fields
         ),
     }
 
@@ -198,8 +200,8 @@ def main() -> None:
                 failures.append(
                     f"{case.name}: {key} expected {expected_value!r}, got {actual.get(key)!r}"
                 )
-        if not actual["crm_payload_has_required_fields"]:
-            failures.append(f"{case.name}: CRM payload is missing required fields")
+        if not actual["crm_payload_has_expected_fields"]:
+            failures.append(f"{case.name}: CRM payload fields do not match the contract")
 
         print(
             f"{case.name} | {actual['qualification_status']} | "
@@ -207,6 +209,31 @@ def main() -> None:
             f"{actual['can_create_handoff']} | {actual['has_crm_payload']} | "
             f"{actual['owner']} / {actual['team']}"
         )
+
+    lifecycle_lead = _lead_from_message(CASES[0].message)
+    lifecycle_checks = {
+        "pending": "ready_to_handoff",
+        "in_progress": "active_handoff",
+        "done": "completed_handoff",
+    }
+    for handoff_status, expected_status in lifecycle_checks.items():
+        package = build_handoff_package(
+            lifecycle_lead,
+            latest_handoff=SimpleNamespace(
+                id=200,
+                status=handoff_status,
+                assigned_to="Tony",
+                created_at="2026-01-01 00:00:00",
+            ),
+            latest_message=SimpleNamespace(text=CASES[0].message),
+        )
+        actual_status = package["qualification_status"]
+        if actual_status != expected_status:
+            failures.append(
+                f"lifecycle {handoff_status}: expected {expected_status!r}, got {actual_status!r}"
+            )
+
+    print("lifecycle | pending->ready_to_handoff | in_progress->active_handoff | done->completed_handoff")
 
     if failures:
         print("\nFAIL")
