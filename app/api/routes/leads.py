@@ -6,6 +6,7 @@ from app.db.models import Lead, Message, Handoff, EventLog
 from app.db.session import get_db
 from app.services.event_service import format_event, log_event
 from app.services.handoff_package_service import build_handoff_package
+from app.services.owner_routing_service import recommend_owner, resolve_owner_routing
 
 router = APIRouter(prefix="/leads", tags=["leads"])
 
@@ -34,6 +35,15 @@ def _latest_handoff(db: Session, lead_id: int) -> Handoff | None:
     )
 
 
+def _latest_owner_event(db: Session, lead_id: int) -> EventLog | None:
+    return (
+        db.query(EventLog)
+        .filter(EventLog.lead_id == lead_id, EventLog.event_type == "owner_assigned")
+        .order_by(EventLog.id.desc())
+        .first()
+    )
+
+
 def create_handoff_if_needed(db: Session, lead: Lead) -> tuple[int | None, bool]:
     if lead.status != "qualified":
         return None, False
@@ -46,10 +56,13 @@ def create_handoff_if_needed(db: Session, lead: Lead) -> tuple[int | None, bool]
     if existing_handoff:
         return existing_handoff.id, False
 
+    owner_routing = recommend_owner(lead)
     handoff = Handoff(
         lead_id=lead.id,
         reason="auto_created_from_lead_patch",
     )
+    if hasattr(handoff, "assigned_to") and owner_routing["owner"] != "Unassigned":
+        handoff.assigned_to = owner_routing["owner"]
     db.add(handoff)
     db.commit()
     db.refresh(handoff)
@@ -58,6 +71,17 @@ def create_handoff_if_needed(db: Session, lead: Lead) -> tuple[int | None, bool]
         lead.id,
         "handoff_created",
         {"handoff_id": handoff.id, "reason": handoff.reason},
+    )
+    log_event(
+        db,
+        lead.id,
+        "owner_assigned",
+        {
+            "owner": owner_routing["owner"],
+            "team": owner_routing["team"],
+            "reason": owner_routing["reason"],
+            "handoff_id": handoff.id,
+        },
     )
 
     return handoff.id, True
@@ -287,6 +311,12 @@ def get_lead_summary(lead_id: int, db: Session = Depends(get_db)) -> dict:
     except Exception:
         db.rollback()
         events = []
+    latest_owner_event = _latest_owner_event(db, lead_id)
+    owner_events = [latest_owner_event] if latest_owner_event is not None else []
+    routing_events = owner_events + [
+        event for event in events if event.event_type != "owner_assigned"
+    ]
+    owner_routing = resolve_owner_routing(lead, latest_handoff, routing_events)
 
     return {
         "status": "ok",
@@ -314,11 +344,12 @@ def get_lead_summary(lead_id: int, db: Session = Depends(get_db)) -> dict:
             "last_text": latest_message.text if latest_message else None,
             "last_intent": latest_message.detected_intent if latest_message else None,
         },
+        "owner_routing": owner_routing,
         "handoff_package": build_handoff_package(
             lead,
             latest_handoff=latest_handoff,
             latest_message=latest_message,
-            events=events,
+            events=routing_events,
         ),
         "events": [format_event(event) for event in events],
     }

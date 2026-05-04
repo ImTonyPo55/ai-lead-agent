@@ -13,6 +13,7 @@ from app.services.extract_service import (
 from app.services.intent_service import detect_intent
 from app.services.knowledge_service import answer_from_knowledge_base
 from app.services.event_service import log_event
+from app.services.owner_routing_service import recommend_owner
 from app.services.telegram_service import notify_handoff_created
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -69,10 +70,13 @@ def create_handoff_if_needed(db: Session, lead: Lead) -> tuple[int | None, bool]
     if existing_handoff:
         return existing_handoff.id, False
 
+    owner_routing = recommend_owner(lead)
     handoff = Handoff(
         lead_id=lead.id,
         reason="auto_created_from_chat",
     )
+    if hasattr(handoff, "assigned_to") and owner_routing["owner"] != "Unassigned":
+        handoff.assigned_to = owner_routing["owner"]
     db.add(handoff)
     db.commit()
     db.refresh(handoff)
@@ -82,7 +86,18 @@ def create_handoff_if_needed(db: Session, lead: Lead) -> tuple[int | None, bool]
         "handoff_created",
         {"handoff_id": handoff.id, "reason": handoff.reason},
     )
-    telegram_sent = notify_handoff_created(lead, handoff)
+    log_event(
+        db,
+        lead.id,
+        "owner_assigned",
+        {
+            "owner": owner_routing["owner"],
+            "team": owner_routing["team"],
+            "reason": owner_routing["reason"],
+            "handoff_id": handoff.id,
+        },
+    )
+    telegram_sent = notify_handoff_created(lead, handoff, owner_routing=owner_routing)
     log_event(
         db,
         lead.id,

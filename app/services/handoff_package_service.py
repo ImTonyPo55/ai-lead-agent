@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.services.owner_routing_service import resolve_owner_routing
+
 
 def _clean(value: Any) -> str:
     if value is None:
@@ -84,6 +86,7 @@ def build_handoff_package(
     use_case = _clean(getattr(lead, "use_case", None)) or None
     lead_status = _clean(getattr(lead, "status", None)) or None
     handoff_status = _clean(getattr(latest_handoff, "status", None)) or None
+    owner_routing = resolve_owner_routing(lead, latest_handoff, events)
 
     recommended_next_action = (
         "Send to CRM and assign owner"
@@ -99,6 +102,8 @@ def build_handoff_package(
         "score": score,
         "source": "AI Lead Agent",
         "handoff_status": handoff_status,
+        "owner": owner_routing["owner"],
+        "team": owner_routing["team"],
     }
     copy_text = "\n".join(
         [
@@ -110,6 +115,9 @@ def build_handoff_package(
             f"Use case: {_display(use_case)}",
             f"Lead status: {_display(lead_status)}",
             f"Handoff status: {_display(handoff_status)}",
+            f"Owner: {_display(owner_routing['owner'])}",
+            f"Team: {_display(owner_routing['team'])}",
+            f"Routing reason: {_display(owner_routing['reason'])}",
             f"Score: {score}",
             f"Priority: {priority}",
             f"Summary: {_summary(lead, latest_handoff)}",
@@ -126,6 +134,9 @@ def build_handoff_package(
         "use_case": use_case,
         "lead_status": lead_status,
         "handoff_status": handoff_status,
+        "owner": owner_routing["owner"],
+        "team": owner_routing["team"],
+        "routing_reason": owner_routing["reason"],
         "score": score,
         "priority": priority,
         "summary": _summary(lead, latest_handoff),

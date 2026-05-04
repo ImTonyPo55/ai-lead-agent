@@ -15,7 +15,22 @@ def _field(value: Any) -> str:
     return str(value).strip()
 
 
-def notify_handoff_created(lead: Any, handoff: Any = None) -> bool:
+def _owner_team(owner_routing: Any = None) -> tuple[str, str]:
+    if isinstance(owner_routing, dict):
+        owner = _field(owner_routing.get("owner"))
+        team = _field(owner_routing.get("team"))
+        return owner or "Unassigned", team or "Intake"
+
+    owner = _field(getattr(owner_routing, "owner", None))
+    team = _field(getattr(owner_routing, "team", None))
+    return owner or "Unassigned", team or "Intake"
+
+
+def notify_handoff_created(
+    lead: Any,
+    handoff: Any = None,
+    owner_routing: Any = None,
+) -> bool:
     try:
         token = os.getenv("TELEGRAM_BOT_TOKEN")
         chat_id = os.getenv("TELEGRAM_CHAT_ID")
@@ -23,6 +38,7 @@ def notify_handoff_created(lead: Any, handoff: Any = None) -> bool:
             return False
 
         handoff_id = getattr(handoff, "id", None) if handoff is not None else None
+        owner, team = _owner_team(owner_routing)
         message = "\n".join(
             [
                 "🔥 New qualified lead",
@@ -32,6 +48,8 @@ def notify_handoff_created(lead: Any, handoff: Any = None) -> bool:
                 f"Contact: {_field(getattr(lead, 'contact', None))}",
                 f"Use case: {_field(getattr(lead, 'use_case', None))}",
                 f"Status: {_field(getattr(lead, 'status', None))}",
+                f"Owner: {owner}",
+                f"Team: {team}",
                 f"Handoff: {_field(handoff_id)}",
             ]
         )

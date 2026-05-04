@@ -16,6 +16,7 @@ EVENT_LABELS = {
     "handoff_moved_to_in_progress": "Передача взята в работу",
     "handoff_completed": "Передача завершена",
     "crm_export_simulated": "CRM-экспорт подготовлен",
+    "owner_assigned": "Ответственный назначен",
 }
 
 STATUS_LABELS = {
@@ -39,6 +40,8 @@ PUBLIC_PAYLOAD_KEYS = {
     "reason",
     "success",
     "target",
+    "owner",
+    "team",
 }
 
 
@@ -138,6 +141,12 @@ def format_event_details(event_type: str, payload: dict[str, Any] | None = None)
         if status:
             parts.append(status)
         return " · ".join(parts)
+
+    if event_type == "owner_assigned":
+        owner = _short(payload.get("owner"))
+        team = _short(payload.get("team"))
+        reason = _short(payload.get("reason"))
+        return " · ".join(part for part in (owner, team, reason) if part)
 
     return ""
 

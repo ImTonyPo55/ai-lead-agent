@@ -2,10 +2,11 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from app.db.models import Handoff, Lead, Message
+from app.db.models import EventLog, Handoff, Lead, Message
 from app.db.session import get_db
 from app.services.event_service import log_event
 from app.services.handoff_package_service import build_handoff_package
+from app.services.owner_routing_service import resolve_owner_routing
 
 router = APIRouter(prefix="/handoffs", tags=["handoffs"])
 
@@ -16,6 +17,11 @@ HANDOFF_STATUS_ALIASES = {"completed": "done"}
 class UpdateHandoffRequest(BaseModel):
     assigned_to: str | None = None
     status: str | None = None
+
+
+class AssignOwnerRequest(BaseModel):
+    owner: str
+    team: str | None = None
 
 
 def _normalize_handoff_status(status: str | None) -> str | None:
@@ -101,22 +107,52 @@ def _latest_message(db: Session, lead_id: int) -> Message | None:
     )
 
 
+def _latest_owner_event(db: Session, lead_id: int) -> EventLog | None:
+    return (
+        db.query(EventLog)
+        .filter(EventLog.lead_id == lead_id, EventLog.event_type == "owner_assigned")
+        .order_by(EventLog.id.desc())
+        .first()
+    )
+
+
+def _clean(value: str | None) -> str:
+    if value is None:
+        return ""
+    return " ".join(str(value).strip().split())
+
+
 @router.get("")
 def list_handoffs(db: Session = Depends(get_db)) -> list[dict]:
     handoffs = db.query(Handoff).order_by(Handoff.id.desc()).all()
 
-    return [
-        {
-            "id": handoff.id,
-            "lead_id": handoff.lead_id,
-            "reason": handoff.reason,
-            "assigned_to": handoff.assigned_to,
-            "status": handoff.status,
-            "handoff_status": handoff.status,
-            "created_at": str(handoff.created_at),
-        }
-        for handoff in handoffs
-    ]
+    items = []
+    for handoff in handoffs:
+        lead = db.get(Lead, handoff.lead_id)
+        owner_event = _latest_owner_event(db, handoff.lead_id)
+        owner_routing = resolve_owner_routing(
+            lead,
+            handoff,
+            [owner_event] if owner_event is not None else [],
+        )
+        assigned_to = owner_routing["owner"]
+        if assigned_to == "Unassigned":
+            assigned_to = None
+
+        items.append(
+            {
+                "id": handoff.id,
+                "lead_id": handoff.lead_id,
+                "reason": handoff.reason,
+                "assigned_to": assigned_to,
+                "owner_routing": owner_routing,
+                "status": handoff.status,
+                "handoff_status": handoff.status,
+                "created_at": str(handoff.created_at),
+            }
+        )
+
+    return items
 
 
 @router.get("/{handoff_id}")
@@ -189,6 +225,49 @@ def set_handoff_done(lead_id: int, db: Session = Depends(get_db)) -> dict:
     return _update_latest_handoff_status(lead_id, "done", db)
 
 
+@router.post("/{lead_id}/assign")
+def assign_handoff_owner(
+    lead_id: int,
+    payload: AssignOwnerRequest,
+    db: Session = Depends(get_db),
+) -> dict:
+    handoff = _latest_handoff(db, lead_id)
+    if handoff is None:
+        return {
+            "status": "error",
+            "message": f"Handoff for lead {lead_id} not found",
+        }
+
+    owner = _clean(payload.owner) or "Unassigned"
+    team = _clean(payload.team) or "Intake"
+
+    if hasattr(handoff, "assigned_to"):
+        handoff.assigned_to = None if owner == "Unassigned" else owner
+        db.add(handoff)
+        db.commit()
+        db.refresh(handoff)
+
+    log_event(
+        db,
+        lead_id,
+        "owner_assigned",
+        {
+            "owner": owner,
+            "team": team,
+            "reason": "Manual owner assignment",
+            "handoff_id": handoff.id,
+        },
+    )
+
+    return {
+        "status": "ok",
+        "lead_id": lead_id,
+        "owner": owner,
+        "team": team,
+        "handoff_id": handoff.id,
+    }
+
+
 @router.post("/{lead_id}/export-crm")
 def export_handoff_to_crm(lead_id: int, db: Session = Depends(get_db)) -> dict:
     lead = db.get(Lead, lead_id)
@@ -209,6 +288,7 @@ def export_handoff_to_crm(lead_id: int, db: Session = Depends(get_db)) -> dict:
         lead,
         latest_handoff=latest_handoff,
         latest_message=_latest_message(db, lead_id),
+        events=[_latest_owner_event(db, lead_id)],
     )
     log_event(
         db,

@@ -624,6 +624,12 @@ def ui_page() -> str:
         crmPayloadPreview: 'CRM payload preview',
         exportCrm: 'Экспорт в CRM',
         copyPackage: 'Скопировать пакет',
+        ownerSection: 'Ответственный',
+        team: 'Команда',
+        routingReason: 'Причина назначения',
+        assignTony: 'Назначить Tony',
+        assignSales: 'Назначить Sales',
+        assignSupport: 'Назначить Support',
         assignedTo: 'Назначен',
         lastSender: 'Последний отправитель',
         lastIntent: 'Последнее намерение',
@@ -650,6 +656,7 @@ def ui_page() -> str:
         toastHandoffUpdated: 'Статус передачи обновлён.',
         toastCrmExported: 'CRM export simulated',
         toastPackageCopied: 'Пакет скопирован.',
+        toastOwnerAssigned: 'Ответственный назначен.',
         toastError: 'Что-то пошло не так.',
         polishedAssistantReply: 'Спасибо. Ключевые данные извлечены, лид квалифицирован и готов к передаче в работу.',
       },
@@ -703,6 +710,12 @@ def ui_page() -> str:
         crmPayloadPreview: 'CRM payload preview',
         exportCrm: 'Export to CRM',
         copyPackage: 'Copy package',
+        ownerSection: 'Owner',
+        team: 'Team',
+        routingReason: 'Assignment reason',
+        assignTony: 'Assign Tony',
+        assignSales: 'Assign Sales',
+        assignSupport: 'Assign Support',
         assignedTo: 'Assigned to',
         lastSender: 'Last sender',
         lastIntent: 'Last intent',
@@ -729,6 +742,7 @@ def ui_page() -> str:
         toastHandoffUpdated: 'Handoff updated.',
         toastCrmExported: 'CRM export simulated',
         toastPackageCopied: 'Package copied.',
+        toastOwnerAssigned: 'Owner assigned.',
         toastError: 'Something went wrong.',
         polishedAssistantReply: 'Thanks. Key data was extracted, the lead is qualified and ready for handoff.',
       },
@@ -782,6 +796,12 @@ def ui_page() -> str:
         crmPayloadPreview: 'Vista previa de CRM payload',
         exportCrm: 'Exportar a CRM',
         copyPackage: 'Copiar paquete',
+        ownerSection: 'Responsable',
+        team: 'Equipo',
+        routingReason: 'Razón de asignación',
+        assignTony: 'Asignar Tony',
+        assignSales: 'Asignar Sales',
+        assignSupport: 'Asignar Support',
         assignedTo: 'Asignado a',
         lastSender: 'Último remitente',
         lastIntent: 'Última intención',
@@ -808,6 +828,7 @@ def ui_page() -> str:
         toastHandoffUpdated: 'Transferencia actualizada.',
         toastCrmExported: 'CRM export simulated',
         toastPackageCopied: 'Paquete copiado.',
+        toastOwnerAssigned: 'Responsable asignado.',
         toastError: 'Algo salió mal.',
         polishedAssistantReply: 'Gracias. Los datos clave fueron extraídos, el lead quedó calificado y listo para transferencia.',
       }
@@ -1016,6 +1037,7 @@ def ui_page() -> str:
       const handoff = data.handoff || {};
       const convo = data.conversation || {};
       const handoffPackage = data.handoff_package || null;
+      const ownerRouting = data.owner_routing || handoffPackage || {};
 
       const effectiveHandoffStatus = getHandoffStatus({ handoff });
 
@@ -1038,7 +1060,7 @@ def ui_page() -> str:
         [t('role'), lead.role || t('empty')],
         [t('contact'), lead.contact || t('empty')],
         [t('useCase'), lead.use_case || t('empty')],
-        [t('assignedTo'), handoff.assigned_to || t('notAssigned')],
+        [t('assignedTo'), ownerRouting.owner && ownerRouting.owner !== 'Unassigned' ? ownerRouting.owner : t('notAssigned')],
         [t('lastSender'), convo.last_sender || t('empty')],
         [t('lastIntent'), convo.last_intent || t('empty')],
         [t('lastText'), convo.last_text || t('empty')],
@@ -1051,6 +1073,23 @@ def ui_page() -> str:
         wrap.appendChild(row);
       });
 
+      const ownerBox = document.createElement('div');
+      ownerBox.className = 'list-item';
+      ownerBox.innerHTML = `
+        <div class="list-title">${t('ownerSection')}</div>
+        <div class="list-sub">${t('assignedTo')}: ${displayValue(ownerRouting.owner)}</div>
+        <div class="list-sub">${t('team')}: ${displayValue(ownerRouting.team)}</div>
+        <div class="list-sub">${t('routingReason')}: ${displayValue(ownerRouting.reason || ownerRouting.routing_reason)}</div>
+        ${handoff.id ? `
+          <div class="list-actions">
+            <button class="btn btn-gray assign-owner-btn" data-owner="Tony" data-team="Sales">${t('assignTony')}</button>
+            <button class="btn btn-gray assign-owner-btn" data-owner="Sales Manager" data-team="Sales">${t('assignSales')}</button>
+            <button class="btn btn-gray assign-owner-btn" data-owner="Support Lead" data-team="Customer Success">${t('assignSupport')}</button>
+          </div>
+        ` : ''}
+      `;
+      wrap.appendChild(ownerBox);
+
       if (handoffPackage) {
         const payload = handoffPackage.crm_payload || {};
         const packageBox = document.createElement('div');
@@ -1062,6 +1101,8 @@ def ui_page() -> str:
           [t('useCase'), payload.use_case],
           [t('score'), payload.score],
           [t('priority'), payload.priority],
+          [t('assignedTo'), payload.owner],
+          [t('team'), payload.team],
         ];
 
         packageBox.innerHTML = `
@@ -1121,6 +1162,13 @@ def ui_page() -> str:
       box.appendChild(wrap);
 
       const leadId = lead.id;
+      document.querySelectorAll('.assign-owner-btn').forEach(btn => {
+        btn.onclick = async () => {
+          if (!leadId) return;
+          await assignOwner(leadId, btn.dataset.owner, btn.dataset.team);
+        };
+      });
+
       const exportCrmBtn = $('exportCrmBtn');
       if (exportCrmBtn) exportCrmBtn.onclick = async () => {
         if (!leadId) return;
@@ -1356,6 +1404,20 @@ def ui_page() -> str:
       try {
         await fetchJSON(`/handoffs/${leadId}/export-crm`, { method: 'POST' });
         showToast(t('toastCrmExported'));
+        await refreshAll(false);
+        await loadSummary(String(leadId), false);
+      } catch (e) {
+        showToast(String(e.message || t('toastError')), 'error');
+      }
+    }
+
+    async function assignOwner(leadId, owner, team) {
+      try {
+        await fetchJSON(`/handoffs/${leadId}/assign`, {
+          method: 'POST',
+          body: JSON.stringify({ owner, team })
+        });
+        showToast(t('toastOwnerAssigned'));
         await refreshAll(false);
         await loadSummary(String(leadId), false);
       } catch (e) {
