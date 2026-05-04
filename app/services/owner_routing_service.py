@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.services.campaign_intelligence_service import build_campaign_intelligence
+
 
 def _clean(value: Any) -> str:
     if value is None:
@@ -17,19 +19,8 @@ def _score(lead: Any, latest_handoff: Any = None) -> int:
     except (TypeError, ValueError):
         pass
 
-    score = 0
-    if _clean(getattr(lead, "company", None)):
-        score += 25
-    if _clean(getattr(lead, "contact", None)):
-        score += 25
-    if _clean(getattr(lead, "use_case", None)):
-        score += 25
-    if _clean(getattr(lead, "role", None)):
-        score += 10
-    if latest_handoff is not None:
-        score += 15
-
-    return min(score, 100)
+    intelligence = build_campaign_intelligence(lead)
+    return int(intelligence.get("score") or 0)
 
 
 def _team_for_owner(owner: str) -> str:
@@ -67,29 +58,52 @@ def recommend_owner(lead: Any, latest_handoff: Any = None) -> dict:
             "reason": "Existing handoff owner",
         }
 
-    score = _score(lead, latest_handoff)
-    priority = _clean(getattr(lead, "priority", None))
+    intelligence = build_campaign_intelligence(lead)
+    missing_fields = intelligence.get("missing_fields") or []
+    pricing_tier = _clean(intelligence.get("pricing_tier"))
     use_case = _clean(getattr(lead, "use_case", None)).casefold()
+    text = " ".join(
+        part
+        for part in (
+            use_case,
+            _clean(getattr(lead, "notes", None)).casefold(),
+        )
+        if part
+    )
 
-    if score >= 90 or priority == "High" or (not priority and score >= 80):
+    if missing_fields:
+        return {
+            "owner": "Unassigned",
+            "team": "Intake",
+            "reason": "Missing key qualification fields",
+        }
+
+    if any(signal in text for signal in ("crm", "cdp", "api", "integration", "gdpr", "analytics")):
+        return {
+            "owner": "Tony",
+            "team": "Tech / Support",
+            "reason": "Technical integration mentioned",
+        }
+
+    if pricing_tier == "DIY Tier":
         return {
             "owner": "Tony",
             "team": "Sales",
-            "reason": "High-priority qualified lead",
+            "reason": "DIY campaign package",
         }
 
-    if "crm" in use_case or "routing" in use_case:
+    if pricing_tier == "Done-With-You Tier":
         return {
             "owner": "Tony",
-            "team": "Sales",
-            "reason": "CRM automation request",
+            "team": "Sales / Delivery",
+            "reason": "Done-With-You campaign package",
         }
 
-    if "support" in use_case or "customer" in use_case:
+    if pricing_tier == "Enterprise Tier":
         return {
-            "owner": "Support Lead",
-            "team": "Customer Success",
-            "reason": "Customer support automation request",
+            "owner": "Tony",
+            "team": "Enterprise",
+            "reason": "Enterprise campaign package",
         }
 
     return {

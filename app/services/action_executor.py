@@ -15,12 +15,41 @@ def _compact_key(value: str) -> str:
     return "".join(char for char in value.casefold() if char.isalnum())
 
 
+def _is_campaign_use_case(value: str) -> bool:
+    lowered = value.casefold()
+    return any(
+        signal in lowered
+        for signal in (
+            "campaign",
+            "spin-to-win",
+            "advent",
+            "shopify",
+            "lead capture",
+            "retention",
+            "loyalty",
+            "quiz",
+            "promo game",
+        )
+    )
+
+
+def _is_generic_lead_use_case(value: str) -> bool:
+    return value.casefold() in {
+        "lead intake and qualification",
+        "inbound lead qualification",
+        "inbound lead qualification and crm routing",
+    }
+
+
 def _should_update_use_case(lead: Any, use_case: str, company: str) -> bool:
     if not use_case:
         return False
 
     existing_use_case = _clean(getattr(lead, "use_case", None))
-    if existing_use_case:
+    if existing_use_case and not (
+        _is_generic_lead_use_case(existing_use_case)
+        and _is_campaign_use_case(use_case)
+    ):
         return False
 
     if company and _compact_key(use_case) == _compact_key(company):
@@ -69,7 +98,7 @@ def apply_agent_status(lead: Any, decision: Any) -> bool:
     if should_ask_followup or next_action == "ask_followup":
         new_status = "needs_followup"
     elif should_create_handoff or next_action in {"qualify_lead", "create_handoff"}:
-        new_status = "qualified"
+        new_status = "ready_to_handoff"
 
     if new_status and new_status != current_status:
         lead.status = new_status

@@ -51,8 +51,8 @@ def get_action_status(
     status = _latest_action_status(events)
     lead_status = _clean(getattr(lead, "status", None))
     reason = (
-        "Qualified lead with handoff package"
-        if lead_status == "qualified" and latest_handoff is not None
+        "Qualified campaign lead with handoff package"
+        if lead_status in {"qualified", "ready_to_handoff", "in_progress", "done"} and latest_handoff is not None
         else "Needs review"
     )
     owner_routing = resolve_owner_routing(lead, latest_handoff, events)

@@ -667,7 +667,7 @@ def ui_page() -> str:
         empty: '(пусто)',
         noSummary: 'Пока пусто.',
         noLeads: 'Нет лидов.',
-        noHandoffs: 'Нет передач.',
+        noHandoffs: 'Пока нет передач.',
         company: 'Компания',
         role: 'Роль',
         contact: 'Контакт',
@@ -680,6 +680,9 @@ def ui_page() -> str:
         mechanicName: 'Игровая механика',
         mechanicReason: 'Почему подходит',
         pricingTier: 'Тариф',
+        qualificationStatus: 'Статус квалификации',
+        missingFields: 'Недостающие поля',
+        recommendedPackage: 'Рекомендованный пакет',
         suggestedTier: 'Рекомендуемый тариф',
         copyReadyFollowup: 'Copy-ready follow-up',
         copyFollowup: 'Copy follow-up',
@@ -689,6 +692,7 @@ def ui_page() -> str:
         noEvents: 'Событий пока нет.',
         crmEvent: 'Событие CRM',
         handoffPackage: 'Campaign handoff package',
+        followupPackage: 'Follow-up package',
         packageSummary: 'Резюме',
         qualificationReason: 'Причина квалификации',
         recommendedNextAction: 'Следующее действие',
@@ -721,7 +725,9 @@ def ui_page() -> str:
         notAssigned: 'Не назначен',
         status_new: 'новый',
         status_qualified: 'квалифицирован',
+        status_ready_to_handoff: 'готов к передаче',
         status_needs_followup: 'требует продолжения',
+        status_needs_follow_up: 'требует продолжения',
         status_pending: 'готов к передаче',
         status_in_progress: 'в работе',
         status_done: 'завершено',
@@ -787,7 +793,7 @@ def ui_page() -> str:
         empty: '(empty)',
         noSummary: 'Empty.',
         noLeads: 'No leads.',
-        noHandoffs: 'No handoffs.',
+        noHandoffs: 'No handoffs yet.',
         company: 'Company',
         role: 'Role',
         contact: 'Contact',
@@ -800,6 +806,9 @@ def ui_page() -> str:
         mechanicName: 'Recommended game mechanic',
         mechanicReason: 'Why it fits',
         pricingTier: 'Pricing tier',
+        qualificationStatus: 'Qualification status',
+        missingFields: 'Missing fields',
+        recommendedPackage: 'Recommended package',
         suggestedTier: 'Suggested tier',
         copyReadyFollowup: 'Copy-ready follow-up',
         copyFollowup: 'Copy follow-up',
@@ -809,6 +818,7 @@ def ui_page() -> str:
         noEvents: 'No events yet.',
         crmEvent: 'CRM event',
         handoffPackage: 'Campaign handoff package',
+        followupPackage: 'Follow-up package',
         packageSummary: 'Summary',
         qualificationReason: 'Qualification reason',
         recommendedNextAction: 'Recommended next action',
@@ -841,7 +851,9 @@ def ui_page() -> str:
         notAssigned: 'Unassigned',
         status_new: 'new',
         status_qualified: 'qualified',
+        status_ready_to_handoff: 'ready for handoff',
         status_needs_followup: 'needs follow-up',
+        status_needs_follow_up: 'needs follow-up',
         status_pending: 'ready for handoff',
         status_in_progress: 'in progress',
         status_done: 'done',
@@ -907,7 +919,7 @@ def ui_page() -> str:
         empty: '(vacío)',
         noSummary: 'Vacío.',
         noLeads: 'No hay leads.',
-        noHandoffs: 'No hay transferencias.',
+        noHandoffs: 'Aún no hay transferencias.',
         company: 'Empresa',
         role: 'Rol',
         contact: 'Contacto',
@@ -920,6 +932,9 @@ def ui_page() -> str:
         mechanicName: 'Mecánica de juego recomendada',
         mechanicReason: 'Por qué encaja',
         pricingTier: 'Plan',
+        qualificationStatus: 'Estado de calificación',
+        missingFields: 'Campos faltantes',
+        recommendedPackage: 'Paquete recomendado',
         suggestedTier: 'Plan sugerido',
         copyReadyFollowup: 'Copy-ready follow-up',
         copyFollowup: 'Copy follow-up',
@@ -929,6 +944,7 @@ def ui_page() -> str:
         noEvents: 'Aún no hay eventos.',
         crmEvent: 'Evento CRM',
         handoffPackage: 'Campaign handoff package',
+        followupPackage: 'Follow-up package',
         packageSummary: 'Resumen',
         qualificationReason: 'Razón de calificación',
         recommendedNextAction: 'Siguiente acción',
@@ -961,7 +977,9 @@ def ui_page() -> str:
         notAssigned: 'Sin asignar',
         status_new: 'nuevo',
         status_qualified: 'calificado',
+        status_ready_to_handoff: 'listo para transferencia',
         status_needs_followup: 'requiere seguimiento',
+        status_needs_follow_up: 'requiere seguimiento',
         status_pending: 'listo para transferencia',
         status_in_progress: 'en progreso',
         status_done: 'completado',
@@ -1013,6 +1031,12 @@ def ui_page() -> str:
 
     function displayValue(value) {
       if (value === null || value === undefined || value === '') return '—';
+      return String(value);
+    }
+
+    function displayList(value) {
+      if (!value) return '—';
+      if (Array.isArray(value)) return value.length ? value.join(', ') : '—';
       return String(value);
     }
 
@@ -1105,8 +1129,8 @@ def ui_page() -> str:
 
     function badgeClass(status) {
       const s = normalizeHandoffStatus(status);
-      if (['qualified', 'done'].includes(s)) return 'badge-green';
-      if (['pending', 'needs_followup'].includes(s)) return 'badge-orange';
+      if (['qualified', 'ready_to_handoff', 'done'].includes(s)) return 'badge-green';
+      if (['pending', 'needs_followup', 'needs_follow_up'].includes(s)) return 'badge-orange';
       if (['in_progress'].includes(s)) return 'badge-graphite';
       return 'badge-gray';
     }
@@ -1114,6 +1138,7 @@ def ui_page() -> str:
     function normalizeHandoffStatus(status) {
       const value = String(status || '').toLowerCase();
       if (value === 'completed') return 'done';
+      if (value === 'needs_followup') return 'needs_follow_up';
       return value;
     }
 
@@ -1232,6 +1257,18 @@ def ui_page() -> str:
       const actionStatus = actionQueue.status || 'new';
 
       const effectiveHandoffStatus = getHandoffStatus({ handoff });
+      const qualificationStatus = normalizeHandoffStatus(
+        handoffPackage?.qualification_status || lead.qualification_status || lead.lead_status
+      );
+      const missingFields = handoffPackage?.missing_fields || lead.missing_fields || [];
+      const hasMissingFields = Array.isArray(missingFields)
+        ? missingFields.length > 0
+        : Boolean(missingFields);
+      const isReadyPackage = handoffPackage
+        && ['ready_to_handoff', 'in_progress', 'done'].includes(qualificationStatus)
+        && !hasMissingFields;
+      const isFollowupPackage = handoffPackage
+        && (qualificationStatus === 'needs_follow_up' || hasMissingFields);
 
       const wrap = document.createElement('div');
       wrap.className = 'summary-box';
@@ -1246,8 +1283,11 @@ def ui_page() -> str:
       wrap.appendChild(badges);
 
       const rows = [
+        [t('qualificationStatus'), mapStatus(qualificationStatus)],
         [t('score'), data.score ?? t('empty')],
         [t('priority'), data.priority || t('empty')],
+        [t('missingFields'), displayList(missingFields)],
+        [t('recommendedPackage'), handoffPackage?.recommended_package || handoffPackage?.pricing_tier || lead.recommended_package || t('empty')],
         [t('company'), lead.company || t('empty')],
         [t('role'), lead.role || t('empty')],
         [t('contact'), lead.contact || t('empty')],
@@ -1300,9 +1340,10 @@ def ui_page() -> str:
           <div class="list-sub">${t('mechanicName')}: ${displayValue(handoffPackage.recommended_mechanic)}</div>
           <div class="list-sub">${t('mechanicReason')}: ${displayValue(handoffPackage.mechanic_reason || handoffPackage.recommended_mechanic_reason)}</div>
           <div class="list-sub">${t('suggestedTier')}: ${displayValue(handoffPackage.pricing_tier)}</div>
+          <div class="list-sub">${t('qualificationStatus')}: ${displayValue(handoffPackage.qualification_status)}</div>
+          <div class="list-sub">${t('missingFields')}: ${displayList(missingFields)}</div>
           <div class="list-sub">${t('recommendedNextAction')}: ${displayValue(handoffPackage.recommended_next_action)}</div>
           <div class="list-sub"><strong>${t('copyReadyFollowup')}:</strong> ${displayValue(handoffPackage.copy_text)}</div>
-          ${handoffPackage.copy_text ? `<div class="list-actions"><button class="btn btn-gray" id="copyFollowupBtn">${t('copyFollowup')}</button></div>` : ''}
         `;
         wrap.appendChild(mechanicBox);
       }
@@ -1330,7 +1371,7 @@ def ui_page() -> str:
       `;
       wrap.appendChild(actionBox);
 
-      if (handoffPackage) {
+      if (isReadyPackage) {
         const payload = handoffPackage.crm_payload || {};
         const packageBox = document.createElement('div');
         packageBox.className = 'list-item';
@@ -1361,11 +1402,22 @@ def ui_page() -> str:
           <div class="list-sub"><strong>${t('crmPayloadPreview')}:</strong></div>
           ${payloadRows.map(([label, value]) => `<div class="list-sub">${label}: ${displayValue(value)}</div>`).join('')}
           <div class="list-actions">
-            ${lead.lead_status === 'qualified' && handoff.id ? `<button class="btn btn-action" id="exportCrmBtn">${t('exportCrm')}</button>` : ''}
+            ${handoff.id ? `<button class="btn btn-action" id="exportCrmBtn">${t('exportCrm')}</button>` : ''}
             ${(handoffPackage.package_copy_text || handoffPackage.copy_text) ? `<button class="btn btn-gray" id="copyPackageBtn">${t('copyPackage')}</button>` : ''}
           </div>
         `;
         wrap.appendChild(packageBox);
+      } else if (isFollowupPackage) {
+        const followupBox = document.createElement('div');
+        followupBox.className = 'list-item';
+        followupBox.innerHTML = `
+          <div class="list-title">${t('followupPackage')}</div>
+          <div class="list-sub"><strong>${t('missingFields')}:</strong> ${displayList(missingFields)}</div>
+          <div class="list-sub"><strong>${t('recommendedNextAction')}:</strong> ${displayValue(handoffPackage.next_question || handoffPackage.recommended_next_action)}</div>
+          <div class="list-sub"><strong>${t('copyReadyFollowup')}:</strong> ${displayValue(handoffPackage.copy_text)}</div>
+          ${handoffPackage.copy_text ? `<div class="list-actions"><button class="btn btn-gray" id="copyFollowupBtn">${t('copyFollowup')}</button></div>` : ''}
+        `;
+        wrap.appendChild(followupBox);
       }
 
       const events = Array.isArray(data.events) ? data.events.slice(0, 8) : [];
@@ -1459,8 +1511,10 @@ def ui_page() -> str:
   const leadsFromList = Array.isArray(lastLeads) ? lastLeads.length : 0;
   const qualifiedFromList = Array.isArray(lastLeads)
     ? lastLeads.filter(item => {
-        const status = item.lead_status ?? item.status ?? item.lead?.lead_status ?? 'qualified';
-        return status === 'qualified';
+        const status = normalizeHandoffStatus(
+          item.qualification_status ?? item.lead_status ?? item.status ?? item.lead?.lead_status
+        );
+        return status === 'ready_to_handoff';
       }).length
     : 0;
 
@@ -1481,6 +1535,7 @@ def ui_page() -> str:
   let leadsTotal =
     data?.leads_total ??
     data?.total_leads ??
+    data?.leads?.total ??
     data?.counts?.leads_total ??
     data?.counts?.total_leads ??
     data?.summary?.leads_total ??
@@ -1489,6 +1544,7 @@ def ui_page() -> str:
   let qualifiedTotal =
     data?.qualified_total ??
     data?.qualified_leads ??
+    data?.leads?.qualified ??
     data?.counts?.qualified_total ??
     data?.counts?.qualified_leads ??
     data?.summary?.qualified_total ??
@@ -1497,12 +1553,14 @@ def ui_page() -> str:
   let inProgress =
     data?.handoffs_in_progress ??
     data?.in_progress ??
+    data?.handoffs?.in_progress ??
     data?.counts?.handoffs_in_progress ??
     data?.summary?.handoffs_in_progress ??
     0;
 
   let done =
     data?.handoffs_done ??
+    data?.handoffs?.done ??
     data?.handoffs_completed ??
     data?.counts?.handoffs_done ??
     data?.counts?.handoffs_completed ??
@@ -1521,8 +1579,10 @@ def ui_page() -> str:
   $('dashboardResult').textContent = data ? safeJson(data) : t('empty');
 	}
 	
-	    function calculateLeadScore(item) {
+    function calculateLeadScore(item) {
 	      const lead = item.lead || item || {};
+	      if (item.score !== undefined && item.score !== null) return Number(item.score) || 0;
+	      if (lead.score !== undefined && lead.score !== null) return Number(lead.score) || 0;
 	      let score = 0;
 	
 	      if (lead.company || item.company) score += 25;
@@ -1531,7 +1591,7 @@ def ui_page() -> str:
 	      if (lead.role || item.role) score += 10;
 	
 	      const status = lead.lead_status || lead.status || item.lead_status || item.status || '';
-	      if (status === 'qualified') score += 15;
+	      if (['qualified', 'ready_to_handoff'].includes(status)) score += 15;
 	
 	      return Math.min(score, 100);
 	    }
@@ -1564,7 +1624,7 @@ def ui_page() -> str:
 	        const contact = item.contact ?? item.lead?.contact ?? t('empty');
 		        const useCase = item.use_case ?? item.lead?.use_case ?? t('empty');
 		        const score = calculateLeadScore(item);
-		        const priority = calculateLeadPriority(score);
+		        const priority = item.priority || item.lead?.priority || calculateLeadPriority(score);
 		        const mechanic = item.recommended_mechanic ?? item.handoff_package?.recommended_mechanic ?? t('empty');
 		        const actionQueue = item.action_queue || {};
 		        const actionText = mapActionStatus(
@@ -1572,9 +1632,9 @@ def ui_page() -> str:
 		          actionQueue.label || item.action_label
 		        );
 		
-			        let leadStatus = item.lead_status ?? item.status ?? item.lead?.lead_status ?? null;
+			        let leadStatus = item.qualification_status ?? item.lead_status ?? item.status ?? item.lead?.lead_status ?? null;
 			        const handoffStatus = getHandoffStatus(item);
-		        if (!leadStatus && (company || useCase)) leadStatus = 'qualified';
+		        if (!leadStatus) leadStatus = handoffStatus || 'new';
 
         const el = document.createElement('div');
         el.className = 'list-item';

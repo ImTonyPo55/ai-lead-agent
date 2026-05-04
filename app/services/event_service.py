@@ -9,6 +9,7 @@ EVENT_LABELS = {
     "lead_created": "Лид создан",
     "message_received": "Получено сообщение",
     "lead_qualified": "Лид квалифицирован",
+    "lead_followup_required": "Лид требует уточнения",
     "handoff_created": "Передача создана",
     "telegram_notification_sent": "Telegram-уведомление отправлено",
     "telegram_notification_failed": "Ошибка Telegram-уведомления",
@@ -25,7 +26,9 @@ EVENT_LABELS = {
 STATUS_LABELS = {
     "new": "новый",
     "needs_followup": "требует уточнения",
+    "needs_follow_up": "требует уточнения",
     "qualified": "квалифицирован",
+    "ready_to_handoff": "готов к передаче",
     "pending": "готов к передаче",
     "in_progress": "в работе",
     "done": "завершено",
@@ -45,6 +48,9 @@ PUBLIC_PAYLOAD_KEYS = {
     "target",
     "owner",
     "team",
+    "notification_type",
+    "missing",
+    "next_question",
 }
 
 
@@ -101,6 +107,16 @@ def format_event_details(event_type: str, payload: dict[str, Any] | None = None)
             return f"{previous_status} → {status}"
         return status
 
+    if event_type == "lead_followup_required":
+        missing = _short(payload.get("missing"))
+        next_question = _short(payload.get("next_question"))
+        parts = []
+        if missing:
+            parts.append(f"missing: {missing}")
+        if next_question:
+            parts.append(next_question)
+        return " · ".join(parts)
+
     if event_type == "handoff_created":
         handoff_id = _short(payload.get("handoff_id"))
         reason = _short(payload.get("reason"))
@@ -117,7 +133,11 @@ def format_event_details(event_type: str, payload: dict[str, Any] | None = None)
         "telegram_notification_skipped",
     }:
         handoff_id = _short(payload.get("handoff_id"))
-        return f"handoff #{handoff_id}" if handoff_id else ""
+        notification_type = _short(payload.get("notification_type"))
+        missing = _short(payload.get("missing"))
+        if handoff_id:
+            return f"handoff #{handoff_id}"
+        return " · ".join(part for part in (notification_type, missing) if part)
 
     if event_type in {"handoff_moved_to_in_progress", "handoff_completed"}:
         handoff_id = _short(payload.get("handoff_id"))

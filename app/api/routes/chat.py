@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
+from types import SimpleNamespace
 
 from app.db.models import Lead, Message, SenderType, Handoff
 from app.db.session import get_db
 from app.schemas.chat import ChatMessageRequest
+from app.services.campaign_intelligence_service import build_campaign_intelligence
 from app.services.extract_service import (
     extract_company,
     extract_contact,
@@ -14,7 +16,7 @@ from app.services.intent_service import detect_intent
 from app.services.knowledge_service import answer_from_knowledge_base
 from app.services.event_service import log_event
 from app.services.owner_routing_service import recommend_owner
-from app.services.telegram_service import notify_handoff_created
+from app.services.telegram_service import notify_followup_needed, notify_handoff_created
 router = APIRouter(prefix="/chat", tags=["chat"])
 
 
@@ -53,13 +55,19 @@ def build_followup_reply(lead: Lead, intent: str) -> str:
 
 
 def calculate_lead_status(lead: Lead) -> str:
-    if lead.company and lead.role and lead.use_case and lead.contact:
-        return "qualified"
-    return "needs_followup"
+    intelligence = build_campaign_intelligence(lead)
+    return intelligence["lead_status"]
 
 
 def create_handoff_if_needed(db: Session, lead: Lead) -> tuple[int | None, bool]:
-    if lead.status != "qualified":
+    intelligence = build_campaign_intelligence(lead)
+    if not intelligence.get("can_create_handoff"):
+        next_status = intelligence.get("lead_status") or "needs_followup"
+        if lead.status not in {"in_progress", "done"} and lead.status != next_status:
+            lead.status = next_status
+            db.add(lead)
+            db.commit()
+            db.refresh(lead)
         return None, False
 
     existing_handoff = (
@@ -68,6 +76,11 @@ def create_handoff_if_needed(db: Session, lead: Lead) -> tuple[int | None, bool]
         .first()
     )
     if existing_handoff:
+        if lead.status not in {"ready_to_handoff", "in_progress", "done"}:
+            lead.status = "ready_to_handoff"
+            db.add(lead)
+            db.commit()
+            db.refresh(lead)
         return existing_handoff.id, False
 
     owner_routing = recommend_owner(lead)
@@ -80,6 +93,10 @@ def create_handoff_if_needed(db: Session, lead: Lead) -> tuple[int | None, bool]
     db.add(handoff)
     db.commit()
     db.refresh(handoff)
+    lead.status = "ready_to_handoff"
+    db.add(lead)
+    db.commit()
+    db.refresh(lead)
     log_event(
         db,
         lead.id,
@@ -200,12 +217,46 @@ def chat_message(payload: ChatMessageRequest, db: Session = Depends(get_db)) -> 
         create_handoff_fn=create_handoff_if_needed,
     )
 
-    if previous_status != "qualified" and action_result["lead_status"] == "qualified":
+    if (
+        previous_status not in {"qualified", "ready_to_handoff"}
+        and action_result["lead_status"] == "ready_to_handoff"
+    ):
         log_event(
             db,
             lead.id,
             "lead_qualified",
             {"previous_status": previous_status, "status": action_result["lead_status"]},
+        )
+
+    if (
+        action_result["lead_status"] == "needs_followup"
+        and previous_status not in {"needs_follow_up", "needs_followup"}
+    ):
+        intelligence = build_campaign_intelligence(
+            lead,
+            latest_message=SimpleNamespace(text=payload.message),
+        )
+        log_event(
+            db,
+            lead.id,
+            "lead_followup_required",
+            {
+                "previous_status": previous_status,
+                "status": action_result["lead_status"],
+                "missing": ", ".join(intelligence.get("missing_fields") or []),
+                "next_question": intelligence.get("next_question"),
+            },
+        )
+        telegram_sent = notify_followup_needed(lead, intelligence)
+        log_event(
+            db,
+            lead.id,
+            "telegram_notification_sent" if telegram_sent else "telegram_notification_failed",
+            {
+                "notification_type": "needs_followup",
+                "success": telegram_sent,
+                "missing": ", ".join(intelligence.get("missing_fields") or []),
+            },
         )
 
     intent = decision.intent

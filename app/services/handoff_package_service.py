@@ -63,15 +63,20 @@ def _summary(
     )
 
 
-def _qualification_reason(lead: Any, latest_handoff: Any = None) -> str:
-    missing = []
+def _qualification_reason(
+    lead: Any,
+    latest_handoff: Any = None,
+    missing_fields: Any = None,
+) -> str:
+    missing = list(missing_fields or [])
 
-    if not _clean(getattr(lead, "company", None)):
-        missing.append("company")
-    if not _clean(getattr(lead, "contact", None)):
-        missing.append("contact")
-    if not _clean(getattr(lead, "use_case", None)):
-        missing.append("use case")
+    if not missing:
+        if not _clean(getattr(lead, "company", None)):
+            missing.append("company")
+        if not _clean(getattr(lead, "contact", None)):
+            missing.append("contact")
+        if not _clean(getattr(lead, "use_case", None)):
+            missing.append("campaign need")
 
     if missing:
         return f"Missing required campaign handoff fields: {', '.join(missing)}."
@@ -88,26 +93,33 @@ def build_handoff_package(
     latest_message: Any = None,
     events: Any = None,
 ) -> dict:
-    score = _score(lead, latest_handoff)
-    priority = _priority(score)
     company = _clean(getattr(lead, "company", None)) or None
     role = _clean(getattr(lead, "role", None)) or None
     contact = _clean(getattr(lead, "contact", None)) or None
     use_case = _clean(getattr(lead, "use_case", None)) or None
-    lead_status = _clean(getattr(lead, "status", None)) or None
     handoff_status = _clean(getattr(latest_handoff, "status", None)) or None
-    owner_routing = resolve_owner_routing(lead, latest_handoff, events)
-    action_queue = get_action_status(lead, latest_handoff, events)
     campaign_intelligence = build_campaign_intelligence(lead, latest_message)
+    score = campaign_intelligence["score"]
+    priority = campaign_intelligence["priority"]
     client_type = campaign_intelligence["client_type"]
     campaign_goal = campaign_intelligence["campaign_goal"]
     platform = campaign_intelligence["platform"]
     recommended_mechanic = campaign_intelligence["recommended_mechanic"]
     mechanic_reason = campaign_intelligence["mechanic_reason"]
     pricing_tier = campaign_intelligence["pricing_tier"]
+    qualification_status = campaign_intelligence["qualification_status"]
+    if handoff_status in {"in_progress", "done"}:
+        qualification_status = handoff_status
+    elif latest_handoff is not None:
+        qualification_status = "ready_to_handoff"
+    lead_status = qualification_status
+    missing_fields = campaign_intelligence["missing_fields"]
     recommended_next_action = campaign_intelligence["recommended_next_action"]
     campaign_summary = campaign_intelligence["campaign_summary"]
     copy_ready_followup = campaign_intelligence["copy_text"]
+    next_question = campaign_intelligence["next_question"]
+    owner_routing = resolve_owner_routing(lead, latest_handoff, events)
+    action_queue = get_action_status(lead, latest_handoff, events)
 
     crm_payload = {
         "company": company,
@@ -121,6 +133,9 @@ def build_handoff_package(
         "best_game": recommended_mechanic,
         "mechanic_reason": mechanic_reason,
         "pricing_tier": pricing_tier,
+        "recommended_package": pricing_tier,
+        "qualification_status": qualification_status,
+        "missing_fields": missing_fields,
         "priority": priority,
         "score": score,
         "source": "MechanicFlow AI",
@@ -145,6 +160,8 @@ def build_handoff_package(
             f"Recommended game mechanic: {_display(recommended_mechanic)}",
             f"Why it fits: {_display(mechanic_reason)}",
             f"Suggested tier: {_display(pricing_tier)}",
+            f"Qualification status: {_display(qualification_status)}",
+            f"Missing fields: {_display(', '.join(missing_fields))}",
             f"Lead status: {_display(lead_status)}",
             f"Handoff status: {_display(handoff_status)}",
             f"Owner: {_display(owner_routing['owner'])}",
@@ -155,7 +172,7 @@ def build_handoff_package(
             f"Score: {score}",
             f"Priority: {priority}",
             f"Summary: {_summary(lead, latest_handoff, campaign_summary, recommended_mechanic)}",
-            f"Qualification reason: {_qualification_reason(lead, latest_handoff)}",
+            f"Qualification reason: {_qualification_reason(lead, latest_handoff, missing_fields)}",
             f"Recommended next action: {recommended_next_action}",
             f"Copy-ready follow-up: {_display(copy_ready_followup)}",
         ]
@@ -178,6 +195,10 @@ def build_handoff_package(
         "mechanic_reason": mechanic_reason,
         "recommended_mechanic_reason": mechanic_reason,
         "pricing_tier": pricing_tier,
+        "recommended_package": pricing_tier,
+        "qualification_status": qualification_status,
+        "missing_fields": missing_fields,
+        "next_question": next_question,
         "lead_status": lead_status,
         "handoff_status": handoff_status,
         "owner": owner_routing["owner"],
@@ -188,7 +209,7 @@ def build_handoff_package(
         "score": score,
         "priority": priority,
         "summary": _summary(lead, latest_handoff, campaign_summary, recommended_mechanic),
-        "qualification_reason": _qualification_reason(lead, latest_handoff),
+        "qualification_reason": _qualification_reason(lead, latest_handoff, missing_fields),
         "recommended_next_action": recommended_next_action,
         "crm_payload": crm_payload,
         "campaign_intelligence": campaign_intelligence,

@@ -1,14 +1,16 @@
 from __future__ import annotations
 
 import json
+from types import SimpleNamespace
 from typing import Any, Dict, List, Optional, Literal
 
 from pydantic import BaseModel, Field
 
+from app.services.campaign_intelligence_service import build_campaign_intelligence
 from app.services.llm_service import llm_extract_fields
 
 
-CRITICAL_FIELDS = ["company", "contact", "use_case"]
+CRITICAL_FIELDS = ["company", "contact", "campaign_need"]
 
 
 class AgentDecision(BaseModel):
@@ -50,6 +52,71 @@ def _missing_fields(extracted: Optional[Dict[str, Any]]) -> List[str]:
             missing.append(field)
 
     return missing
+
+
+def _campaign_lead_from(
+    extracted: Optional[Dict[str, Any]],
+    current_lead: Optional[Dict[str, Any]],
+) -> SimpleNamespace:
+    data: Dict[str, Any] = dict(current_lead or {})
+    for key, value in (extracted or {}).items():
+        if _has_value(value):
+            data[key] = value
+
+    return SimpleNamespace(
+        company=data.get("company"),
+        role=data.get("role"),
+        contact=data.get("contact"),
+        use_case=data.get("use_case") or data.get("campaign_need"),
+        notes=data.get("notes"),
+        status=data.get("status"),
+    )
+
+
+def _campaign_decision(
+    message_text: str,
+    extracted: Optional[Dict[str, Any]],
+    current_lead: Optional[Dict[str, Any]],
+) -> tuple[dict, AgentDecision]:
+    lead = _campaign_lead_from(extracted, current_lead)
+    latest_message = SimpleNamespace(text=message_text)
+    intelligence = build_campaign_intelligence(lead, latest_message=latest_message)
+    lead_exists = bool(current_lead)
+    missing_fields = intelligence.get("missing_fields") or []
+    can_handoff = bool(intelligence.get("can_create_handoff"))
+    confidence = min(0.98, max(0.35, (intelligence.get("qualification_score") or 0) / 100))
+
+    if not can_handoff:
+        next_question = intelligence.get("next_question") or (
+            "Can you confirm the main campaign goal before we prepare the campaign package?"
+        )
+        return intelligence, AgentDecision(
+            intent="lead_followup",
+            next_action="ask_followup",
+            should_ask_followup=True,
+            should_create_handoff=False,
+            should_update_lead=lead_exists,
+            should_create_new_lead=not lead_exists,
+            confidence=confidence,
+            missing_fields=missing_fields,
+            reply_text=f"Thanks — {next_question}",
+            notes="Campaign qualification requires one focused follow-up.",
+        )
+
+    return intelligence, AgentDecision(
+        intent="qualified_lead",
+        next_action="create_handoff",
+        should_ask_followup=False,
+        should_create_handoff=True,
+        should_update_lead=True,
+        should_create_new_lead=not lead_exists,
+        confidence=confidence,
+        missing_fields=[],
+        reply_text=intelligence.get("copy_text") or (
+            "Thanks — the campaign lead is qualified and ready for handoff."
+        ),
+        notes="Campaign lead has enough data for package recommendation and handoff.",
+    )
 
 
 def _followup_question(missing_fields: List[str]) -> str:
@@ -98,7 +165,7 @@ def build_agent_prompt(
     current_lead = current_lead or {}
 
     return f"""
-You are an agent decision engine for inbound B2B lead qualification.
+You are an agent decision engine for campaign lead qualification.
 
 Your job is to decide the next best action after a user message.
 
@@ -177,42 +244,8 @@ def rule_based_agent_decide(
     extracted: Optional[Dict[str, Any]] = None,
     current_lead: Optional[Dict[str, Any]] = None,
 ) -> AgentDecision:
-    _ = _clean_text(message_text)
-    extracted = extracted or {}
-    current_lead = current_lead or {}
-
-    missing_fields = _missing_fields(extracted)
-    lead_exists = bool(current_lead)
-
-    if missing_fields:
-        return AgentDecision(
-            intent="lead_followup",
-            next_action="ask_followup",
-            should_ask_followup=True,
-            should_create_handoff=False,
-            should_update_lead=lead_exists,
-            should_create_new_lead=not lead_exists,
-            confidence=0.78,
-            missing_fields=missing_fields,
-            reply_text=_followup_question(missing_fields),
-            notes="Critical lead fields are missing.",
-        )
-
-    return AgentDecision(
-        intent="qualified_lead",
-        next_action="create_handoff",
-        should_ask_followup=False,
-        should_create_handoff=True,
-        should_update_lead=True,
-        should_create_new_lead=not lead_exists,
-        confidence=0.92,
-        missing_fields=[],
-        reply_text=(
-            "Готово. Я извлёк ключевые данные, квалифицировал лид "
-            "и подготовил его к передаче в работу."
-        ),
-        notes="Lead has enough data for qualification and handoff.",
-    )
+    _, decision = _campaign_decision(message_text, extracted, current_lead)
+    return decision
 
 
 def llm_agent_decide(
@@ -272,17 +305,23 @@ def agent_decide(
     current_lead: Optional[Dict[str, Any]] = None,
     use_llm: bool = False,
 ) -> AgentDecision:
+    _, safe_decision = _campaign_decision(message_text, extracted, current_lead)
+
+    if safe_decision.should_ask_followup:
+        return safe_decision
+
     if use_llm:
         llm_decision = llm_agent_decide(
             message_text=message_text,
             extracted=extracted,
             current_lead=current_lead,
         )
-        if llm_decision is not None:
+        if llm_decision is not None and not llm_decision.should_ask_followup:
+            llm_decision.should_create_handoff = True
+            llm_decision.next_action = "create_handoff"
+            llm_decision.intent = "qualified_lead"
+            llm_decision.missing_fields = []
+            llm_decision.reply_text = safe_decision.reply_text
             return llm_decision
 
-    return rule_based_agent_decide(
-        message_text=message_text,
-        extracted=extracted,
-        current_lead=current_lead,
-    )
+    return safe_decision

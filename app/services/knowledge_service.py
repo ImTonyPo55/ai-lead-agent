@@ -18,7 +18,7 @@ def _has_any(text: str, keywords: tuple[str, ...]) -> bool:
 
 def answer_from_knowledge_base(message_text: str) -> Optional[str]:
     """
-    Demo-ready knowledge base for AI Lead Agent.
+    Demo-ready knowledge base for MechanicFlow AI.
 
     Returns short FAQ answers for common product questions.
     Can combine several answers when the user asks about multiple topics.

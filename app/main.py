@@ -10,7 +10,7 @@ from app.api.routes.ui import router as ui_router
 from app.db.models import Base
 from app.db.session import engine
 
-app = FastAPI(title="AI Lead Agent")
+app = FastAPI(title="MechanicFlow AI")
 
 Base.metadata.create_all(bind=engine)
 

@@ -42,6 +42,8 @@ def notify_handoff_created(
         handoff_id = getattr(handoff, "id", None) if handoff is not None else None
         owner, team = _owner_team(owner_routing)
         handoff_package = build_handoff_package(lead, latest_handoff=handoff)
+        if handoff_package.get("missing_fields"):
+            return False
         message = "\n".join(
             [
                 "🔥 New game campaign lead",
@@ -55,6 +57,60 @@ def notify_handoff_created(
                 f"Owner: {owner}",
                 f"Team: {team}",
                 f"Handoff: {_field(handoff_id)}",
+            ]
+        )
+
+        data = urllib.parse.urlencode(
+            {
+                "chat_id": chat_id,
+                "text": message,
+            }
+        ).encode("utf-8")
+        request = urllib.request.Request(
+            f"https://api.telegram.org/bot{token}/sendMessage",
+            data=data,
+            method="POST",
+        )
+        context = ssl.create_default_context(cafile=certifi.where())
+
+        with urllib.request.urlopen(request, timeout=5, context=context) as response:
+            return 200 <= response.status < 300
+    except Exception:
+        return False
+
+
+def notify_followup_needed(
+    lead: Any,
+    qualification: Any = None,
+    owner_routing: Any = None,
+) -> bool:
+    try:
+        token = os.getenv("TELEGRAM_BOT_TOKEN")
+        chat_id = os.getenv("TELEGRAM_CHAT_ID")
+        if not token or not chat_id:
+            return False
+
+        if not isinstance(qualification, dict):
+            qualification = build_handoff_package(lead)
+
+        package = build_handoff_package(lead)
+        owner, team = _owner_team(owner_routing or package)
+        missing = qualification.get("missing_fields") or package.get("missing_fields") or []
+        next_question = (
+            _field(qualification.get("next_question"))
+            or _field(package.get("next_question"))
+            or _field(package.get("recommended_next_action"))
+        )
+        message = "\n".join(
+            [
+                "⚠️ Campaign lead needs follow-up",
+                "",
+                f"Company: {_field(getattr(lead, 'company', None))}",
+                f"Contact: {_field(getattr(lead, 'contact', None))}",
+                f"Missing: {_field(', '.join(missing))}",
+                f"Next question: {next_question}",
+                f"Owner: {owner}",
+                f"Team: {team}",
             ]
         )
 

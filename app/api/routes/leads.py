@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.db.models import Lead, Message, Handoff, EventLog
 from app.db.session import get_db
 from app.services.action_queue_service import get_action_status
+from app.services.campaign_intelligence_service import build_campaign_intelligence
 from app.services.event_service import format_event, log_event
 from app.services.handoff_package_service import build_handoff_package
 from app.services.owner_routing_service import recommend_owner, resolve_owner_routing
@@ -68,7 +69,14 @@ def _latest_routing_events(db: Session, lead_id: int) -> list[EventLog]:
 
 
 def create_handoff_if_needed(db: Session, lead: Lead) -> tuple[int | None, bool]:
-    if lead.status != "qualified":
+    intelligence = build_campaign_intelligence(lead)
+    if not intelligence.get("can_create_handoff"):
+        next_status = intelligence.get("lead_status") or "needs_followup"
+        if lead.status not in {"in_progress", "done"} and lead.status != next_status:
+            lead.status = next_status
+            db.add(lead)
+            db.commit()
+            db.refresh(lead)
         return None, False
 
     existing_handoff = (
@@ -77,6 +85,11 @@ def create_handoff_if_needed(db: Session, lead: Lead) -> tuple[int | None, bool]
         .first()
     )
     if existing_handoff:
+        if lead.status not in {"ready_to_handoff", "in_progress", "done"}:
+            lead.status = "ready_to_handoff"
+            db.add(lead)
+            db.commit()
+            db.refresh(lead)
         return existing_handoff.id, False
 
     owner_routing = recommend_owner(lead)
@@ -89,6 +102,10 @@ def create_handoff_if_needed(db: Session, lead: Lead) -> tuple[int | None, bool]
     db.add(handoff)
     db.commit()
     db.refresh(handoff)
+    lead.status = "ready_to_handoff"
+    db.add(lead)
+    db.commit()
+    db.refresh(lead)
     log_event(
         db,
         lead.id,
@@ -138,7 +155,13 @@ def list_leads(db: Session = Depends(get_db)) -> list[dict]:
                 "recommended_mechanic": handoff_package["recommended_mechanic"],
                 "mechanic_reason": handoff_package["mechanic_reason"],
                 "pricing_tier": handoff_package["pricing_tier"],
-                "status": lead.status,
+                "qualification_status": handoff_package["qualification_status"],
+                "missing_fields": handoff_package["missing_fields"],
+                "recommended_package": handoff_package["recommended_package"],
+                "score": handoff_package["score"],
+                "priority": handoff_package["priority"],
+                "status": handoff_package["qualification_status"],
+                "lead_status": handoff_package["qualification_status"],
                 "handoff_id": latest_handoff.id if latest_handoff else None,
                 "handoff_status": latest_handoff.status if latest_handoff else None,
                 "action_queue": action_queue,
@@ -193,12 +216,20 @@ def update_lead(
             "message": f"Lead {lead_id} not found",
         }
 
-    allowed_statuses = {"new", "needs_followup", "qualified"}
+    allowed_statuses = {
+        "new",
+        "needs_followup",
+        "needs_follow_up",
+        "qualified",
+        "ready_to_handoff",
+        "in_progress",
+        "done",
+    }
 
     if payload.status is not None and payload.status not in allowed_statuses:
         return {
             "status": "error",
-            "message": "Invalid status. Use: new, needs_followup, qualified",
+            "message": "Invalid status. Use: new, needs_followup, qualified, ready_to_handoff, in_progress, done",
         }
 
     previous_status = lead.status
@@ -232,7 +263,7 @@ def update_lead(
     db.commit()
     db.refresh(lead)
 
-    if previous_status != "qualified" and lead.status == "qualified":
+    if previous_status not in {"qualified", "ready_to_handoff"} and lead.status == "ready_to_handoff":
         log_event(
             db,
             lead.id,
@@ -314,28 +345,6 @@ def get_lead_summary(lead_id: int, db: Session = Depends(get_db)) -> dict:
 
     latest_handoff = _latest_handoff(db, lead_id)
 
-    score = 0
-
-    if lead.company:
-        score += 25
-    if lead.contact:
-        score += 25
-    if lead.use_case:
-        score += 25
-    if lead.role:
-        score += 10
-    if latest_handoff:
-        score += 15
-
-    score = min(score, 100)
-
-    if score >= 75:
-        priority = "High"
-    elif score >= 40:
-        priority = "Medium"
-    else:
-        priority = "Low"
-
     message_count = db.query(Message).filter(
         Message.lead_id == lead_id).count()
 
@@ -366,6 +375,8 @@ def get_lead_summary(lead_id: int, db: Session = Depends(get_db)) -> dict:
         latest_message=latest_message,
         events=routing_events,
     )
+    score = handoff_package["score"]
+    priority = handoff_package["priority"]
 
     return {
         "status": "ok",
@@ -385,8 +396,12 @@ def get_lead_summary(lead_id: int, db: Session = Depends(get_db)) -> dict:
             "recommended_mechanic": handoff_package["recommended_mechanic"],
             "mechanic_reason": handoff_package["mechanic_reason"],
             "pricing_tier": handoff_package["pricing_tier"],
+            "qualification_status": handoff_package["qualification_status"],
+            "missing_fields": handoff_package["missing_fields"],
+            "recommended_package": handoff_package["recommended_package"],
+            "next_question": handoff_package["next_question"],
             "recommended_next_action": handoff_package["recommended_next_action"],
-            "lead_status": lead.status,
+            "lead_status": handoff_package["qualification_status"],
         },
         "handoff": {
             "id": latest_handoff.id if latest_handoff else None,

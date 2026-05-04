@@ -84,6 +84,10 @@ def _update_latest_handoff_status(lead_id: int, status: str, db: Session) -> dic
 
     previous_status = handoff.status
     handoff.status = status
+    lead = db.get(Lead, lead_id)
+    if lead is not None and status in {"in_progress", "done"}:
+        lead.status = status
+        db.add(lead)
     db.add(handoff)
     db.commit()
     db.refresh(handoff)
@@ -277,6 +281,11 @@ def update_handoff(
 
     if payload.status is not None:
         handoff.status = _normalize_handoff_status(payload.status) or payload.status
+        if handoff.status in {"in_progress", "done"}:
+            lead = db.get(Lead, handoff.lead_id)
+            if lead is not None:
+                lead.status = handoff.status
+                db.add(lead)
 
     db.add(handoff)
     db.commit()

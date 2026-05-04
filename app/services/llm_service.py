@@ -80,7 +80,7 @@ def llm_extract_fields(message_text: str) -> Optional[dict]:
     )
 
     prompt = f"""
-You are an extraction engine for inbound B2B lead messages.
+You are an extraction engine for campaign lead messages from brands, eCommerce teams and agencies.
 
 Extract these fields from the message:
 - company
