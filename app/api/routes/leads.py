@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.db.models import Lead, Message, Handoff, EventLog
 from app.db.session import get_db
 from app.services.event_service import format_event, log_event
+from app.services.handoff_package_service import build_handoff_package
 
 router = APIRouter(prefix="/leads", tags=["leads"])
 
@@ -313,5 +314,11 @@ def get_lead_summary(lead_id: int, db: Session = Depends(get_db)) -> dict:
             "last_text": latest_message.text if latest_message else None,
             "last_intent": latest_message.detected_intent if latest_message else None,
         },
+        "handoff_package": build_handoff_package(
+            lead,
+            latest_handoff=latest_handoff,
+            latest_message=latest_message,
+            events=events,
+        ),
         "events": [format_event(event) for event in events],
     }

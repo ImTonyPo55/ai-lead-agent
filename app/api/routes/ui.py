@@ -617,6 +617,13 @@ def ui_page() -> str:
         eventTimeline: 'История событий',
         noEvents: 'Событий пока нет.',
         crmEvent: 'Событие CRM',
+        handoffPackage: 'Пакет передачи',
+        packageSummary: 'Резюме',
+        qualificationReason: 'Причина квалификации',
+        recommendedNextAction: 'Следующее действие',
+        crmPayloadPreview: 'CRM payload preview',
+        exportCrm: 'Экспорт в CRM',
+        copyPackage: 'Скопировать пакет',
         assignedTo: 'Назначен',
         lastSender: 'Последний отправитель',
         lastIntent: 'Последнее намерение',
@@ -641,6 +648,8 @@ def ui_page() -> str:
         toastLeadsRefreshed: 'Лиды обновлены.',
         toastHandoffsRefreshed: 'Передачи обновлены.',
         toastHandoffUpdated: 'Статус передачи обновлён.',
+        toastCrmExported: 'CRM export simulated',
+        toastPackageCopied: 'Пакет скопирован.',
         toastError: 'Что-то пошло не так.',
         polishedAssistantReply: 'Спасибо. Ключевые данные извлечены, лид квалифицирован и готов к передаче в работу.',
       },
@@ -687,6 +696,13 @@ def ui_page() -> str:
         eventTimeline: 'Event timeline',
         noEvents: 'No events yet.',
         crmEvent: 'CRM event',
+        handoffPackage: 'Handoff package',
+        packageSummary: 'Summary',
+        qualificationReason: 'Qualification reason',
+        recommendedNextAction: 'Recommended next action',
+        crmPayloadPreview: 'CRM payload preview',
+        exportCrm: 'Export to CRM',
+        copyPackage: 'Copy package',
         assignedTo: 'Assigned to',
         lastSender: 'Last sender',
         lastIntent: 'Last intent',
@@ -711,6 +727,8 @@ def ui_page() -> str:
         toastLeadsRefreshed: 'Leads refreshed.',
         toastHandoffsRefreshed: 'Handoffs refreshed.',
         toastHandoffUpdated: 'Handoff updated.',
+        toastCrmExported: 'CRM export simulated',
+        toastPackageCopied: 'Package copied.',
         toastError: 'Something went wrong.',
         polishedAssistantReply: 'Thanks. Key data was extracted, the lead is qualified and ready for handoff.',
       },
@@ -757,6 +775,13 @@ def ui_page() -> str:
         eventTimeline: 'Historial de eventos',
         noEvents: 'Aún no hay eventos.',
         crmEvent: 'Evento CRM',
+        handoffPackage: 'Paquete de transferencia',
+        packageSummary: 'Resumen',
+        qualificationReason: 'Razón de calificación',
+        recommendedNextAction: 'Siguiente acción',
+        crmPayloadPreview: 'Vista previa de CRM payload',
+        exportCrm: 'Exportar a CRM',
+        copyPackage: 'Copiar paquete',
         assignedTo: 'Asignado a',
         lastSender: 'Último remitente',
         lastIntent: 'Última intención',
@@ -781,6 +806,8 @@ def ui_page() -> str:
         toastLeadsRefreshed: 'Leads actualizados.',
         toastHandoffsRefreshed: 'Transferencias actualizadas.',
         toastHandoffUpdated: 'Transferencia actualizada.',
+        toastCrmExported: 'CRM export simulated',
+        toastPackageCopied: 'Paquete copiado.',
         toastError: 'Algo salió mal.',
         polishedAssistantReply: 'Gracias. Los datos clave fueron extraídos, el lead quedó calificado y listo para transferencia.',
       }
@@ -807,6 +834,11 @@ def ui_page() -> str:
     function safeJson(obj) {
       try { return JSON.stringify(obj, null, 2); }
       catch { return String(obj); }
+    }
+
+    function displayValue(value) {
+      if (value === null || value === undefined || value === '') return '—';
+      return String(value);
     }
 
     function setLang(lang) {
@@ -983,6 +1015,7 @@ def ui_page() -> str:
       const lead = data.lead || {};
       const handoff = data.handoff || {};
       const convo = data.conversation || {};
+      const handoffPackage = data.handoff_package || null;
 
       const effectiveHandoffStatus = getHandoffStatus({ handoff });
 
@@ -1017,6 +1050,34 @@ def ui_page() -> str:
         row.innerHTML = `<div class="k">${k}:</div><div class="v">${v}</div>`;
         wrap.appendChild(row);
       });
+
+      if (handoffPackage) {
+        const payload = handoffPackage.crm_payload || {};
+        const packageBox = document.createElement('div');
+        packageBox.className = 'list-item';
+
+        const payloadRows = [
+          [t('company'), payload.company],
+          [t('contact'), payload.contact],
+          [t('useCase'), payload.use_case],
+          [t('score'), payload.score],
+          [t('priority'), payload.priority],
+        ];
+
+        packageBox.innerHTML = `
+          <div class="list-title">${t('handoffPackage')}</div>
+          <div class="list-sub"><strong>${t('packageSummary')}:</strong> ${displayValue(handoffPackage.summary)}</div>
+          <div class="list-sub"><strong>${t('qualificationReason')}:</strong> ${displayValue(handoffPackage.qualification_reason)}</div>
+          <div class="list-sub"><strong>${t('recommendedNextAction')}:</strong> ${displayValue(handoffPackage.recommended_next_action)}</div>
+          <div class="list-sub"><strong>${t('crmPayloadPreview')}:</strong></div>
+          ${payloadRows.map(([label, value]) => `<div class="list-sub">${label}: ${displayValue(value)}</div>`).join('')}
+          <div class="list-actions">
+            ${lead.lead_status === 'qualified' && handoff.id ? `<button class="btn btn-blue" id="exportCrmBtn">${t('exportCrm')}</button>` : ''}
+            ${handoffPackage.copy_text ? `<button class="btn btn-gray" id="copyPackageBtn">${t('copyPackage')}</button>` : ''}
+          </div>
+        `;
+        wrap.appendChild(packageBox);
+      }
 
       const events = Array.isArray(data.events) ? data.events.slice(0, 8) : [];
       const timeline = document.createElement('div');
@@ -1060,6 +1121,17 @@ def ui_page() -> str:
       box.appendChild(wrap);
 
       const leadId = lead.id;
+      const exportCrmBtn = $('exportCrmBtn');
+      if (exportCrmBtn) exportCrmBtn.onclick = async () => {
+        if (!leadId) return;
+        await exportCrm(leadId);
+      };
+
+      const copyPackageBtn = $('copyPackageBtn');
+      if (copyPackageBtn) copyPackageBtn.onclick = async () => {
+        await copyHandoffPackage(handoffPackage.copy_text);
+      };
+
       const setInProgressBtn = $('setInProgressBtn');
       if (setInProgressBtn) setInProgressBtn.onclick = async () => {
         if (!leadId) return;
@@ -1278,6 +1350,40 @@ def ui_page() -> str:
       }
 
       showToast(t('toastError'), 'error');
+    }
+
+    async function exportCrm(leadId) {
+      try {
+        await fetchJSON(`/handoffs/${leadId}/export-crm`, { method: 'POST' });
+        showToast(t('toastCrmExported'));
+        await refreshAll(false);
+        await loadSummary(String(leadId), false);
+      } catch (e) {
+        showToast(String(e.message || t('toastError')), 'error');
+      }
+    }
+
+    async function copyHandoffPackage(text) {
+      if (!text) return;
+
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          const area = document.createElement('textarea');
+          area.value = text;
+          area.style.position = 'fixed';
+          area.style.opacity = '0';
+          document.body.appendChild(area);
+          area.focus();
+          area.select();
+          document.execCommand('copy');
+          area.remove();
+        }
+        showToast(t('toastPackageCopied'));
+      } catch (e) {
+        showToast(String(e.message || t('toastError')), 'error');
+      }
     }
 
     async function sendMessage() {

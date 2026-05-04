@@ -15,6 +15,7 @@ EVENT_LABELS = {
     "telegram_notification_skipped": "Telegram-уведомление не отправлено",
     "handoff_moved_to_in_progress": "Передача взята в работу",
     "handoff_completed": "Передача завершена",
+    "crm_export_simulated": "CRM-экспорт подготовлен",
 }
 
 STATUS_LABELS = {
@@ -37,6 +38,7 @@ PUBLIC_PAYLOAD_KEYS = {
     "handoff_id",
     "reason",
     "success",
+    "target",
 }
 
 
@@ -121,6 +123,19 @@ def format_event_details(event_type: str, payload: dict[str, Any] | None = None)
         if previous_status and status:
             parts.append(f"{previous_status} → {status}")
         elif status:
+            parts.append(status)
+        return " · ".join(parts)
+
+    if event_type == "crm_export_simulated":
+        handoff_id = _short(payload.get("handoff_id"))
+        target = _short(payload.get("target"))
+        status = _short(payload.get("status"))
+        parts = []
+        if handoff_id:
+            parts.append(f"handoff #{handoff_id}")
+        if target:
+            parts.append(target)
+        if status:
             parts.append(status)
         return " · ".join(parts)
 

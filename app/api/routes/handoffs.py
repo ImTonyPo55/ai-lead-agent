@@ -2,9 +2,10 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from app.db.models import Handoff
+from app.db.models import Handoff, Lead, Message
 from app.db.session import get_db
 from app.services.event_service import log_event
+from app.services.handoff_package_service import build_handoff_package
 
 router = APIRouter(prefix="/handoffs", tags=["handoffs"])
 
@@ -80,6 +81,24 @@ def _update_latest_handoff_status(lead_id: int, status: str, db: Session) -> dic
     _log_handoff_status_event(db, handoff, previous_status)
 
     return _handoff_response(handoff)
+
+
+def _latest_handoff(db: Session, lead_id: int) -> Handoff | None:
+    return (
+        db.query(Handoff)
+        .filter(Handoff.lead_id == lead_id)
+        .order_by(Handoff.id.desc())
+        .first()
+    )
+
+
+def _latest_message(db: Session, lead_id: int) -> Message | None:
+    return (
+        db.query(Message)
+        .filter(Message.lead_id == lead_id)
+        .order_by(Message.id.desc())
+        .first()
+    )
 
 
 @router.get("")
@@ -168,3 +187,44 @@ def set_handoff_in_progress(lead_id: int, db: Session = Depends(get_db)) -> dict
 @router.post("/{lead_id}/complete")
 def set_handoff_done(lead_id: int, db: Session = Depends(get_db)) -> dict:
     return _update_latest_handoff_status(lead_id, "done", db)
+
+
+@router.post("/{lead_id}/export-crm")
+def export_handoff_to_crm(lead_id: int, db: Session = Depends(get_db)) -> dict:
+    lead = db.get(Lead, lead_id)
+    if lead is None:
+        return {
+            "status": "error",
+            "message": f"Lead {lead_id} not found",
+        }
+
+    latest_handoff = _latest_handoff(db, lead_id)
+    if latest_handoff is None:
+        return {
+            "status": "error",
+            "message": f"Handoff for lead {lead_id} not found",
+        }
+
+    handoff_package = build_handoff_package(
+        lead,
+        latest_handoff=latest_handoff,
+        latest_message=_latest_message(db, lead_id),
+    )
+    log_event(
+        db,
+        lead_id,
+        "crm_export_simulated",
+        {
+            "handoff_id": latest_handoff.id,
+            "target": "demo_crm",
+            "status": "ok",
+        },
+    )
+
+    return {
+        "status": "ok",
+        "message": "CRM export simulated",
+        "lead_id": lead.id,
+        "handoff_status": latest_handoff.status,
+        "crm_payload": handoff_package["crm_payload"],
+    }
