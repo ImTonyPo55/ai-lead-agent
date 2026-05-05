@@ -527,9 +527,9 @@ def ui_page() -> str:
           <h3 id="sendSectionTitle">Отправить сообщение</h3>
         </div>
 
-        <div id="leadIdLabel" class="field-label">lead_id</div>
+        <div id="leadIdLabel" class="field-label">Lead ID</div>
         <input id="leadIdInput" placeholder="Оставьте пустым для нового лида" />
-        <div id="leadIdHelp" class="field-help">Укажите существующий lead_id только если продолжаете текущий диалог.</div>
+        <div id="leadIdHelp" class="field-help">Оставьте пустым для нового лида. Укажите Lead ID только если продолжаете существующий диалог.</div>
         <div style="height: 10px;"></div>
         <div id="messageLabel" class="field-label">Входящее сообщение</div>
         <textarea id="messageInput" placeholder="Например: We are UrbanFit. Need a spin-to-win campaign for Shopify lead capture. Contact @urbanfit_cmo"></textarea>
@@ -548,14 +548,14 @@ def ui_page() -> str:
         </div>
 
         <details>
-          <summary id="rawResponseSummary">Технический ответ</summary>
+          <summary id="rawResponseSummary">Технический JSON ответа</summary>
           <pre id="sendResult">—</pre>
         </details>
       </div>
 
       <div class="card">
         <div class="section-title">
-          <h3 id="summarySectionTitle">Сводка лида кампании</h3>
+          <h3 id="summarySectionTitle">Сводка лида</h3>
         </div>
 
         <input id="summaryLeadIdInput" placeholder="Введите lead_id" />
@@ -577,7 +577,7 @@ def ui_page() -> str:
 
     <div class="card">
       <div class="section-title">
-        <h3 id="dashboardSectionTitle">Обзор панели</h3>
+        <h3 id="dashboardSectionTitle">Операционная панель</h3>
         <button id="refreshDashboardBtn" class="btn btn-action">Обновить панель</button>
       </div>
 
@@ -627,7 +627,7 @@ def ui_page() -> str:
 
       <div class="card">
         <div class="section-title">
-          <h3 id="handoffsSectionTitle">Последние передачи</h3>
+          <h3 id="handoffsSectionTitle">Последние передачи в работу</h3>
           <button id="refreshHandoffsBtn" class="btn btn-action">Обновить</button>
         </div>
 
@@ -660,10 +660,10 @@ def ui_page() -> str:
       ru: {
         pageTitle: 'MechanicFlow AI',
         pageSubtitle: 'AI intake agent for gamified campaign leads, mechanic recommendation, qualification, CRM-ready handoff.',
-        sendSectionTitle: 'Отправить сообщение',
+        sendSectionTitle: 'Обработать входящий лид',
         sendBtn: 'Отправить',
         clearBtn: 'Очистить',
-        sendHint: 'Оставьте lead_id пустым для нового лида или укажите существующий lead_id, чтобы продолжить диалог.',
+        sendHint: 'Оставьте Lead ID пустым для нового лида или укажите существующий Lead ID, чтобы продолжить диалог.',
         demoExamplesTitle: 'Примеры входящих запросов',
         demoExamples: [
           'We are Bloom Retail. Need a holiday promo game to collect emails and boost repeat purchases. Contact @bloom_growth',
@@ -672,11 +672,11 @@ def ui_page() -> str:
           'We are Nova Agency. Need a branded Advent Calendar campaign for a client. Contact @nova_agency',
           'We are GameLaunch Studio. Need a quiz lead magnet for a new product launch. Contact @gamelaunch_cmo',
         ],
-        rawResponseSummary: 'Технический ответ',
-        summarySectionTitle: 'Сводка лида кампании',
+        rawResponseSummary: 'Технический JSON ответа',
+        summarySectionTitle: 'Сводка лида',
         loadSummaryBtn: 'Загрузить сводку',
         rawSummarySummary: 'Технический JSON сводки',
-        dashboardSectionTitle: 'Обзор панели',
+        dashboardSectionTitle: 'Операционная панель',
         refreshDashboardBtn: 'Обновить панель',
         metricLeadsLabel: 'Лиды кампаний',
         metricQualifiedLabel: 'Готовы к передаче',
@@ -686,20 +686,20 @@ def ui_page() -> str:
         leadsSectionTitle: 'Последние лиды кампаний',
         refreshLeadsBtn: 'Обновить',
         rawLeadsSummary: 'Технический JSON лидов',
-        handoffsSectionTitle: 'Последние передачи',
+        handoffsSectionTitle: 'Последние передачи в работу',
         refreshHandoffsBtn: 'Обновить',
         rawHandoffsSummary: 'Технический JSON передач',
         loadDemoBtn: 'Загрузить примеры',
         resetDemoBtn: 'Очистить данные',
-        footerText: 'MechanicFlow AI operational workspace for campaign lead qualification and handoff.',
-        leadIdLabel: 'lead_id',
-        leadIdHelp: 'Укажите существующий lead_id только если продолжаете текущий диалог.',
+        footerText: 'MechanicFlow AI: операционное пространство для квалификации campaign leads и передачи в работу.',
+        leadIdLabel: 'Lead ID',
+        leadIdHelp: 'Оставьте пустым для нового лида. Укажите Lead ID только если продолжаете существующий диалог.',
         messageLabel: 'Входящее сообщение',
         leadIdPlaceholder: 'Оставьте пустым для нового лида',
-        summaryLeadIdPlaceholder: 'Введите lead_id',
+        summaryLeadIdPlaceholder: 'Введите Lead ID',
         messagePlaceholder: 'Например: We are UrbanFit. Need a spin-to-win campaign for Shopify lead capture. Contact @urbanfit_cmo',
         empty: '—',
-        noSummary: 'Выберите лид или отправьте новое входящее сообщение.',
+        noSummary: 'Выберите лид из списка или введите Lead ID.',
         noLeads: 'Лидов кампаний пока нет.',
         noHandoffs: 'Передач пока нет.',
         leadId: 'lead_id',
@@ -719,7 +719,7 @@ def ui_page() -> str:
         missingFields: 'Недостающие поля',
         recommendedPackage: 'Рекомендованный пакет',
         suggestedTier: 'Рекомендуемый тариф',
-        copyReadyFollowup: 'Готовый follow-up',
+        copyReadyFollowup: 'Готовое follow-up сообщение',
         copyFollowup: 'Скопировать follow-up',
         score: 'Оценка',
         priority: 'Приоритет',
@@ -728,18 +728,19 @@ def ui_page() -> str:
         crmEvent: 'Событие CRM',
         handoffPackage: 'Пакет передачи кампании',
         followupPackage: 'Пакет follow-up',
-        packageSummary: 'Резюме',
-        qualificationReason: 'Причина квалификации',
-        recommendedNextAction: 'Следующее действие',
+        packageSummary: 'Краткое резюме',
+        qualificationReason: 'Почему лид готов',
+        recommendedNextAction: 'Рекомендуемое следующее действие',
+        nextQuestion: 'Следующий вопрос',
         recommendedMechanicSection: 'Рекомендованная игровая механика',
-        crmPayloadPreview: 'CRM payload',
+        crmPayloadPreview: 'Предпросмотр CRM payload',
         exportCrm: 'Экспорт в CRM',
         copyPackage: 'Скопировать пакет',
         handoffStatus: 'Статус передачи',
-        lifecycleReady: 'Лид готов к передаче: CRM export, копирование пакета и перевод в работу доступны.',
-        lifecycleActive: 'Передача уже взята в работу. Новый handoff не создаётся повторно.',
-        lifecycleCompleted: 'Передача завершена. CRM export повторно не предлагается.',
-        lifecycleFollowup: 'Лид требует уточнения. Доступен только follow-up без CRM export.',
+        lifecycleReady: 'Лид готов к передаче: доступны экспорт в CRM, копирование пакета и перевод в работу.',
+        lifecycleActive: 'Передача уже в работе. Повторный handoff не создаётся.',
+        lifecycleCompleted: 'Передача завершена. Экспорт в CRM больше не предлагается как основное действие.',
+        lifecycleFollowup: 'Лид требует уточнения. Доступно только follow-up сообщение; CRM export заблокирован.',
         ownerSection: 'Ответственный',
         team: 'Команда',
         routingReason: 'Причина назначения',
@@ -797,7 +798,7 @@ def ui_page() -> str:
       en: {
         pageTitle: 'MechanicFlow AI',
         pageSubtitle: 'AI intake agent for gamified campaign leads, mechanic recommendation, qualification, CRM-ready handoff.',
-        sendSectionTitle: 'Send message',
+        sendSectionTitle: 'Process inbound lead',
         sendBtn: 'Send',
         clearBtn: 'Clear',
         sendHint: 'Try a campaign example or send an inbound request from a brand, eCommerce team, or agency.',
@@ -809,11 +810,11 @@ def ui_page() -> str:
           'We are Nova Agency. Need a branded Advent Calendar campaign for a client. Contact @nova_agency',
           'We are GameLaunch Studio. Need a quiz lead magnet for a new product launch. Contact @gamelaunch_cmo',
         ],
-        rawResponseSummary: 'Technical response',
-        summarySectionTitle: 'Campaign lead summary',
+        rawResponseSummary: 'Technical response JSON',
+        summarySectionTitle: 'Lead summary',
         loadSummaryBtn: 'Load summary',
         rawSummarySummary: 'Technical summary JSON',
-        dashboardSectionTitle: 'Dashboard overview',
+        dashboardSectionTitle: 'Operational dashboard',
         refreshDashboardBtn: 'Refresh dashboard',
         metricLeadsLabel: 'Campaign leads',
         metricQualifiedLabel: 'Qualified',
@@ -829,11 +830,11 @@ def ui_page() -> str:
         loadDemoBtn: 'Load examples',
         resetDemoBtn: 'Clear data',
         footerText: 'MechanicFlow AI operational workspace for campaign lead qualification and handoff.',
-        leadIdLabel: 'lead_id',
+        leadIdLabel: 'Lead ID',
         leadIdHelp: 'Use an existing lead_id only when continuing an active conversation.',
         messageLabel: 'Inbound message',
         leadIdPlaceholder: 'Leave empty to create a new lead',
-        summaryLeadIdPlaceholder: 'Enter lead_id',
+        summaryLeadIdPlaceholder: 'Enter Lead ID',
         messagePlaceholder: 'Example: We are UrbanFit. Need a spin-to-win campaign for Shopify lead capture. Contact @urbanfit_cmo',
         empty: '—',
         noSummary: 'Select a lead or send a new inbound message.',
@@ -865,9 +866,10 @@ def ui_page() -> str:
         crmEvent: 'CRM event',
         handoffPackage: 'Campaign handoff package',
         followupPackage: 'Follow-up package',
-        packageSummary: 'Summary',
-        qualificationReason: 'Qualification reason',
+        packageSummary: 'Short summary',
+        qualificationReason: 'Why qualified',
         recommendedNextAction: 'Recommended next action',
+        nextQuestion: 'Next question',
         recommendedMechanicSection: 'Recommended game mechanic',
         crmPayloadPreview: 'CRM payload preview',
         exportCrm: 'Export to CRM',
@@ -934,11 +936,11 @@ def ui_page() -> str:
       es: {
         pageTitle: 'MechanicFlow AI',
         pageSubtitle: 'AI intake agent for gamified campaign leads, mechanic recommendation, qualification, CRM-ready handoff.',
-        sendSectionTitle: 'Enviar mensaje',
+        sendSectionTitle: 'Procesar lead entrante',
         sendBtn: 'Enviar',
         clearBtn: 'Limpiar',
         sendHint: 'Prueba un ejemplo de campaña o envía una solicitud de una marca, eCommerce o agencia.',
-        demoExamplesTitle: 'Campaign examples',
+        demoExamplesTitle: 'Ejemplos de campaña',
         demoExamples: [
           'We are Bloom Retail. Need a holiday promo game to collect emails and boost repeat purchases. Contact @bloom_growth',
           'We are UrbanFit. Need a spin-to-win campaign for Shopify lead capture. Contact @urbanfit_cmo',
@@ -946,18 +948,18 @@ def ui_page() -> str:
           'We are Nova Agency. Need a branded Advent Calendar campaign for a client. Contact @nova_agency',
           'We are GameLaunch Studio. Need a quiz lead magnet for a new product launch. Contact @gamelaunch_cmo',
         ],
-        rawResponseSummary: 'Respuesta técnica',
-        summarySectionTitle: 'Resumen del campaign lead',
+        rawResponseSummary: 'JSON técnico de la respuesta',
+        summarySectionTitle: 'Resumen del lead',
         loadSummaryBtn: 'Cargar resumen',
         rawSummarySummary: 'JSON técnico del resumen',
-        dashboardSectionTitle: 'Resumen del panel',
+        dashboardSectionTitle: 'Panel operativo',
         refreshDashboardBtn: 'Actualizar panel',
-        metricLeadsLabel: 'Campaign leads',
+        metricLeadsLabel: 'Leads de campaña',
         metricQualifiedLabel: 'Calificados',
         metricInProgressLabel: 'En progreso',
         metricDoneLabel: 'Completados',
         rawDashboardSummary: 'JSON técnico del panel',
-        leadsSectionTitle: 'Campaign leads recientes',
+        leadsSectionTitle: 'Leads de campaña recientes',
         refreshLeadsBtn: 'Actualizar',
         rawLeadsSummary: 'JSON técnico de leads',
         handoffsSectionTitle: 'Transferencias recientes',
@@ -965,12 +967,12 @@ def ui_page() -> str:
         rawHandoffsSummary: 'JSON técnico de transferencias',
         loadDemoBtn: 'Cargar ejemplos',
         resetDemoBtn: 'Limpiar datos',
-        footerText: 'MechanicFlow AI operational workspace for campaign lead qualification and handoff.',
-        leadIdLabel: 'lead_id',
-        leadIdHelp: 'Usa un lead_id existente solo si continúas una conversación activa.',
+        footerText: 'MechanicFlow AI: espacio operativo para calificar leads de campaña y transferirlos a trabajo.',
+        leadIdLabel: 'Lead ID',
+        leadIdHelp: 'Déjalo vacío para crear un nuevo lead. Usa Lead ID solo si continúas una conversación existente.',
         messageLabel: 'Mensaje entrante',
         leadIdPlaceholder: 'Déjalo vacío para crear un nuevo lead',
-        summaryLeadIdPlaceholder: 'Ingresa lead_id',
+        summaryLeadIdPlaceholder: 'Ingresa Lead ID',
         messagePlaceholder: 'Ejemplo: We are UrbanFit. Need a spin-to-win campaign for Shopify lead capture. Contact @urbanfit_cmo',
         empty: '—',
         noSummary: 'Selecciona un lead o envía un nuevo mensaje entrante.',
@@ -984,7 +986,7 @@ def ui_page() -> str:
         clientType: 'Tipo de cliente',
         campaignGoal: 'Objetivo de campaña',
         platform: 'Plataforma',
-        campaignIntelligence: 'Campaign Intelligence',
+        campaignIntelligence: 'Inteligencia de campaña',
         recommendedMechanic: 'Mejor juego para esta campaña',
         mechanicName: 'Mecánica de juego recomendada',
         mechanicReason: 'Por qué encaja',
@@ -993,19 +995,20 @@ def ui_page() -> str:
         missingFields: 'Campos faltantes',
         recommendedPackage: 'Paquete recomendado',
         suggestedTier: 'Plan sugerido',
-        copyReadyFollowup: 'Copy-ready follow-up',
-        copyFollowup: 'Copy follow-up',
+        copyReadyFollowup: 'Mensaje follow-up listo',
+        copyFollowup: 'Copiar follow-up',
         score: 'Puntuación',
         priority: 'Prioridad',
         eventTimeline: 'Historial de eventos',
         noEvents: 'Aún no hay eventos.',
         crmEvent: 'Evento CRM',
-        handoffPackage: 'Campaign handoff package',
-        followupPackage: 'Follow-up package',
+        handoffPackage: 'Paquete de transferencia de campaña',
+        followupPackage: 'Paquete de follow-up',
         packageSummary: 'Resumen',
         qualificationReason: 'Razón de calificación',
-        recommendedNextAction: 'Siguiente acción',
-        recommendedMechanicSection: 'Recommended game mechanic',
+        recommendedNextAction: 'Siguiente acción recomendada',
+        nextQuestion: 'Siguiente pregunta',
+        recommendedMechanicSection: 'Mecánica de juego recomendada',
         crmPayloadPreview: 'Vista previa de CRM payload',
         exportCrm: 'Exportar a CRM',
         copyPackage: 'Copiar paquete',
@@ -1102,6 +1105,30 @@ def ui_page() -> str:
       if (!value) return '—';
       if (Array.isArray(value)) return value.length ? value.join(', ') : '—';
       return String(value);
+    }
+
+    function displayMissingFields(value) {
+      if (!value) return '—';
+
+      const rawItems = Array.isArray(value) ? value : String(value).split(',');
+      const labels = {
+        company: t('company'),
+        contact: t('contact'),
+        campaign_need: t('useCase'),
+        use_case: t('useCase'),
+        client_type: t('clientType'),
+        campaign_goal: t('campaignGoal'),
+        platform: t('platform'),
+        pricing_tier: t('pricingTier'),
+        recommended_mechanic: t('recommendedMechanic'),
+      };
+
+      const items = rawItems
+        .map(item => String(item || '').trim())
+        .filter(Boolean)
+        .map(item => labels[item.toLowerCase().replace(/\\s+/g, '_')] || item);
+
+      return items.length ? items.join(', ') : '—';
     }
 
     function renderDemoExamples() {
@@ -1366,7 +1393,7 @@ def ui_page() -> str:
         [t('handoffStatus'), mapStatus(lifecycleStatus)],
         [t('score'), data.score ?? t('empty')],
         [t('priority'), data.priority || t('empty')],
-        [t('missingFields'), displayList(missingFields)],
+        [t('missingFields'), displayMissingFields(missingFields)],
         [t('company'), lead.company || t('empty')],
         [t('role'), lead.role || t('empty')],
         [t('contact'), lead.contact || t('empty')],
@@ -1418,7 +1445,7 @@ def ui_page() -> str:
           <div class="list-sub">${t('mechanicReason')}: ${displayValue(handoffPackage.mechanic_reason || handoffPackage.recommended_mechanic_reason)}</div>
           <div class="list-sub">${t('suggestedTier')}: ${displayValue(handoffPackage.pricing_tier)}</div>
           <div class="list-sub">${t('qualificationStatus')}: ${mapStatus(handoffPackage.qualification_status)}</div>
-          <div class="list-sub">${t('missingFields')}: ${displayList(missingFields)}</div>
+          <div class="list-sub">${t('missingFields')}: ${displayMissingFields(missingFields)}</div>
           <div class="list-sub">${t('recommendedNextAction')}: ${displayValue(handoffPackage.recommended_next_action)}</div>
           <div class="list-sub"><strong>${t('copyReadyFollowup')}:</strong> ${displayValue(handoffPackage.copy_text)}</div>
         `;
@@ -1495,7 +1522,10 @@ def ui_page() -> str:
           <div class="lifecycle-note">${lifecycleText(lifecycleStatus, hasMissingFields)}</div>
           <div class="list-sub"><strong>${t('packageSummary')}:</strong> ${displayValue(handoffPackage.summary)}</div>
           <div class="list-sub"><strong>${t('qualificationReason')}:</strong> ${displayValue(handoffPackage.qualification_reason)}</div>
+          <div class="list-sub"><strong>${t('recommendedMechanicSection')}:</strong> ${displayValue(handoffPackage.recommended_mechanic)}</div>
+          <div class="list-sub"><strong>${t('suggestedTier')}:</strong> ${displayValue(handoffPackage.pricing_tier)}</div>
           <div class="list-sub"><strong>${t('recommendedNextAction')}:</strong> ${displayValue(handoffPackage.recommended_next_action)}</div>
+          <div class="list-sub"><strong>${t('copyReadyFollowup')}:</strong> ${displayValue(handoffPackage.copy_text)}</div>
           <div class="list-sub"><strong>${t('crmPayloadPreview')}:</strong></div>
           ${payloadRows.map(([label, value]) => `<div class="list-sub">${label}: ${displayValue(value)}</div>`).join('')}
           ${packageActions.length ? `<div class="list-actions">${packageActions.join('')}</div>` : ''}
@@ -1507,8 +1537,8 @@ def ui_page() -> str:
         followupBox.innerHTML = `
           <div class="list-title">${t('followupPackage')}</div>
           <div class="lifecycle-note">${lifecycleText(lifecycleStatus, hasMissingFields)}</div>
-          <div class="list-sub"><strong>${t('missingFields')}:</strong> ${displayList(missingFields)}</div>
-          <div class="list-sub"><strong>${t('recommendedNextAction')}:</strong> ${displayValue(handoffPackage.next_question || handoffPackage.recommended_next_action)}</div>
+          <div class="list-sub"><strong>${t('missingFields')}:</strong> ${displayMissingFields(missingFields)}</div>
+          <div class="list-sub"><strong>${t('nextQuestion')}:</strong> ${displayValue(handoffPackage.next_question || handoffPackage.recommended_next_action)}</div>
           <div class="list-sub"><strong>${t('copyReadyFollowup')}:</strong> ${displayValue(handoffPackage.copy_text)}</div>
           ${handoffPackage.copy_text ? `<div class="list-actions"><button class="btn btn-gray" id="copyFollowupBtn">${t('copyFollowup')}</button></div>` : ''}
         `;
