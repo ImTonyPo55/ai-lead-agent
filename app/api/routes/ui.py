@@ -2068,6 +2068,11 @@ def ui_page() -> str:
 """
 
 
+def render_ui_html() -> str:
+    return ui_page()
+
+
 @router.get("/ui", response_class=HTMLResponse)
+@router.get("/ui/", response_class=HTMLResponse)
 async def ui():
-    return HTMLResponse(ui_page())
+    return HTMLResponse(render_ui_html())
