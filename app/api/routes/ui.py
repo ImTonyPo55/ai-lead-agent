@@ -248,6 +248,22 @@ def ui_page() -> str:
       margin-bottom: 8px;
     }
 
+    .field-label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 7px;
+    }
+
+    .field-help {
+      color: var(--muted-2);
+      font-size: 12px;
+      line-height: 1.4;
+      margin-top: 6px;
+    }
+
     .example-grid {
       display: grid;
       gap: 8px;
@@ -490,7 +506,7 @@ def ui_page() -> str:
     <div class="topbar">
       <div class="title">
         <h1 id="pageTitle">MechanicFlow AI</h1>
-        <p id="pageSubtitle">AI workflow for qualifying campaign leads, recommending gamified mechanics, and preparing CRM-ready handoff.</p>
+        <p id="pageSubtitle">AI intake agent for gamified campaign leads, mechanic recommendation, qualification, CRM-ready handoff.</p>
       </div>
 
       <div class="controls">
@@ -511,9 +527,12 @@ def ui_page() -> str:
           <h3 id="sendSectionTitle">Отправить сообщение</h3>
         </div>
 
-        <input id="leadIdInput" placeholder="lead_id — необязательно для первого сообщения" />
+        <div id="leadIdLabel" class="field-label">lead_id</div>
+        <input id="leadIdInput" placeholder="Оставьте пустым для нового лида" />
+        <div id="leadIdHelp" class="field-help">Укажите существующий lead_id только если продолжаете текущий диалог.</div>
         <div style="height: 10px;"></div>
-        <textarea id="messageInput" placeholder="Введите входящее сообщение..."></textarea>
+        <div id="messageLabel" class="field-label">Входящее сообщение</div>
+        <textarea id="messageInput" placeholder="Например: We are UrbanFit. Need a spin-to-win campaign for Shopify lead capture. Contact @urbanfit_cmo"></textarea>
         <div class="example-panel">
           <div id="demoExamplesTitle" class="example-title">Campaign examples</div>
           <div id="demoExamples" class="example-grid"></div>
@@ -568,15 +587,15 @@ def ui_page() -> str:
           <div id="metricLeads" class="value">0</div>
         </div>
         <div class="metric">
-          <div class="label" id="metricQualifiedLabel">Квалифицировано</div>
+          <div class="label" id="metricQualifiedLabel">Готовы к передаче</div>
           <div id="metricQualified" class="value">0</div>
         </div>
         <div class="metric">
-          <div class="label" id="metricInProgressLabel">Передачи в работе</div>
+          <div class="label" id="metricInProgressLabel">В работе</div>
           <div id="metricInProgress" class="value">0</div>
         </div>
         <div class="metric">
-          <div class="label" id="metricDoneLabel">Передачи завершены</div>
+          <div class="label" id="metricDoneLabel">Завершены</div>
           <div id="metricDone" class="value">0</div>
         </div>
       </div>
@@ -640,11 +659,11 @@ def ui_page() -> str:
     const i18n = {
       ru: {
         pageTitle: 'MechanicFlow AI',
-        pageSubtitle: 'AI workflow for qualifying campaign leads, recommending gamified mechanics, and preparing CRM-ready handoff.',
+        pageSubtitle: 'AI intake agent for gamified campaign leads, mechanic recommendation, qualification, CRM-ready handoff.',
         sendSectionTitle: 'Отправить сообщение',
         sendBtn: 'Отправить',
         clearBtn: 'Очистить',
-        sendHint: 'Отправьте входящий запрос бренда, eCommerce-команды или агентства.',
+        sendHint: 'Оставьте lead_id пустым для нового лида или укажите существующий lead_id, чтобы продолжить диалог.',
         demoExamplesTitle: 'Примеры входящих запросов',
         demoExamples: [
           'We are Bloom Retail. Need a holiday promo game to collect emails and boost repeat purchases. Contact @bloom_growth',
@@ -661,8 +680,8 @@ def ui_page() -> str:
         refreshDashboardBtn: 'Обновить панель',
         metricLeadsLabel: 'Лиды кампаний',
         metricQualifiedLabel: 'Готовы к передаче',
-        metricInProgressLabel: 'Передачи в работе',
-        metricDoneLabel: 'Передачи завершены',
+        metricInProgressLabel: 'В работе',
+        metricDoneLabel: 'Завершены',
         rawDashboardSummary: 'Технический JSON панели',
         leadsSectionTitle: 'Последние лиды кампаний',
         refreshLeadsBtn: 'Обновить',
@@ -673,9 +692,12 @@ def ui_page() -> str:
         loadDemoBtn: 'Загрузить примеры',
         resetDemoBtn: 'Очистить данные',
         footerText: 'MechanicFlow AI operational workspace for campaign lead qualification and handoff.',
-        leadIdPlaceholder: 'lead_id — необязательно для первого сообщения',
+        leadIdLabel: 'lead_id',
+        leadIdHelp: 'Укажите существующий lead_id только если продолжаете текущий диалог.',
+        messageLabel: 'Входящее сообщение',
+        leadIdPlaceholder: 'Оставьте пустым для нового лида',
         summaryLeadIdPlaceholder: 'Введите lead_id',
-        messagePlaceholder: 'Введите входящее сообщение...',
+        messagePlaceholder: 'Например: We are UrbanFit. Need a spin-to-win campaign for Shopify lead capture. Contact @urbanfit_cmo',
         empty: '—',
         noSummary: 'Выберите лид или отправьте новое входящее сообщение.',
         noLeads: 'Лидов кампаний пока нет.',
@@ -746,15 +768,15 @@ def ui_page() -> str:
         status_ready_to_handoff: 'готов к передаче',
         status_active_handoff: 'в работе',
         status_completed_handoff: 'завершено',
-        status_needs_followup: 'требует продолжения',
-        status_needs_follow_up: 'требует продолжения',
+        status_needs_followup: 'требует уточнения',
+        status_needs_follow_up: 'требует уточнения',
         status_pending: 'готов к передаче',
         status_in_progress: 'в работе',
         status_done: 'завершено',
         status_completed: 'завершено',
         status_unknown: 'неизвестно',
         moveToInProgress: 'Перевести в работу',
-        markDone: 'Отметить как завершённую',
+        markDone: 'Завершить передачу',
         open: 'Открыть',
         toastDemoLoaded: 'Примеры загружены.',
         toastDemoReset: 'Данные очищены.',
@@ -774,7 +796,7 @@ def ui_page() -> str:
       },
       en: {
         pageTitle: 'MechanicFlow AI',
-        pageSubtitle: 'AI workflow for qualifying campaign leads, recommending gamified mechanics, and preparing CRM-ready handoff.',
+        pageSubtitle: 'AI intake agent for gamified campaign leads, mechanic recommendation, qualification, CRM-ready handoff.',
         sendSectionTitle: 'Send message',
         sendBtn: 'Send',
         clearBtn: 'Clear',
@@ -787,29 +809,32 @@ def ui_page() -> str:
           'We are Nova Agency. Need a branded Advent Calendar campaign for a client. Contact @nova_agency',
           'We are GameLaunch Studio. Need a quiz lead magnet for a new product launch. Contact @gamelaunch_cmo',
         ],
-        rawResponseSummary: 'Raw response',
+        rawResponseSummary: 'Technical response',
         summarySectionTitle: 'Campaign lead summary',
         loadSummaryBtn: 'Load summary',
-        rawSummarySummary: 'Raw summary JSON',
+        rawSummarySummary: 'Technical summary JSON',
         dashboardSectionTitle: 'Dashboard overview',
         refreshDashboardBtn: 'Refresh dashboard',
         metricLeadsLabel: 'Campaign leads',
         metricQualifiedLabel: 'Qualified',
-        metricInProgressLabel: 'Handoffs in progress',
-        metricDoneLabel: 'Handoffs done',
-        rawDashboardSummary: 'Raw dashboard JSON',
+        metricInProgressLabel: 'In progress',
+        metricDoneLabel: 'Completed',
+        rawDashboardSummary: 'Technical dashboard JSON',
         leadsSectionTitle: 'Recent campaign leads',
         refreshLeadsBtn: 'Refresh',
-        rawLeadsSummary: 'Raw leads JSON',
+        rawLeadsSummary: 'Technical leads JSON',
         handoffsSectionTitle: 'Recent handoffs',
         refreshHandoffsBtn: 'Refresh',
-        rawHandoffsSummary: 'Raw handoffs JSON',
+        rawHandoffsSummary: 'Technical handoffs JSON',
         loadDemoBtn: 'Load examples',
         resetDemoBtn: 'Clear data',
         footerText: 'MechanicFlow AI operational workspace for campaign lead qualification and handoff.',
-        leadIdPlaceholder: 'lead_id — optional for the first message',
+        leadIdLabel: 'lead_id',
+        leadIdHelp: 'Use an existing lead_id only when continuing an active conversation.',
+        messageLabel: 'Inbound message',
+        leadIdPlaceholder: 'Leave empty to create a new lead',
         summaryLeadIdPlaceholder: 'Enter lead_id',
-        messagePlaceholder: 'Enter inbound message...',
+        messagePlaceholder: 'Example: We are UrbanFit. Need a spin-to-win campaign for Shopify lead capture. Contact @urbanfit_cmo',
         empty: '—',
         noSummary: 'Select a lead or send a new inbound message.',
         noLeads: 'No campaign leads yet.',
@@ -878,7 +903,7 @@ def ui_page() -> str:
         status_new: 'new',
         status_qualified: 'qualified',
         status_ready_to_handoff: 'ready for handoff',
-        status_active_handoff: 'in work',
+        status_active_handoff: 'in progress',
         status_completed_handoff: 'completed',
         status_needs_followup: 'needs follow-up',
         status_needs_follow_up: 'needs follow-up',
@@ -887,8 +912,8 @@ def ui_page() -> str:
         status_done: 'done',
         status_completed: 'completed',
         status_unknown: 'unknown',
-        moveToInProgress: 'Set handoff in progress',
-        markDone: 'Set handoff done',
+        moveToInProgress: 'Move to work',
+        markDone: 'Complete handoff',
         open: 'Open',
         toastDemoLoaded: 'Examples loaded.',
         toastDemoReset: 'Data cleared.',
@@ -908,7 +933,7 @@ def ui_page() -> str:
       },
       es: {
         pageTitle: 'MechanicFlow AI',
-        pageSubtitle: 'AI workflow for qualifying campaign leads, recommending gamified mechanics, and preparing CRM-ready handoff.',
+        pageSubtitle: 'AI intake agent for gamified campaign leads, mechanic recommendation, qualification, CRM-ready handoff.',
         sendSectionTitle: 'Enviar mensaje',
         sendBtn: 'Enviar',
         clearBtn: 'Limpiar',
@@ -921,29 +946,32 @@ def ui_page() -> str:
           'We are Nova Agency. Need a branded Advent Calendar campaign for a client. Contact @nova_agency',
           'We are GameLaunch Studio. Need a quiz lead magnet for a new product launch. Contact @gamelaunch_cmo',
         ],
-        rawResponseSummary: 'Respuesta bruta',
+        rawResponseSummary: 'Respuesta técnica',
         summarySectionTitle: 'Resumen del campaign lead',
         loadSummaryBtn: 'Cargar resumen',
-        rawSummarySummary: 'JSON bruto del resumen',
+        rawSummarySummary: 'JSON técnico del resumen',
         dashboardSectionTitle: 'Resumen del panel',
         refreshDashboardBtn: 'Actualizar panel',
         metricLeadsLabel: 'Campaign leads',
         metricQualifiedLabel: 'Calificados',
-        metricInProgressLabel: 'Transferencias en progreso',
-        metricDoneLabel: 'Transferencias completadas',
-        rawDashboardSummary: 'JSON bruto del panel',
+        metricInProgressLabel: 'En progreso',
+        metricDoneLabel: 'Completados',
+        rawDashboardSummary: 'JSON técnico del panel',
         leadsSectionTitle: 'Campaign leads recientes',
         refreshLeadsBtn: 'Actualizar',
-        rawLeadsSummary: 'JSON bruto de leads',
+        rawLeadsSummary: 'JSON técnico de leads',
         handoffsSectionTitle: 'Transferencias recientes',
         refreshHandoffsBtn: 'Actualizar',
-        rawHandoffsSummary: 'JSON bruto de transferencias',
+        rawHandoffsSummary: 'JSON técnico de transferencias',
         loadDemoBtn: 'Cargar ejemplos',
         resetDemoBtn: 'Limpiar datos',
         footerText: 'MechanicFlow AI operational workspace for campaign lead qualification and handoff.',
-        leadIdPlaceholder: 'lead_id — opcional para el primer mensaje',
+        leadIdLabel: 'lead_id',
+        leadIdHelp: 'Usa un lead_id existente solo si continúas una conversación activa.',
+        messageLabel: 'Mensaje entrante',
+        leadIdPlaceholder: 'Déjalo vacío para crear un nuevo lead',
         summaryLeadIdPlaceholder: 'Ingresa lead_id',
-        messagePlaceholder: 'Ingresa el mensaje entrante...',
+        messagePlaceholder: 'Ejemplo: We are UrbanFit. Need a spin-to-win campaign for Shopify lead capture. Contact @urbanfit_cmo',
         empty: '—',
         noSummary: 'Selecciona un lead o envía un nuevo mensaje entrante.',
         noLeads: 'Aún no hay leads de campaña.',
@@ -1012,7 +1040,7 @@ def ui_page() -> str:
         status_new: 'nuevo',
         status_qualified: 'calificado',
         status_ready_to_handoff: 'listo para transferencia',
-        status_active_handoff: 'en trabajo',
+        status_active_handoff: 'en progreso',
         status_completed_handoff: 'completado',
         status_needs_followup: 'requiere seguimiento',
         status_needs_follow_up: 'requiere seguimiento',
@@ -1021,8 +1049,8 @@ def ui_page() -> str:
         status_done: 'completado',
         status_completed: 'completado',
         status_unknown: 'desconocido',
-        moveToInProgress: 'Mover a en progreso',
-        markDone: 'Marcar como completada',
+        moveToInProgress: 'Mover a trabajo',
+        markDone: 'Completar transferencia',
         open: 'Abrir',
         toastDemoLoaded: 'Ejemplos cargados.',
         toastDemoReset: 'Datos limpiados.',
@@ -1131,6 +1159,9 @@ def ui_page() -> str:
       $('resetDemoBtn').textContent = t('resetDemoBtn');
       $('footerText').textContent = t('footerText');
 
+      $('leadIdLabel').textContent = t('leadIdLabel');
+      $('leadIdHelp').textContent = t('leadIdHelp');
+      $('messageLabel').textContent = t('messageLabel');
       $('leadIdInput').placeholder = t('leadIdPlaceholder');
       $('summaryLeadIdInput').placeholder = t('summaryLeadIdPlaceholder');
       $('messageInput').placeholder = t('messagePlaceholder');
@@ -1325,7 +1356,7 @@ def ui_page() -> str:
       badges.innerHTML = `
         <span class="badge badge-id">lead_id: ${lead.id ?? '-'}</span>
         <span class="badge ${badgeClass(lead.lead_status)}">${mapStatus(lead.lead_status)}</span>
-        ${effectiveHandoffStatus ? `<span class="badge ${badgeClass(effectiveHandoffStatus)}">${mapStatus(effectiveHandoffStatus)}</span>` : ''}
+        ${effectiveHandoffStatus && !isFollowupPackage ? `<span class="badge ${badgeClass(effectiveHandoffStatus)}">${mapStatus(effectiveHandoffStatus)}</span>` : ''}
       `;
       wrap.appendChild(badges);
 
@@ -1365,7 +1396,7 @@ def ui_page() -> str:
         <div class="list-sub">${t('assignedTo')}: ${displayValue(ownerRouting.owner)}</div>
         <div class="list-sub">${t('team')}: ${displayValue(ownerRouting.team)}</div>
         <div class="list-sub">${t('routingReason')}: ${displayValue(ownerRouting.reason || ownerRouting.routing_reason)}</div>
-        ${handoff.id ? `
+        ${handoff.id && !isFollowupPackage ? `
           <div class="list-actions">
             <button class="btn btn-gray assign-owner-btn" data-owner="Tony" data-team="Sales">${t('assignTony')}</button>
             <button class="btn btn-gray assign-owner-btn" data-owner="Sales Manager" data-team="Sales">${t('assignSales')}</button>
@@ -1423,6 +1454,21 @@ def ui_page() -> str:
         const payload = handoffPackage.crm_payload || {};
         const packageBox = document.createElement('div');
         packageBox.className = 'list-item';
+        const packageActions = [];
+        const copyPackageAction = (handoffPackage.package_copy_text || handoffPackage.copy_text)
+          ? `<button class="btn btn-gray" id="copyPackageBtn">${t('copyPackage')}</button>`
+          : '';
+
+        if (qualificationStatus === 'ready_to_handoff' && handoff.id) {
+          packageActions.push(`<button class="btn btn-action" id="exportCrmBtn">${t('exportCrm')}</button>`);
+          if (copyPackageAction) packageActions.push(copyPackageAction);
+          packageActions.push(`<button class="btn btn-gray" id="setInProgressBtn">${t('moveToInProgress')}</button>`);
+        } else if (qualificationStatus === 'active_handoff' && handoff.id) {
+          packageActions.push(`<button class="btn btn-green" id="setDoneBtn">${t('markDone')}</button>`);
+          if (copyPackageAction) packageActions.push(copyPackageAction);
+        } else if (copyPackageAction) {
+          packageActions.push(copyPackageAction);
+        }
 
         const payloadRows = [
           [t('company'), payload.company],
@@ -1452,10 +1498,7 @@ def ui_page() -> str:
           <div class="list-sub"><strong>${t('recommendedNextAction')}:</strong> ${displayValue(handoffPackage.recommended_next_action)}</div>
           <div class="list-sub"><strong>${t('crmPayloadPreview')}:</strong></div>
           ${payloadRows.map(([label, value]) => `<div class="list-sub">${label}: ${displayValue(value)}</div>`).join('')}
-          <div class="list-actions">
-            ${qualificationStatus === 'ready_to_handoff' && handoff.id ? `<button class="btn btn-action" id="exportCrmBtn">${t('exportCrm')}</button>` : ''}
-            ${(handoffPackage.package_copy_text || handoffPackage.copy_text) ? `<button class="btn btn-gray" id="copyPackageBtn">${t('copyPackage')}</button>` : ''}
-          </div>
+          ${packageActions.length ? `<div class="list-actions">${packageActions.join('')}</div>` : ''}
         `;
         wrap.appendChild(packageBox);
       } else if (isFollowupPackage) {
@@ -1502,23 +1545,6 @@ def ui_page() -> str:
 
       wrap.appendChild(timeline);
 
-      const actions = document.createElement('div');
-      actions.className = 'summary-actions';
-      if (
-        effectiveHandoffStatus === 'pending'
-        && qualificationStatus === 'ready_to_handoff'
-        && !hasMissingFields
-      ) {
-        actions.innerHTML = `<button class="btn btn-gray" id="setInProgressBtn">${t('moveToInProgress')}</button>`;
-        wrap.appendChild(actions);
-      } else if (
-        effectiveHandoffStatus === 'active_handoff'
-        && qualificationStatus === 'active_handoff'
-        && !hasMissingFields
-      ) {
-        actions.innerHTML = `<button class="btn btn-green" id="setDoneBtn">${t('markDone')}</button>`;
-        wrap.appendChild(actions);
-      }
       box.appendChild(wrap);
 
       const leadId = lead.id;
