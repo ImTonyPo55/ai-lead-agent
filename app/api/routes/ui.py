@@ -544,7 +544,7 @@ def ui_page() -> str:
         </div>
 
         <div id="sendHint" class="hint">
-          После ответа lead_id автоматически подставится в сводку.
+          Оставьте Lead ID пустым для нового лида или укажите существующий Lead ID, чтобы продолжить диалог.
         </div>
 
         <details>
@@ -558,7 +558,7 @@ def ui_page() -> str:
           <h3 id="summarySectionTitle">Сводка лида</h3>
         </div>
 
-        <input id="summaryLeadIdInput" placeholder="Введите lead_id" />
+        <input id="summaryLeadIdInput" placeholder="Введите Lead ID" />
         <div style="height: 10px;"></div>
         <button id="loadSummaryBtn" class="btn btn-action">Загрузить сводку</button>
 
@@ -702,7 +702,7 @@ def ui_page() -> str:
         noSummary: 'Выберите лид из списка или введите Lead ID.',
         noLeads: 'Лидов кампаний пока нет.',
         noHandoffs: 'Передач пока нет.',
-        leadId: 'lead_id',
+        leadId: 'Lead ID',
         company: 'Компания',
         role: 'Роль',
         contact: 'Контакт',
@@ -715,7 +715,7 @@ def ui_page() -> str:
         mechanicName: 'Игровая механика',
         mechanicReason: 'Почему подходит',
         pricingTier: 'Тариф',
-        qualificationStatus: 'Статус квалификации',
+        qualificationStatus: 'Статус',
         missingFields: 'Недостающие поля',
         recommendedPackage: 'Рекомендованный пакет',
         suggestedTier: 'Рекомендуемый тариф',
@@ -763,6 +763,12 @@ def ui_page() -> str:
         lastSender: 'Последний отправитель',
         lastIntent: 'Последнее намерение',
         lastText: 'Последний текст',
+        sender_user: 'клиент',
+        sender_assistant: 'агент',
+        intent_qualified_lead: 'готовый лид',
+        intent_lead_followup: 'нужно уточнение',
+        intent_faq_answer: 'ответ на вопрос',
+        intent_unknown: 'неизвестно',
         notAssigned: 'Не назначен',
         status_new: 'новый',
         status_qualified: 'квалифицирован',
@@ -840,7 +846,7 @@ def ui_page() -> str:
         noSummary: 'Select a lead or send a new inbound message.',
         noLeads: 'No campaign leads yet.',
         noHandoffs: 'No handoffs yet.',
-        leadId: 'lead_id',
+        leadId: 'Lead ID',
         company: 'Company',
         role: 'Role',
         contact: 'Contact',
@@ -853,7 +859,7 @@ def ui_page() -> str:
         mechanicName: 'Recommended game mechanic',
         mechanicReason: 'Why it fits',
         pricingTier: 'Pricing tier',
-        qualificationStatus: 'Qualification status',
+        qualificationStatus: 'Status',
         missingFields: 'Missing fields',
         recommendedPackage: 'Recommended package',
         suggestedTier: 'Suggested tier',
@@ -901,6 +907,12 @@ def ui_page() -> str:
         lastSender: 'Last sender',
         lastIntent: 'Last intent',
         lastText: 'Last text',
+        sender_user: 'client',
+        sender_assistant: 'agent',
+        intent_qualified_lead: 'ready lead',
+        intent_lead_followup: 'needs follow-up',
+        intent_faq_answer: 'question answered',
+        intent_unknown: 'unknown',
         notAssigned: 'Unassigned',
         status_new: 'new',
         status_qualified: 'qualified',
@@ -978,7 +990,7 @@ def ui_page() -> str:
         noSummary: 'Selecciona un lead o envía un nuevo mensaje entrante.',
         noLeads: 'Aún no hay leads de campaña.',
         noHandoffs: 'Aún no hay transferencias.',
-        leadId: 'lead_id',
+        leadId: 'Lead ID',
         company: 'Empresa',
         role: 'Rol',
         contact: 'Contacto',
@@ -991,7 +1003,7 @@ def ui_page() -> str:
         mechanicName: 'Mecánica de juego recomendada',
         mechanicReason: 'Por qué encaja',
         pricingTier: 'Plan',
-        qualificationStatus: 'Estado de calificación',
+        qualificationStatus: 'Estado',
         missingFields: 'Campos faltantes',
         recommendedPackage: 'Paquete recomendado',
         suggestedTier: 'Plan sugerido',
@@ -1039,6 +1051,12 @@ def ui_page() -> str:
         lastSender: 'Último remitente',
         lastIntent: 'Última intención',
         lastText: 'Último texto',
+        sender_user: 'cliente',
+        sender_assistant: 'agente',
+        intent_qualified_lead: 'lead listo',
+        intent_lead_followup: 'requiere seguimiento',
+        intent_faq_answer: 'pregunta respondida',
+        intent_unknown: 'desconocido',
         notAssigned: 'Sin asignar',
         status_new: 'nuevo',
         status_qualified: 'calificado',
@@ -1221,6 +1239,20 @@ def ui_page() -> str:
       return translated === key ? displayValue(fallback || status) : translated;
     }
 
+    function mapSender(sender) {
+      const normalized = String(sender || '').toLowerCase();
+      const key = `sender_${normalized}`;
+      const translated = t(key);
+      return translated === key ? displayValue(sender) : translated;
+    }
+
+    function mapIntent(intent) {
+      const normalized = String(intent || '').toLowerCase();
+      const key = `intent_${normalized}`;
+      const translated = t(key);
+      return translated === key ? displayValue(intent) : translated;
+    }
+
     function badgeClass(status) {
       const s = normalizeHandoffStatus(status);
       if (['qualified', 'ready_to_handoff', 'completed_handoff'].includes(s)) return 'badge-green';
@@ -1381,7 +1413,7 @@ def ui_page() -> str:
       const badges = document.createElement('div');
       badges.className = 'badges';
       badges.innerHTML = `
-        <span class="badge badge-id">lead_id: ${lead.id ?? '-'}</span>
+        <span class="badge badge-id">${t('leadId')}: ${lead.id ?? '-'}</span>
         <span class="badge ${badgeClass(lead.lead_status)}">${mapStatus(lead.lead_status)}</span>
         ${effectiveHandoffStatus && !isFollowupPackage ? `<span class="badge ${badgeClass(effectiveHandoffStatus)}">${mapStatus(effectiveHandoffStatus)}</span>` : ''}
       `;
@@ -1407,6 +1439,9 @@ def ui_page() -> str:
         [t('recommendedNextAction'), handoffPackage?.recommended_next_action || lead.recommended_next_action || t('empty')],
         [t('assignedTo'), ownerRouting.owner && ownerRouting.owner !== 'Unassigned' ? ownerRouting.owner : t('notAssigned')],
         [t('team'), ownerRouting.team || t('empty')],
+        [t('lastSender'), mapSender(convo.last_sender)],
+        [t('lastIntent'), mapIntent(convo.last_intent)],
+        [t('lastText'), convo.last_text || t('empty')],
       ];
 
       rows.forEach(([k, v]) => {
@@ -1735,7 +1770,7 @@ def ui_page() -> str:
 
       lastLeads.forEach((item) => {
         const leadId = item.id ?? item.lead_id ?? item.lead?.id ?? '-';
-        const company = item.company ?? item.lead?.company ?? item.name ?? item.contact ?? ('lead_id ' + leadId);
+        const company = item.company ?? item.lead?.company ?? item.name ?? item.contact ?? (t('leadId') + ' ' + leadId);
 	        const role = item.role ?? item.lead?.role ?? t('empty');
 	        const contact = item.contact ?? item.lead?.contact ?? t('empty');
 		        const useCase = item.use_case ?? item.lead?.use_case ?? t('empty');
@@ -1764,7 +1799,7 @@ def ui_page() -> str:
 		              <div class="list-sub">${t('role')}: ${role} · ${t('contact')}: ${contact}</div>
 		            </div>
 	            <div class="badges">
-	              <span class="badge badge-id">lead_id: ${leadId}</span>
+	              <span class="badge badge-id">${t('leadId')}: ${leadId}</span>
 	              <span class="badge ${badgeClass(leadStatus)}">${mapStatus(leadStatus)}</span>
 	              ${handoffStatus ? `<span class="badge ${badgeClass(handoffStatus)}">${mapStatus(handoffStatus)}</span>` : ''}
 	            </div>
@@ -1817,12 +1852,12 @@ def ui_page() -> str:
         el.innerHTML = `
           <div class="list-top">
 	            <div>
-	              <div class="list-title">lead_id ${leadId}</div>
+	              <div class="list-title">${t('leadId')} ${leadId}</div>
 	              <div class="list-sub">${t('assignedTo')}: ${assigned}</div>
 	              <div class="list-sub">${t('actionLabel')}: ${actionText}</div>
 	            </div>
             <div class="badges">
-              <span class="badge badge-id">lead_id: ${leadId}</span>
+              <span class="badge badge-id">${t('leadId')}: ${leadId}</span>
               <span class="badge ${badgeClass(status)}">${mapStatus(status)}</span>
             </div>
           </div>
