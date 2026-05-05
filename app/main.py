@@ -14,19 +14,21 @@ app = FastAPI(title="MechanicFlow AI")
 
 Base.metadata.create_all(bind=engine)
 
-app.include_router(chat_router)
-app.include_router(leads_router)
-app.include_router(handoffs_router)
-app.include_router(dashboard_router)
-app.include_router(demo_router)
-app.include_router(ui_router)
 
-
-@app.get("/", response_class=HTMLResponse)
-def root():
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
+@app.get("/ui", response_class=HTMLResponse, include_in_schema=False)
+def serve_ui():
     return HTMLResponse(ui_page())
 
 
 @app.get("/health")
 def health() -> dict:
     return {"status": "ok"}
+
+
+app.include_router(chat_router)
+app.include_router(leads_router)
+app.include_router(handoffs_router)
+app.include_router(dashboard_router)
+app.include_router(demo_router)
+app.include_router(ui_router)
