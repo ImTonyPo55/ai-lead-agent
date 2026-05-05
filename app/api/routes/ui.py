@@ -230,6 +230,21 @@ def ui_page() -> str:
       margin-bottom: 12px;
     }
 
+    .demo-guide {
+      margin-bottom: 18px;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.04);
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .demo-guide strong {
+      color: var(--text);
+    }
+
     .example-panel {
       margin-top: 10px;
       margin-bottom: 12px;
@@ -516,9 +531,15 @@ def ui_page() -> str:
           <button class="lang-btn" data-lang="es">ES</button>
         </div>
 
+        <a id="portfolioLink" class="btn btn-gray" href="/portfolio" target="_blank">Portfolio / Case Study</a>
         <button id="loadDemoBtn" class="btn btn-green">Загрузить примеры</button>
         <button id="resetDemoBtn" class="btn btn-red">Очистить данные</button>
       </div>
+    </div>
+
+    <div class="demo-guide">
+      <strong id="demoGuideTitle">Как проверить демо:</strong>
+      <span id="demoGuideText">Выберите пример кампании, отправьте сообщение, проверьте квалификацию, рекомендованную механику, тариф и CRM-ready пакет передачи.</span>
     </div>
 
     <div class="grid-2">
@@ -691,6 +712,9 @@ def ui_page() -> str:
         rawHandoffsSummary: 'Технический JSON передач',
         loadDemoBtn: 'Загрузить примеры',
         resetDemoBtn: 'Очистить данные',
+        portfolioLink: 'Portfolio / Case Study',
+        demoGuideTitle: 'Как проверить демо:',
+        demoGuideText: 'Выберите пример кампании, отправьте сообщение, проверьте квалификацию, рекомендованную механику, тариф и CRM-ready пакет передачи.',
         footerText: 'MechanicFlow AI: операционное пространство для квалификации campaign leads и передачи в работу.',
         leadIdLabel: 'Lead ID',
         leadIdHelp: 'Оставьте пустым для нового лида. Укажите Lead ID только если продолжаете существующий диалог.',
@@ -835,6 +859,9 @@ def ui_page() -> str:
         rawHandoffsSummary: 'Technical handoffs JSON',
         loadDemoBtn: 'Load examples',
         resetDemoBtn: 'Clear data',
+        portfolioLink: 'Portfolio / Case Study',
+        demoGuideTitle: 'How to test this demo:',
+        demoGuideText: 'Click a campaign example, send the message, review qualification, check the recommended mechanic and tier, then review the CRM-ready handoff package.',
         footerText: 'MechanicFlow AI operational workspace for campaign lead qualification and handoff.',
         leadIdLabel: 'Lead ID',
         leadIdHelp: 'Use an existing lead_id only when continuing an active conversation.',
@@ -979,6 +1006,9 @@ def ui_page() -> str:
         rawHandoffsSummary: 'JSON técnico de transferencias',
         loadDemoBtn: 'Cargar ejemplos',
         resetDemoBtn: 'Limpiar datos',
+        portfolioLink: 'Portfolio / Case Study',
+        demoGuideTitle: 'Cómo probar este demo:',
+        demoGuideText: 'Haz clic en un ejemplo de campaña, envía el mensaje, revisa la calificación, la mecánica recomendada, el plan y el paquete listo para CRM.',
         footerText: 'MechanicFlow AI: espacio operativo para calificar leads de campaña y transferirlos a trabajo.',
         leadIdLabel: 'Lead ID',
         leadIdHelp: 'Déjalo vacío para crear un nuevo lead. Usa Lead ID solo si continúas una conversación existente.',
@@ -1202,6 +1232,9 @@ def ui_page() -> str:
       $('rawHandoffsSummary').textContent = t('rawHandoffsSummary');
       $('loadDemoBtn').textContent = t('loadDemoBtn');
       $('resetDemoBtn').textContent = t('resetDemoBtn');
+      $('portfolioLink').textContent = t('portfolioLink');
+      $('demoGuideTitle').textContent = t('demoGuideTitle');
+      $('demoGuideText').textContent = t('demoGuideText');
       $('footerText').textContent = t('footerText');
 
       $('leadIdLabel').textContent = t('leadIdLabel');
@@ -2133,11 +2166,332 @@ def ui_page() -> str:
 """
 
 
+def portfolio_page() -> str:
+    return """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MechanicFlow AI Portfolio Case Study</title>
+  <style>
+    :root {
+      --bg: #202428;
+      --panel: #2A2F35;
+      --card: rgba(255,255,255,0.06);
+      --border: rgba(255,255,255,0.14);
+      --text: #F5F7FA;
+      --muted: #B8C0CC;
+      --muted-2: #7D8794;
+      --green: #33FF00;
+      --button-text: #111418;
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 18% 0%, rgba(255,255,255,0.08), transparent 30%),
+        linear-gradient(180deg, #2A2F35 0%, #202428 56%, #1A1E22 100%);
+      color: var(--text);
+    }
+
+    .wrap {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 32px 22px 44px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.25fr 0.75fr;
+      gap: 20px;
+      align-items: stretch;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.28);
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(34px, 5vw, 58px);
+      line-height: 1;
+      letter-spacing: -0.04em;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 17px;
+      letter-spacing: -0.01em;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .eyebrow {
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    .subtitle {
+      font-size: 18px;
+      max-width: 780px;
+    }
+
+    .cta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 11px 15px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 800;
+      border: 1px solid var(--border);
+    }
+
+    .btn-primary {
+      background: var(--green);
+      color: var(--button-text);
+      border-color: rgba(51,255,0,0.4);
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.08);
+      color: var(--text);
+    }
+
+    .metric {
+      display: grid;
+      gap: 12px;
+    }
+
+    .metric-row {
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.045);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .metric-label {
+      color: var(--muted-2);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .metric-value {
+      margin-top: 4px;
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    li::marker {
+      color: var(--green);
+    }
+
+    .workflow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .pill {
+      padding: 9px 11px;
+      border-radius: 999px;
+      color: var(--text);
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.1);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .footer {
+      margin-top: 20px;
+      color: var(--muted-2);
+      font-size: 13px;
+    }
+
+    @media (max-width: 820px) {
+      .hero, .grid { grid-template-columns: 1fr; }
+      .wrap { padding: 22px 14px 32px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <div class="card">
+        <div class="eyebrow">Portfolio Case Study</div>
+        <h1>MechanicFlow AI</h1>
+        <p class="subtitle">AI lead qualification and CRM-ready handoff agent for campaign requests.</p>
+        <div class="cta">
+          <a class="btn btn-primary" href="/">Open Live Demo</a>
+          <a class="btn btn-secondary" href="/ui">Open App UI</a>
+        </div>
+      </div>
+
+      <div class="card metric">
+        <div class="metric-row">
+          <div class="metric-label">Automation level</div>
+          <div class="metric-value">AI intake, qualification, routing, handoff package</div>
+        </div>
+        <div class="metric-row">
+          <div class="metric-label">Current status</div>
+          <div class="metric-value">Client-ready production MVP</div>
+        </div>
+        <div class="metric-row">
+          <div class="metric-label">Primary users</div>
+          <div class="metric-value">Agencies, eCommerce brands, retail and campaign teams</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div class="card">
+        <h2>Problem</h2>
+        <p>Inbound campaign requests often arrive as messy free-text messages. Sales teams need to understand the company, contact, campaign goal, platform, best game mechanic, pricing tier, and next action before they can move fast.</p>
+      </div>
+
+      <div class="card">
+        <h2>Solution</h2>
+        <p>MechanicFlow AI turns an inbound message into a qualified campaign lead, recommends a gamified mechanic, routes ownership, and prepares a structured CRM-ready handoff package.</p>
+      </div>
+
+      <div class="card">
+        <h2>Core Workflow</h2>
+        <div class="workflow">
+          <span class="pill">Inbound message</span>
+          <span class="pill">Extraction</span>
+          <span class="pill">Campaign intelligence</span>
+          <span class="pill">Qualification</span>
+          <span class="pill">Owner routing</span>
+          <span class="pill">CRM-ready handoff</span>
+          <span class="pill">Lifecycle tracking</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>What the Agent Extracts</h2>
+        <ul>
+          <li>Company, contact, role and campaign need</li>
+          <li>Client type, campaign goal and platform</li>
+          <li>Recommended game mechanic and reason</li>
+          <li>Pricing tier, owner, team and next action</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h2>What the Agent Outputs</h2>
+        <ul>
+          <li>Qualification status and score</li>
+          <li>Follow-up package for incomplete leads</li>
+          <li>Campaign handoff package for ready leads</li>
+          <li>CRM payload preview and copy-ready sales brief</li>
+          <li>Event timeline and handoff lifecycle state</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h2>Tech Stack</h2>
+        <ul>
+          <li>Python, FastAPI and SQLAlchemy</li>
+          <li>Server-rendered HTML/CSS/JavaScript UI</li>
+          <li>Deterministic rule-based campaign intelligence with safe fallbacks</li>
+          <li>Telegram notification integration when environment variables are configured</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h2>Use Cases</h2>
+        <ul>
+          <li>eCommerce lead capture campaigns</li>
+          <li>Agency campaign intake for client projects</li>
+          <li>Holiday promo games and Advent Calendar campaigns</li>
+          <li>Retention, rewards and product-launch campaign qualification</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h2>Business Value</h2>
+        <ul>
+          <li>Reduces manual lead triage time</li>
+          <li>Makes next steps clear for sales and delivery</li>
+          <li>Standardizes campaign recommendations</li>
+          <li>Creates a CRM-ready package without waiting for a full CRM integration</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h2>Known MVP Limitations</h2>
+        <ul>
+          <li>No authentication or multi-client workspaces yet</li>
+          <li>No billing or subscription layer</li>
+          <li>No real CRM OAuth or direct CRM writeback yet</li>
+          <li>Telegram delivery depends on configured environment variables</li>
+        </ul>
+      </div>
+    </section>
+
+    <div class="footer">MechanicFlow AI portfolio page. No secrets, tokens or internal debug data are exposed.</div>
+  </main>
+</body>
+</html>
+"""
+
+
 def render_ui_html() -> str:
     return ui_page()
+
+
+def render_portfolio_html() -> str:
+    return portfolio_page()
 
 
 @router.get("/ui", response_class=HTMLResponse)
 @router.get("/ui/", response_class=HTMLResponse)
 async def ui():
     return HTMLResponse(render_ui_html())
+
+
+@router.get("/portfolio", response_class=HTMLResponse)
+async def portfolio():
+    return HTMLResponse(render_portfolio_html())

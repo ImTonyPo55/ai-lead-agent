@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from app.api.routes.ui import ui_page
+from app.api.routes.ui import portfolio_page, ui_page
 from app.main import app
 from app.services.campaign_regression_check import CASES, _actual
 
 
-REQUIRED_ROUTES = {"/", "/ui", "/ui/", "/health"}
+REQUIRED_ROUTES = {"/", "/ui", "/ui/", "/health", "/portfolio"}
 
 REQUIRED_UI_STRINGS = (
     "MechanicFlow AI",
@@ -17,6 +17,26 @@ REQUIRED_UI_STRINGS = (
     "Export to CRM",
     "Move to work",
     "Complete handoff",
+    "Portfolio / Case Study",
+    "How to test this demo",
+)
+
+REQUIRED_PORTFOLIO_STRINGS = (
+    "MechanicFlow AI",
+    "AI lead qualification and CRM-ready handoff agent for campaign requests",
+    "Problem",
+    "Solution",
+    "Core Workflow",
+    "What the Agent Extracts",
+    "What the Agent Outputs",
+    "Tech Stack",
+    "Automation level",
+    "Current status",
+    "Known MVP Limitations",
+    "Use Cases",
+    "Business Value",
+    "Open Live Demo",
+    "Open App UI",
 )
 
 
@@ -32,6 +52,13 @@ def _check_ui_labels() -> None:
     missing = [text for text in REQUIRED_UI_STRINGS if text not in html]
     if missing:
         raise SystemExit(f"Missing UI labels: {', '.join(missing)}")
+
+
+def _check_portfolio_page() -> None:
+    html = portfolio_page()
+    missing = [text for text in REQUIRED_PORTFOLIO_STRINGS if text not in html]
+    if missing:
+        raise SystemExit(f"Missing portfolio content: {', '.join(missing)}")
 
 
 def _check_campaign_regression() -> None:
@@ -53,6 +80,7 @@ def _check_campaign_regression() -> None:
 def main() -> None:
     _check_routes()
     _check_ui_labels()
+    _check_portfolio_page()
     _check_campaign_regression()
     print("MVP final check OK")
 
