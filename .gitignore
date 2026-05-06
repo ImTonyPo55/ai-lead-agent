@@ -1,9 +1,42 @@
+# Environment
+.env
+.env.*
+!.env.example
+
+# Python
 __pycache__/
-*.pyc
-.DS_Store
-.localized
+*.py[cod]
+*.pyo
+*.pyd
+.Python
 .venv/
 venv/
-.env
-app.db
+env/
+
+# Database
 *.db
+*.sqlite
+*.sqlite3
+app.db
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
+
+# Logs / debug
+logs/
+*.log
+
+# Node / frontend
+node_modules/
+
+# Local portfolio/video assets - do not publish
+Screen/
+upwork_video_package/
+*.mp4
+
+# Test/cache
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/

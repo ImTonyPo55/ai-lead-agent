@@ -1,41 +1,76 @@
-# AI Lead Agent
+# MechanicFlow AI
 
-Demo-ready MVP для входящих B2B-запросов.
+**AI intake and lead qualification agent for gamified campaign leads.**
 
-## Что умеет
+MechanicFlow AI turns messy inbound campaign requests into structured, qualified leads, recommends the best campaign mechanic, assigns a pricing tier, and prepares a CRM-ready handoff package for sales and delivery teams.
 
-- принимает входящее сообщение в свободной форме
-- извлекает company, role, contact, use_case
-- создаёт или обновляет lead
-- переводит lead в qualified
-- автоматически создаёт handoff
-- поддерживает handoff lifecycle: pending -> in_progress -> done
-- показывает dashboard overview
-- поддерживает demo reset и demo seed
-- имеет UI на `/ui`
+---
 
-## Основные endpoint'ы
+## Live Demo
 
-- `POST /chat/message`
-- `GET /leads`
-- `GET /leads/{lead_id}`
-- `PATCH /leads/{lead_id}`
-- `GET /leads/{lead_id}/messages`
-- `GET /leads/{lead_id}/summary`
-- `GET /handoffs`
-- `GET /handoffs/{handoff_id}`
-- `PATCH /handoffs/{handoff_id}`
-- `GET /dashboard/overview`
-- `POST /demo/reset`
-- `POST /demo/seed`
-- `GET /ui`
-- `GET /health`
+- **App UI:** https://ai-lead-agent-mz5s.onrender.com/
+- **Portfolio / Case Study:** https://ai-lead-agent-mz5s.onrender.com/portfolio
 
-## Как запустить
+> Note: the demo is hosted on Render free tier, so the first request may take a few seconds if the service is sleeping.
 
-```bash
-cd ~/Desktop/python_tony
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload
+---
+
+## Problem
+
+Inbound campaign requests often arrive as unstructured free-text messages from websites, Telegram, WhatsApp, email, or sales conversations.
+
+Sales and delivery teams need to manually understand:
+
+- who the client is;
+- what campaign they need;
+- what platform they use;
+- which mechanic fits the request;
+- whether the lead is qualified;
+- who should handle it next;
+- what should be sent to CRM or delivery.
+
+This creates slow lead triage, inconsistent qualification, and messy handoff between sales and delivery.
+
+---
+
+## Solution
+
+MechanicFlow AI automates the first layer of lead intake and qualification.
+
+The agent receives an inbound message, extracts key business fields, classifies the request, recommends a campaign mechanic, prepares follow-up for incomplete leads, and creates a structured CRM-ready handoff package for qualified leads.
+
+---
+
+## What the MVP Does
+
+- Accepts inbound lead messages in free-text format
+- Extracts company, contact, role, campaign need, campaign goal, and platform
+- Detects client type and campaign intent
+- Recommends the best gamified campaign mechanic
+- Assigns pricing tier and next action
+- Routes ownership to the right owner/team
+- Generates follow-up guidance for incomplete leads
+- Builds a CRM-ready handoff summary for qualified leads
+- Tracks lead lifecycle status
+- Provides a clean demo UI for testing and presentation
+- Includes dashboard and portfolio/case-study pages
+- Supports Telegram notification integration when environment variables are configured
+
+---
+
+## Core Workflow
+
+```text
+Inbound message
+   ↓
+Field extraction
+   ↓
+Campaign intelligence
+   ↓
+Lead qualification
+   ↓
+Owner / team routing
+   ↓
+CRM-ready handoff package
+   ↓
+Lifecycle tracking
